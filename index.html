@@ -2,88 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dream2Build1 Rotating $ Registration</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
     h1 { text-align: center; color: #007BFF; }
-    form, table, .admin-section, .admin-login, .paiement-etapes {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    form, .admin-section, .admin-login, .paiement-etapes {
+      max-width: 900px; margin: auto; background: white; padding: 20px;
+      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
+      border: 1px solid #ccc; border-radius: 4px;
     }
     button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
+      background-color: #28a745; color: white; border: none;
+      padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer;
     }
     button:hover { background-color: #218838; }
-    .cash-infos, .paiement-etapes, .merci-message {
-      display: none;
-      background: #fff3cd;
-      padding: 10px;
-      border-left: 5px solid #ffc107;
-      margin-bottom: 20px;
+    .cash-infos, .paiement-etapes, .merci-message, .attente-verif {
+      display: none; background: #fff3cd; padding: 10px;
+      border-left: 5px solid #ffc107; margin-bottom: 20px;
     }
     .admin-info {
-      margin: 20px auto;
-      max-width: 900px;
-      background: #e7f3fe;
-      padding: 15px;
-      border-left: 4px solid #2196F3;
-      border-radius: 5px;
+      margin: 20px auto; max-width: 900px; background: #e7f3fe;
+      padding: 15px; border-left: 4px solid #2196F3; border-radius: 5px;
       font-size: 16px;
     }
-    .admin-info strong { color: #007BFF; }
     .admin-section { display: none; margin-top: 30px; }
-    .admin-login { margin-top: 40px; text-align: center; }
-    .translate-widget { text-align: center; margin-bottom: 20px; }
+    .logout-btn { display: none; text-align: center; margin-top: 10px; }
+    .logout-btn button { background-color: #dc3545; }
   </style>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  <script>
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-    }
-  </script>
 </head>
 <body>
 
-<div class="translate-widget">
-  <div id="google_translate_element"></div>
-</div>
-
-<h1>Dream2Build1 Rotating $ Registration Form</h1>
+<h1>Dream2Build1 Rotating $ Registration</h1>
 
 <div class="admin-info">
-  <strong>Admin Reference:</strong> D2B1-001<br />
+  <strong>Admin Reference:</strong> D2B1-001<br/>
   <strong>Admin Link:</strong> <a href="https://dream2build1.com/ref-admin" target="_blank">https://dream2build1.com/ref-admin</a>
 </div>
 
 <form id="inscriptionForm" name="inscriptionForm">
   <label>Full Name:</label>
-  <input name="nom" id="nom" type="text" placeholder="Jean Dupont" required />
+  <input name="nom" id="nom" type="text" required placeholder="Jean Dupont"/>
 
   <label>Reference Code:</label>
-  <input name="ref" id="ref" type="text" placeholder="Ref123" />
+  <input name="ref" id="ref" type="text" placeholder="Ref123"/>
 
   <label>Referral Link:</label>
-  <input name="lien" id="lien" type="url" placeholder="https://..." />
+  <input name="lien" id="lien" type="url" placeholder="https://..."/>
 
   <label>Payment Method:</label>
   <select id="paiementSelect" required onchange="checkPaiement()">
@@ -91,7 +60,7 @@
     <option value="MonCash">MonCash</option>
     <option value="PayPal">PayPal</option>
     <option value="NatCash">NatCash</option>
-    <option value="Mastercard">Mastercard</option>
+    <option value="Mastercard">Card (Debit / Credit)</option>
     <option value="Cash">Cash</option>
   </select>
 
@@ -100,180 +69,76 @@
   </div>
 
   <div id="paiementEtapes" class="paiement-etapes"></div>
+  <div id="attenteVerif" class="attente-verif">✅ Please wait while admin verifies your payment… Then you can confirm.</div>
   <div id="merciMessage" class="merci-message">
     ✅ Thank you for registering. You are about to <strong>Earn with Dream2Build1!</strong>
   </div>
 
-  <button type="button" onclick="soumettreInscription()">Pay & Submit</button>
+  <button type="button" onclick="soumettreInscription()">Submit Registration</button>
 </form>
 
 <div class="admin-login">
   <h2>Admin Login</h2>
-  <input type="email" id="adminEmail" placeholder="Enter your admin email">
+  <input type="email" id="adminEmail" placeholder="Admin Email">
+  <input type="password" id="adminPassword" placeholder="Admin Password">
   <button onclick="verifierAdmin()">Login</button>
+</div>
+
+<div class="logout-btn" id="logoutBtn">
+  <button onclick="logoutAdmin()">Logout</button>
 </div>
 
 <div class="admin-section" id="adminSection">
   <h2>Dream2Build1 Admin Panel</h2>
-  <p>📋 Registered participants and rotating calculations will be displayed here...</p>
+  <p>📋 Registered participants and rotation data appear here...</p>
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/TON_URL_SCRIPT/exec"; // Replace with your actual script URL
-
-function checkPaiement() {
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dream2Build1 Rotating $ Registration</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h1 { text-align: center; color: #007BFF; }
-    form, table, .admin-section, .admin-login, .paiement-etapes {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover { background-color: #218838; }
-    .cash-infos, .paiement-etapes, .merci-message {
-      display: none;
-      background: #fff3cd;
-      padding: 10px;
-      border-left: 5px solid #ffc107;
-      margin-bottom: 20px;
-    }
-    .admin-info {
-      margin: 20px auto;
-      max-width: 900px;
-      background: #e7f3fe;
-      padding: 15px;
-      border-left: 4px solid #2196F3;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    .admin-info strong { color: #007BFF; }
-    .admin-section { display: none; margin-top: 30px; }
-    .admin-login { margin-top: 40px; text-align: center; }
-    .translate-widget { text-align: center; margin-bottom: 20px; }
-  </style>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  <script>
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-    }
-  </script>
-</head>
-<body>
-
-<div class="translate-widget">
-  <div id="google_translate_element"></div>
-</div>
-
-<h1>Dream2Build1 Rotating $ Registration Form</h1>
-
-<div class="admin-info">
-  <strong>Admin Reference:</strong> D2B1-001<br />
-  <strong>Admin Link:</strong> <a href="https://dream2build1.com/ref-admin" target="_blank">https://dream2build1.com/ref-admin</a>
-</div>
-
-<form id="inscriptionForm" name="inscriptionForm">
-  <label>Full Name:</label>
-  <input name="nom" id="nom" type="text" placeholder="Jean Dupont" required />
-
-  <label>Reference Code:</label>
-  <input name="ref" id="ref" type="text" placeholder="Ref123" />
-
-  <label>Referral Link:</label>
-  <input name="lien" id="lien" type="url" placeholder="https://..." />
-
-  <label>Payment Method:</label>
-  <select id="paiementSelect" required onchange="checkPaiement()">
-    <option value="">-- Choose --</option>
-    <option value="MonCash">MonCash</option>
-    <option value="PayPal">PayPal</option>
-    <option value="NatCash">NatCash</option>
-    <option value="Mastercard">Mastercard</option>
-    <option value="Cash">Cash</option>
-  </select>
-
-  <div id="cashMessage" class="cash-infos">
-    You chose <strong>Cash</strong>. Please contact admin via WhatsApp or email to validate your payment.
-  </div>
-
-  <div id="paiementEtapes" class="paiement-etapes"></div>
-  <div id="merciMessage" class="merci-message">
-    ✅ Thank you for registering. You are about to <strong>Earn with Dream2Build1!</strong>
-  </div>
-
-  <button type="button" onclick="soumettreInscription()">Pay & Submit</button>
-</form>
-
-<div class="admin-login">
-  <h2>Admin Login</h2>
-  <input type="email" id="adminEmail" placeholder="Enter your admin email">
-  <button onclick="verifierAdmin()">Login</button>
-</div>
-
-<div class="admin-section" id="adminSection">
-  <h2>Dream2Build1 Admin Panel</h2>
-  <p>📋 Registered participants and rotating calculations will be displayed here...</p>
-</div>
-
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/TON_URL_SCRIPT/exec"; // Replace with your actual script URL
+const SCRIPT_URL = "https://script.google.com/macros/s/TON_URL_SCRIPT/exec"; // à remplacer
 
 function checkPaiement() {
   const paiement = document.getElementById("paiementSelect").value;
   const cashDiv = document.getElementById("cashMessage");
   const etapesDiv = document.getElementById("paiementEtapes");
   const merciDiv = document.getElementById("merciMessage");
+  const attenteDiv = document.getElementById("attenteVerif");
+
   cashDiv.style.display = "none";
   etapesDiv.style.display = "none";
   merciDiv.style.display = "none";
+  attenteDiv.style.display = "none";
 
   if (paiement === "Cash") {
     cashDiv.style.display = "block";
   } else if (paiement !== "") {
-    let instructions = "";
+    let html = "";
+
     if (paiement === "MonCash") {
-      instructions = "<strong>MonCash Steps:</strong><ul><li>Send $10 to 509XXXXXXX</li><li>Add your name in the message</li><li>Confirm below once paid.</li></ul>";
+      html = "<strong>MonCash Steps:</strong><ul><li>Send $10 to <b>509XXXXXXX</b></li><li>Put your full name in the message</li></ul>";
     } else if (paiement === "PayPal") {
-      instructions = "<strong>PayPal Steps:</strong><ul><li>Send $10 to email@example.com</li><li>Include your name in the note</li></ul>";
+      html = "<strong>PayPal:</strong><ul><li>Send $10 to: <b>dream2build@gmail.com</b></li><li>Use your name as note</li></ul>";
     } else if (paiement === "NatCash") {
-      instructions = "<strong>NatCash Steps:</strong><ul><li>Send $10 to NatCash account #123456</li></ul>";
+      html = "<strong>NatCash:</strong><ul><li>Send $10 to account: <b>#123456789</b></li></ul>";
     } else if (paiement === "Mastercard") {
-      instructions = "<strong>Mastercard Steps:</strong><ul><li>Enter your card details in the secure terminal</li></ul>";
+      html = `
+      <strong>Card Payment:</strong>
+      <label>Card Number:</label><input type="text" maxlength="16" placeholder="XXXX XXXX XXXX XXXX"/>
+      <label>Expiration Date (MM/YY):</label><input type="text" placeholder="12/26"/>
+      <label>CVV:</label><input type="text" maxlength="3" placeholder="123"/>
+      <label>Name on Card:</label><input type="text" placeholder="Cardholder Name"/>
+      `;
     }
-    etapesDiv.innerHTML = instructions + '<br><button onclick="validerPaiement()">I have paid</button>';
+
+    html += '<br><button onclick="validerPaiement()">I have paid</button>';
+    etapesDiv.innerHTML = html;
     etapesDiv.style.display = "block";
+    attenteDiv.style.display = "block";
   }
 }
 
 function validerPaiement() {
   document.getElementById("paiementEtapes").style.display = "none";
+  document.getElementById("attenteVerif").style.display = "none";
   document.getElementById("merciMessage").style.display = "block";
 }
 
@@ -284,12 +149,12 @@ function soumettreInscription() {
   const moyen = document.getElementById("paiementSelect").value;
 
   if (moyen === "Cash") {
-    alert("Thank you! Please contact admin to confirm your cash payment.");
+    alert("Thank you! Contact admin to confirm your cash payment.");
     return;
   }
 
   if (!document.getElementById("merciMessage").style.display.includes("block")) {
-    alert("Please complete the payment steps before submitting.");
+    alert("Please complete payment and wait for admin confirmation before submitting.");
     return;
   }
 
@@ -298,26 +163,36 @@ function soumettreInscription() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ nom, ref, lien, moyen })
   })
-    .then(res => res.text())
-    .then(() => {
-      alert("✅ Registration successfully saved!");
-      document.getElementById("inscriptionForm").reset();
-      document.getElementById("merciMessage").style.display = "none";
-    })
-    .catch(err => {
-      console.error(err);
-      alert("❌ Error while submitting. Try again.");
-    });
+  .then(res => res.text())
+  .then(() => {
+    alert("✅ Registration saved!");
+    document.getElementById("inscriptionForm").reset();
+    document.getElementById("merciMessage").style.display = "none";
+  })
+  .catch(err => {
+    console.error(err);
+    alert("❌ Submission failed.");
+  });
 }
 
 function verifierAdmin() {
   const email = document.getElementById("adminEmail").value.trim();
-  const adminAuthorized = "emmanueljeambas@gmail.com";
-  if (email === adminAuthorized) {
+  const password = document.getElementById("adminPassword").value.trim();
+  if (email === "emmanueljeambas@gmail.com" && password === "Emmanuel1@") {
     document.getElementById("adminSection").style.display = "block";
+    document.getElementById("logoutBtn").style.display = "block";
+    document.querySelector(".admin-login").style.display = "none";
   } else {
-    alert("Access denied. Incorrect email.");
+    alert("Access denied.");
   }
+}
+
+function logoutAdmin() {
+  document.getElementById("adminSection").style.display = "none";
+  document.getElementById("logoutBtn").style.display = "none";
+  document.querySelector(".admin-login").style.display = "block";
+  document.getElementById("adminEmail").value = "";
+  document.getElementById("adminPassword").value = "";
 }
 </script>
 
