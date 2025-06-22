@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dream2Build1 Full Access Site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dream2Build1 - Inscription & Panel</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
-    h1, h2 { text-align: center; color: #007BFF; }
+    h1,h2 { text-align: center; color: #007BFF; }
     .container, .panel, .form-section, form {
       max-width: 900px; margin: auto; background: white; padding: 20px;
       border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -24,23 +24,41 @@
     .hidden { display: none; }
     .logout-btn { text-align: center; margin-top: 20px; }
     .logout-btn button { background-color: #dc3545; }
-    .role-choice, .translate-widget { text-align: center; margin-bottom: 20px; }
+    .role-choice, .lang-select, .info-box {
+      text-align: center; margin-bottom: 20px;
+    }
     .cash-infos, .paiement-etapes, .merci-message {
       display: none; background: #fff3cd;
       padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
     }
+    .rotation-box {
+      background: #e9f7ef; padding: 15px; margin-top: 20px; border-left: 5px solid #28a745;
+      white-space: pre-line;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #007BFF; color: white; }
   </style>
 </head>
 <body>
 
-<div class="translate-widget">
-  <div id="google_translate_element"></div>
+<div class="lang-select">
+  <label for="langSelect">Choisissez la langue / Choose Language:</label>
+  <select id="langSelect" onchange="switchLang()">
+    <option value="fr">Français</option>
+    <option value="en">English</option>
+    <option value="ht">Kreyòl Ayisyen</option>
+  </select>
 </div>
 
-<h1>Dream2Build1 Registration & Access Panel</h1>
+<h1 data-lang-fr="Dream2Build1 - Inscription & Panel"
+    data-lang-en="Dream2Build1 - Registration & Panel"
+    data-lang-ht="Dream2Build1 - Enskripsyon & Panel">Dream2Build1 - Inscription & Panel</h1>
 
 <div class="role-choice">
-  <label>Select your role:</label>
+  <label data-lang-fr="Choisissez votre rôle:"
+         data-lang-en="Select your role:"
+         data-lang-ht="Chwazi wòl ou:">Choisissez votre rôle:</label>
   <select id="roleSelect" onchange="switchLogin()">
     <option value="">-- Choose --</option>
     <option value="ceo">CEO</option>
@@ -49,34 +67,37 @@
 </div>
 
 <div id="ceoLogin" class="form-section hidden">
-  <h2>CEO Login</h2>
+  <h2 data-lang-fr="Connexion CEO" data-lang-en="CEO Login" data-lang-ht="Koneksyon CEO">Connexion CEO</h2>
   <input type="email" id="ceoEmail" placeholder="CEO Email">
   <input type="password" id="ceoPassword" placeholder="Password">
-  <button onclick="loginCEO()">Login</button>
+  <button onclick="loginCEO()" data-lang-fr="Connexion" data-lang-en="Login" data-lang-ht="Antre">Connexion</button>
 </div>
 
 <div id="leaderLogin" class="form-section hidden">
-  <h2>Team Leader Login</h2>
+  <h2 data-lang-fr="Connexion Team Leader" data-lang-en="Team Leader Login" data-lang-ht="Koneksyon Lidè Ekip">Connexion Team Leader</h2>
   <input type="email" id="leaderEmail" placeholder="Leader Email">
   <input type="password" id="leaderPassword" placeholder="Password">
-  <button onclick="loginLeader()">Login</button>
+  <button onclick="loginLeader()" data-lang-fr="Connexion" data-lang-en="Login" data-lang-ht="Antre">Connexion</button>
 </div>
 
-<form id="inscriptionForm">
-  <h2>Register as New Member</h2>
-  <label>Full Name:</label>
+<form id="inscriptionForm" onsubmit="return submitMember(event)">
+  <h2 data-lang-fr="Inscription Nouveau Membre"
+      data-lang-en="Register as New Member"
+      data-lang-ht="Anrejistre kòm Nouvo Manm">Inscription Nouveau Membre</h2>
+
+  <label data-lang-fr="Nom complet:" data-lang-en="Full Name:" data-lang-ht="Non konplè:">Nom complet:</label>
   <input name="nom" id="nom" type="text" placeholder="Jean Dupont" required />
 
-  <label>Email:</label>
+  <label data-lang-fr="Email:" data-lang-en="Email:" data-lang-ht="Imèl:">Email:</label>
   <input name="email" id="email" type="email" required />
 
-  <label>Reference Code:</label>
-  <input name="ref" id="ref" type="text" placeholder="Ref123" />
+  <label data-lang-fr="Code de référence:" data-lang-en="Reference Code:" data-lang-ht="Kòd referans:">Code de référence:</label>
+  <input name="ref" id="ref" type="text" readonly />
 
-  <label>Referral Link:</label>
+  <label data-lang-fr="Lien de référence:" data-lang-en="Referral Link:" data-lang-ht="Lyèn referans:">Lien de référence:</label>
   <input name="lien" id="lien" type="url" placeholder="https://..." />
 
-  <label>Payment Method:</label>
+  <label data-lang-fr="Méthode de paiement:" data-lang-en="Payment Method:" data-lang-ht="Metòd peman:">Méthode de paiement:</label>
   <select id="paiementSelect" required onchange="checkPaiement()">
     <option value="">-- Choose --</option>
     <option value="MonCash">MonCash</option>
@@ -86,126 +107,218 @@
     <option value="Cash">Cash</option>
   </select>
 
-  <div id="cashMessage" class="cash-infos">
-    You chose <strong>Cash</strong>. Please contact admin via WhatsApp or email to validate your payment.
+  <div id="cashMessage" class="cash-infos" data-lang-fr="Vous avez choisi <strong>Cash</strong>. Contactez l'admin pour validation." data-lang-en="You chose <strong>Cash</strong>. Please contact admin to validate payment." data-lang-ht="Ou chwazi <strong>Cash</strong>. Tanpri kontakte admin pou validasyon peman.">
+    Vous avez choisi <strong>Cash</strong>. Contactez l'admin pour validation.
   </div>
 
   <div id="paiementEtapes" class="paiement-etapes"></div>
-  <div id="merciMessage" class="merci-message">
-    ✅ Thank you for registering. You are about to <strong>Earn with Dream2Build1!</strong>
+
+  <div id="merciMessage" class="merci-message" data-lang-fr="✅ Merci pour votre inscription. Vous êtes sur le point de gagner avec Dream2Build1 !" data-lang-en="✅ Thank you for registering. You are about to earn with Dream2Build1!" data-lang-ht="✅ Mèsi paske ou anrejistre. Ou pral kòmanse touche avèk Dream2Build1!">
+    ✅ Merci pour votre inscription. Vous êtes sur le point de gagner avec Dream2Build1 !
   </div>
 
-  <button type="button" onclick="alert('⏳ Please wait: a leader will validate your registration.')">Pay & Submit</button>
+  <button type="submit" data-lang-fr="Payer & Soumettre" data-lang-en="Pay & Submit" data-lang-ht="Peye & Soumèt">Payer & Soumettre</button>
 </form>
 
 <div id="ceoPanel" class="panel hidden">
-  <h2>👑 CEO Dashboard</h2>
+  <h2 data-lang-fr="Tableau de bord CEO" data-lang-en="CEO Dashboard" data-lang-ht="Tablo CEO">Tableau de bord CEO</h2>
   <div id="ceoContent">📊 Panel complet des membres, validations, calculs rotatifs à venir...</div>
+  <button onclick="calculRotation()" data-lang-fr="Afficher Rotation du jour" data-lang-en="Show Today's Rotation" data-lang-ht="Montre wotasyon jounen an">Afficher Rotation du jour</button>
+  <button onclick="nextRotation()" data-lang-fr="➡️ Prochain jour" data-lang-en="Next Day" data-lang-ht="Pwochen jou">➡️ Prochain jour</button>
+  <div id="rotationResult" class="rotation-box hidden"></div>
+  <h3 data-lang-fr="Historique des 25 jours :" data-lang-en="History of 25 Days:" data-lang-ht="Istwa 25 jou yo:">Historique des 25 jours :</h3>
+  <table id="historyTable">
+    <thead>
+      <tr>
+        <th data-lang-fr="Jour" data-lang-en="Day" data-lang-ht="Jou">Jour</th>
+        <th data-lang-fr="Membre" data-lang-en="Member" data-lang-ht="Manm">Membre</th>
+        <th data-lang-fr="Total ($)" data-lang-en="Total ($)" data-lang-ht="Total ($)">Total ($)</th>
+        <th data-lang-fr="Réserve" data-lang-en="Reserve" data-lang-ht="Rezèv">Réserve</th>
+        <th data-lang-fr="Retenu (10%)" data-lang-en="Deducted (10%)" data-lang-ht="Retni (10%)">Retenu (10%)</th>
+        <th data-lang-fr="À recevoir" data-lang-en="To Receive" data-lang-ht="Pou resevwa">À recevoir</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
 <div id="leaderPanel" class="panel hidden">
-  <h2>👥 Leader Dashboard</h2>
+  <h2 data-lang-fr="Tableau de bord Leader" data-lang-en="Leader Dashboard" data-lang-ht="Tablo Lidè">Tableau de bord Leader</h2>
   <div id="leaderContent">Chargement des membres à valider...</div>
 </div>
 
 <div class="logout-btn hidden" id="logoutBtn">
-  <button onclick="logoutUser()">Logout</button>
+  <button onclick="logoutUser()" data-lang-fr="Déconnexion" data-lang-en="Logout" data-lang-ht="Dekonekte">Déconnexion</button>
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
-const CEO_EMAIL = "emmanueljeambas@gmail.com";
-const CEO_PASS = "Emmanuel1@";
+// === Langue ===
+const langs = ['fr', 'en', 'ht'];
+function switchLang() {
+  const selected = document.getElementById('langSelect').value;
+  langs.forEach(lang => {
+    document.querySelectorAll(`[data-lang-${lang}]`).forEach(el => {
+      el.style.display = (lang === selected) ? '' : 'none';
+    });
+  });
+}
+// Initial display French
+switchLang();
 
-const leaders = [
-  { email: "leader1@d2b1.com", password: "leaderpass1" },
-  { email: "leader2@d2b1.com", password: "leaderpass2" }
-  // 👉 Pour ajouter un leader :
-  // { email: "nouveauleader@email.com", password: "sonMotDePasse" }
-];
-
+// === Gestion affichage connexion ===
 function switchLogin() {
-  const role = document.getElementById("roleSelect").value;
-  document.getElementById("ceoLogin").classList.add("hidden");
-  document.getElementById("leaderLogin").classList.add("hidden");
-  if (role === "ceo") document.getElementById("ceoLogin").classList.remove("hidden");
-  else if (role === "leader") document.getElementById("leaderLogin").classList.remove("hidden");
+  const role = document.getElementById('roleSelect').value;
+  document.getElementById('ceoLogin').classList.toggle('hidden', role !== 'ceo');
+  document.getElementById('leaderLogin').classList.toggle('hidden', role !== 'leader');
 }
+// === Variables simplifiées pour démo ===
+const ceoUser = { email: 'emmanuel1@d2b1.com', password: 'CEOpass123' };
+const leaders = [
+  { email: 'leader1@d2b1.com', password: 'Leader1pass' },
+  { email: 'leader2@d2b1.com', password: 'Leader2pass' },
+  // Ajoute jusqu'à 10 leaders ici
+];
+let loggedInUser = null;
+let loggedInRole = null;
 
+// === Connexions ===
 function loginCEO() {
-  const email = document.getElementById("ceoEmail").value;
-  const pass = document.getElementById("ceoPassword").value;
-  if (email === CEO_EMAIL && pass === CEO_PASS) {
-    document.getElementById("ceoPanel").classList.remove("hidden");
-    document.getElementById("logoutBtn").classList.remove("hidden");
-    document.getElementById("ceoLogin").classList.add("hidden");
-  } else {
-    alert("Access denied for CEO");
-  }
+  const email = document.getElementById('ceoEmail').value.trim();
+  const pass = document.getElementById('ceoPassword').value.trim();
+  if(email === ceoUser.email && pass === ceoUser.password) {
+    loggedInUser = ceoUser.email;
+    loggedInRole = 'ceo';
+    showDashboard();
+  } else alert('Invalid CEO credentials');
 }
-
 function loginLeader() {
-  const email = document.getElementById("leaderEmail").value;
-  const pass = document.getElementById("leaderPassword").value;
-  const valid = leaders.find(l => l.email === email && l.password === pass);
-  if (valid) {
-    document.getElementById("leaderPanel").classList.remove("hidden");
-    document.getElementById("logoutBtn").classList.remove("hidden");
-    document.getElementById("leaderLogin").classList.add("hidden");
-    loadLeaderPanel(email);
-  } else {
-    alert("Invalid leader credentials");
-  }
+  const email = document.getElementById('leaderEmail').value.trim();
+  const pass = document.getElementById('leaderPassword').value.trim();
+  const found = leaders.find(l => l.email === email && l.password === pass);
+  if(found) {
+    loggedInUser = email;
+    loggedInRole = 'leader';
+    showDashboard();
+  } else alert('Invalid Leader credentials');
 }
 
-function logoutUser() { location.reload(); }
+function showDashboard() {
+  document.querySelector('.role-choice').style.display = 'none';
+  document.getElementById('ceoLogin').classList.add('hidden');
+  document.getElementById('leaderLogin').classList.add('hidden');
+  document.getElementById('inscriptionForm').style.display = loggedInRole === 'leader' ? 'none' : '';
+  document.getElementById('ceoPanel').classList.toggle('hidden', loggedInRole !== 'ceo');
+  document.getElementById('leaderPanel').classList.toggle('hidden', loggedInRole !== 'leader');
+  document.getElementById('logoutBtn').classList.remove('hidden');
+}
 
+function logoutUser() {
+  loggedInUser = null;
+  loggedInRole = null;
+  document.querySelector('.role-choice').style.display = '';
+  document.getElementById('ceoLogin').classList.add('hidden');
+  document.getElementById('leaderLogin').classList.add('hidden');
+  document.getElementById('ceoPanel').classList.add('hidden');
+  document.getElementById('leaderPanel').classList.add('hidden');
+  document.getElementById('inscriptionForm').style.display = '';
+  document.getElementById('logoutBtn').classList.add('hidden');
+  clearForm();
+  alert('Logged out.');
+}
+
+// === Génération code référence ===
+let lastRefNum = 0;
+function generateRef() {
+  lastRefNum++;
+  return `D2B1-${String(lastRefNum).padStart(3,'0')}`;
+}
+function setRef() {
+  const refInput = document.getElementById('ref');
+  if(!refInput.value) {
+    refInput.value = generateRef();
+  }
+}
+setRef(); // au chargement
+
+// === Paiement info ===
 function checkPaiement() {
-  const paiement = document.getElementById("paiementSelect").value;
-  const cashDiv = document.getElementById("cashMessage");
-  const etapesDiv = document.getElementById("paiementEtapes");
-  const merciDiv = document.getElementById("merciMessage");
-  cashDiv.style.display = "none";
-  etapesDiv.style.display = "none";
-  merciDiv.style.display = "none";
+  const val = document.getElementById('paiementSelect').value;
+  document.getElementById('cashMessage').style.display = val === 'Cash' ? 'block' : 'none';
+  // Ici tu peux ajouter affichage d'étapes spécifiques au paiement
+}
 
-  if (paiement === "Cash") {
-    cashDiv.style.display = "block";
+// === Soumission inscription ===
+function submitMember(e) {
+  e.preventDefault();
+  if(loggedInRole) {
+    // Ici tu ferais appel à backend/Google Sheets/serveur pour enregistrer
+    alert("✅ "+document.getElementById('nom').value +", you registered with ref: "+document.getElementById('ref').value);
+    sendEmailNotification({
+      nom: document.getElementById('nom').value,
+      email: document.getElementById('email').value,
+      ref: document.getElementById('ref').value,
+      paiement: document.getElementById('paiementSelect').value
+    });
+    clearForm();
+    setRef();
+    return false;
   } else {
-    let instructions = `<strong>${paiement} Steps:</strong><ul><li>Send $10 to details provided</li><li>Confirm below once paid.</li></ul>`;
-    etapesDiv.innerHTML = instructions + '<br><button onclick="validerPaiement()">I have paid</button>';
-    etapesDiv.style.display = "block";
+    alert("⚠️ Please login as CEO or Leader to submit.");
+    return false;
   }
 }
-
-function validerPaiement() {
-  document.getElementById("paiementEtapes").style.display = "none";
-  document.getElementById("merciMessage").style.display = "block";
+function clearForm() {
+  document.getElementById('nom').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('ref').value = '';
+  document.getElementById('lien').value = '';
+  document.getElementById('paiementSelect').value = '';
+  document.getElementById('cashMessage').style.display = 'none';
 }
 
-function loadLeaderPanel(leaderEmail) {
-  document.getElementById("leaderContent").innerHTML = `
-    <div><strong>John Doe</strong> - john@example.com <br>
-    <button onclick="soumettreInscriptionDepuisLeader('John Doe', 'john@example.com', 'Ref123', 'https://ref')">✔️ Submit Registration</button></div>`;
+// === Simulation email notification (remplacer par Apps Script etc.) ===
+function sendEmailNotification(data) {
+  // Remplace ici par vraie fonction d'envoi email via Google Apps Script
+  console.log("Email notification envoyée à CEO & Leaders:", data);
+  alert("Notification email envoyée au CEO & Leaders (simulée).");
 }
 
-function soumettreInscriptionDepuisLeader(nom, email, ref, lien) {
-  const moyen = 'ValidatedByLeader';
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nom, email, ref, lien, moyen })
-  })
-    .then(res => res.text())
-    .then(() => alert("✅ Registration submitted by leader!"))
-    .catch(() => alert("❌ Error during leader submission."));
-}
-</script>
+// === Rotation 25 jours ===
+const members = [
+  "Jean Dupont", "Marie Pierre", "André Michel", "Lucie Bernadette", "Josué Charles",
+  "Léna Joseph", "Samuel Paul", "Carine Moreau", "Diego Lopez", "Manuela Rose",
+  "Alain Jean", "Sophie Nadeau", "Michel François", "Nadia Rigaud", "Tania Joseph",
+  "Rudy Belle", "Judith Dorval", "Maxence Prévost", "Claire Antoine", "Daniel Mardy",
+  "Yvette Dorsainvil", "Elie Dumarsais", "Beatrice Montfort", "Fabrice Lemay", "Stéphanie Rouzier"
+];
+let currentIndex = new Date().getDate() - 1;
 
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-<script>
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+function calculRotation() {
+  if (currentIndex >= members.length) return;
+  const name = members[currentIndex];
+  const total = 100 + (currentIndex * 30);
+  const reserve = total / 3;
+  const deduction = reserve * 0.10;
+  const net = total - (reserve - deduction);
+
+  let text = 
+    `📅 Jour ${currentIndex + 1} – ${name}\n` +
+    `💰 Total contributions: $${total.toFixed(2)}\n` +
+    `📦 Reserve (1/3): $${reserve.toFixed(2)}\n` +
+    `🔒 Retenu spécial (10%): $${deduction.toFixed(2)}\n` +
+    `✅ Montant à recevoir: $${net.toFixed(2)}`;
+
+  const resultEl = document.getElementById("rotationResult");
+  resultEl.textContent = text;
+  resultEl.classList.remove("hidden");
+
+  const row = `<tr><td>${currentIndex + 1}</td><td>${name}</td><td>${total.toFixed(2)}</td><td>${reserve.toFixed(2)}</td><td>${deduction.toFixed(2)}</td><td>${net.toFixed(2)}</td></tr>`;
+  document.querySelector("#historyTable tbody").innerHTML += row;
+}
+
+function nextRotation() {
+  currentIndex++;
+  calculRotation();
 }
 </script>
 </body>
