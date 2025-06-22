@@ -19,6 +19,7 @@
     button {
       background-color: #28a745; color: white; border: none; padding: 10px 20px;
       font-size: 16px; border-radius: 5px; cursor: pointer;
+      margin-top: 10px;
     }
     button:hover { background-color: #218838; }
     .hidden { display: none; }
@@ -66,20 +67,28 @@
   </select>
 </div>
 
+<!-- CEO Login Section -->
 <div id="ceoLogin" class="form-section hidden">
   <h2 data-lang-fr="Connexion CEO" data-lang-en="CEO Login" data-lang-ht="Koneksyon CEO">Connexion CEO</h2>
-  <input type="email" id="ceoEmail" placeholder="CEO Email">
-  <input type="password" id="ceoPassword" placeholder="Password">
+  <input type="email" id="ceoEmail" placeholder="CEO Email" />
+  <input type="password" id="ceoPassword" placeholder="Password" />
   <button onclick="loginCEO()" data-lang-fr="Connexion" data-lang-en="Login" data-lang-ht="Antre">Connexion</button>
 </div>
 
+<!-- Leader Login Section -->
 <div id="leaderLogin" class="form-section hidden">
   <h2 data-lang-fr="Connexion Team Leader" data-lang-en="Team Leader Login" data-lang-ht="Koneksyon Lidè Ekip">Connexion Team Leader</h2>
-  <input type="email" id="leaderEmail" placeholder="Leader Email">
-  <input type="password" id="leaderPassword" placeholder="Password">
+  <input type="email" id="leaderEmail" placeholder="Leader Email" />
+  <input type="password" id="leaderPassword" placeholder="Password" />
   <button onclick="loginLeader()" data-lang-fr="Connexion" data-lang-en="Login" data-lang-ht="Antre">Connexion</button>
 </div>
 
+<!-- Logout button, always visible when logged in -->
+<div class="logout-btn hidden" id="logoutBtn">
+  <button onclick="logoutUser()" data-lang-fr="Déconnexion" data-lang-en="Logout" data-lang-ht="Dekonekte">Déconnexion</button>
+</div>
+
+<!-- New Member Registration Form -->
 <form id="inscriptionForm" onsubmit="return submitMember(event)">
   <h2 data-lang-fr="Inscription Nouveau Membre"
       data-lang-en="Register as New Member"
@@ -120,6 +129,7 @@
   <button type="submit" data-lang-fr="Payer & Soumettre" data-lang-en="Pay & Submit" data-lang-ht="Peye & Soumèt">Payer & Soumettre</button>
 </form>
 
+<!-- CEO Panel -->
 <div id="ceoPanel" class="panel hidden">
   <h2 data-lang-fr="Tableau de bord CEO" data-lang-en="CEO Dashboard" data-lang-ht="Tablo CEO">Tableau de bord CEO</h2>
   <div id="ceoContent">📊 Panel complet des membres, validations, calculs rotatifs à venir...</div>
@@ -142,13 +152,10 @@
   </table>
 </div>
 
+<!-- Leader Panel -->
 <div id="leaderPanel" class="panel hidden">
   <h2 data-lang-fr="Tableau de bord Leader" data-lang-en="Leader Dashboard" data-lang-ht="Tablo Lidè">Tableau de bord Leader</h2>
   <div id="leaderContent">Chargement des membres à valider...</div>
-</div>
-
-<div class="logout-btn hidden" id="logoutBtn">
-  <button onclick="logoutUser()" data-lang-fr="Déconnexion" data-lang-en="Logout" data-lang-ht="Dekonekte">Déconnexion</button>
 </div>
 
 <script>
@@ -194,96 +201,109 @@ function loginCEO() {
 function loginLeader() {
   const email = document.getElementById('leaderEmail').value.trim();
   const pass = document.getElementById('leaderPassword').value.trim();
-  const found = leaders.find(l => l.email === email && l.password === pass);
-  if(found) {
-    loggedInUser = email;
+  const leader = leaders.find(l => l.email === email && l.password === pass);
+  if(leader) {
+    loggedInUser = leader.email;
     loggedInRole = 'leader';
     showDashboard();
   } else alert('Invalid Leader credentials');
 }
-
-function showDashboard() {
-  document.querySelector('.role-choice').style.display = 'none';
-  document.getElementById('ceoLogin').classList.add('hidden');
-  document.getElementById('leaderLogin').classList.add('hidden');
-  document.getElementById('inscriptionForm').style.display = loggedInRole === 'leader' ? 'none' : '';
-  document.getElementById('ceoPanel').classList.toggle('hidden', loggedInRole !== 'ceo');
-  document.getElementById('leaderPanel').classList.toggle('hidden', loggedInRole !== 'leader');
-  document.getElementById('logoutBtn').classList.remove('hidden');
-}
-
+// === Logout ===
 function logoutUser() {
   loggedInUser = null;
   loggedInRole = null;
-  document.querySelector('.role-choice').style.display = '';
-  document.getElementById('ceoLogin').classList.add('hidden');
-  document.getElementById('leaderLogin').classList.add('hidden');
   document.getElementById('ceoPanel').classList.add('hidden');
   document.getElementById('leaderPanel').classList.add('hidden');
-  document.getElementById('inscriptionForm').style.display = '';
   document.getElementById('logoutBtn').classList.add('hidden');
-  clearForm();
-  alert('Logged out.');
+  document.getElementById('inscriptionForm').style.display = '';
+  document.getElementById('roleSelect').value = '';
+  document.getElementById('ceoLogin').classList.add('hidden');
+  document.getElementById('leaderLogin').classList.add('hidden');
+  alert('Logged out successfully');
 }
-
-// === Génération code référence ===
-let lastRefNum = 0;
-function generateRef() {
-  lastRefNum++;
-  return `D2B1-${String(lastRefNum).padStart(3,'0')}`;
-}
-function setRef() {
-  const refInput = document.getElementById('ref');
-  if(!refInput.value) {
-    refInput.value = generateRef();
+// === Affichage tableau de bord ===
+function showDashboard() {
+  document.getElementById('logoutBtn').classList.remove('hidden');
+  document.getElementById('inscriptionForm').style.display = 'none';
+  document.getElementById('roleSelect').value = '';
+  document.getElementById('ceoLogin').classList.add('hidden');
+  document.getElementById('leaderLogin').classList.add('hidden');
+  if(loggedInRole === 'ceo') {
+    document.getElementById('ceoPanel').classList.remove('hidden');
+    document.getElementById('leaderPanel').classList.add('hidden');
+    loadCeoContent();
+  } else if(loggedInRole === 'leader') {
+    document.getElementById('leaderPanel').classList.remove('hidden');
+    document.getElementById('ceoPanel').classList.add('hidden');
+    loadLeaderContent();
   }
 }
-setRef(); // au chargement
 
-// === Paiement info ===
+// === Paiement ===
 function checkPaiement() {
-  const val = document.getElementById('paiementSelect').value;
-  document.getElementById('cashMessage').style.display = val === 'Cash' ? 'block' : 'none';
-  // Ici tu peux ajouter affichage d'étapes spécifiques au paiement
-}
+  const method = document.getElementById('paiementSelect').value;
+  const cashMsg = document.getElementById('cashMessage');
+  const stepsDiv = document.getElementById('paiementEtapes');
+  const merciDiv = document.getElementById('merciMessage');
 
-// === Soumission inscription ===
+  cashMsg.style.display = 'none';
+  stepsDiv.style.display = 'none';
+  merciDiv.style.display = 'none';
+  stepsDiv.innerHTML = '';
+
+  if(method === 'Cash') {
+    cashMsg.style.display = '';
+  } else if(method === 'Mastercard') {
+    stepsDiv.style.display = '';
+    stepsDiv.innerHTML = `
+      <p><strong>Mastercard Payment Steps:</strong></p>
+      <label>Card Number (16 digits):</label>
+      <input type="text" id="cardNumber" maxlength="16" placeholder="1234 5678 9012 3456" />
+      <label>Expiry Date (MM/YY):</label>
+      <input type="text" id="expiryDate" maxlength="5" placeholder="MM/YY" />
+      <label>CVV (3 digits):</label>
+      <input type="text" id="cvv" maxlength="3" placeholder="123" />
+    `;
+  } else if(method === 'PayPal') {
+    stepsDiv.style.display = '';
+    stepsDiv.innerHTML = `
+      <p>Send payment to PayPal email: <strong>dream2build@gmail.com</strong></p>
+    `;
+  } else if(method === 'MonCash') {
+    stepsDiv.style.display = '';
+    stepsDiv.innerHTML = `
+      <p>Send payment via MonCash to number: <strong>xxxxxx</strong></p>
+    `;
+  } else if(method === 'NatCash') {
+    stepsDiv.style.display = '';
+    stepsDiv.innerHTML = `
+      <p>Send payment via NatCash to number: <strong>xxxxxx</strong></p>
+    `;
+  }
+}
+// === Form Submission (for demo, replace with real backend call) ===
 function submitMember(e) {
   e.preventDefault();
-  if(loggedInRole) {
-    // Ici tu ferais appel à backend/Google Sheets/serveur pour enregistrer
-    alert("✅ "+document.getElementById('nom').value +", you registered with ref: "+document.getElementById('ref').value);
-    sendEmailNotification({
-      nom: document.getElementById('nom').value,
-      email: document.getElementById('email').value,
-      ref: document.getElementById('ref').value,
-      paiement: document.getElementById('paiementSelect').value
-    });
-    clearForm();
-    setRef();
-    return false;
-  } else {
-    alert("⚠️ Please login as CEO or Leader to submit.");
+  if(!loggedInUser) {
+    alert('You must be logged in as CEO or Leader to submit registration.');
     return false;
   }
-}
-function clearForm() {
-  document.getElementById('nom').value = '';
-  document.getElementById('email').value = '';
-  document.getElementById('ref').value = '';
-  document.getElementById('lien').value = '';
-  document.getElementById('paiementSelect').value = '';
-  document.getElementById('cashMessage').style.display = 'none';
-}
-
-// === Simulation email notification (remplacer par Apps Script etc.) ===
-function sendEmailNotification(data) {
-  // Remplace ici par vraie fonction d'envoi email via Google Apps Script
-  console.log("Email notification envoyée à CEO & Leaders:", data);
-  alert("Notification email envoyée au CEO & Leaders (simulée).");
+  // Validate Mastercard fields if chosen
+  if(document.getElementById('paiementSelect').value === 'Mastercard') {
+    const card = document.getElementById('cardNumber').value.trim();
+    const expiry = document.getElementById('expiryDate').value.trim();
+    const cvv = document.getElementById('cvv').value.trim();
+    if(card.length !== 16 || !expiry.match(/^\d{2}\/\d{2}$/) || cvv.length !== 3) {
+      alert('Please fill in valid Mastercard details.');
+      return false;
+    }
+  }
+  alert('Registration submitted! Pending admin verification.');
+  // Ici on enverrait les données au backend ou Google Sheets via API
+  return true;
 }
 
-// === Rotation 25 jours ===
+// === Données d'exemple pour rotation ===
 const members = [
   "Jean Dupont", "Marie Pierre", "André Michel", "Lucie Bernadette", "Josué Charles",
   "Léna Joseph", "Samuel Paul", "Carine Moreau", "Diego Lopez", "Manuela Rose",
@@ -301,16 +321,14 @@ function calculRotation() {
   const deduction = reserve * 0.10;
   const net = total - (reserve - deduction);
 
-  let text = 
-    `📅 Jour ${currentIndex + 1} – ${name}\n` +
-    `💰 Total contributions: $${total.toFixed(2)}\n` +
-    `📦 Reserve (1/3): $${reserve.toFixed(2)}\n` +
-    `🔒 Retenu spécial (10%): $${deduction.toFixed(2)}\n` +
-    `✅ Montant à recevoir: $${net.toFixed(2)}`;
-
-  const resultEl = document.getElementById("rotationResult");
-  resultEl.textContent = text;
-  resultEl.classList.remove("hidden");
+  document.getElementById("rotationResult").innerHTML = `
+    <strong>📅 Jour ${currentIndex + 1} – ${name}</strong><br>
+    💰 Total contributions: $${total.toFixed(2)}<br>
+    📦 Reserve (1/3): $${reserve.toFixed(2)}<br>
+    🔒 Retenu spécial (10%): $${deduction.toFixed(2)}<br>
+    ✅ Montant à recevoir: $${net.toFixed(2)}
+  `;
+  document.getElementById("rotationResult").classList.remove("hidden");
 
   const row = `<tr><td>${currentIndex + 1}</td><td>${name}</td><td>${total.toFixed(2)}</td><td>${reserve.toFixed(2)}</td><td>${deduction.toFixed(2)}</td><td>${net.toFixed(2)}</td></tr>`;
   document.querySelector("#historyTable tbody").innerHTML += row;
@@ -320,6 +338,27 @@ function nextRotation() {
   currentIndex++;
   calculRotation();
 }
+
+// === Auto-génération code référence ===
+function generateRefCode() {
+  const refInput = document.getElementById('ref');
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = '';
+  for(let i=0; i<6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  refInput.value = code;
+}
+generateRefCode();
+
 </script>
+
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script>
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'fr'}, 'google_translate_element');
+}
+</script>
+
 </body>
 </html>
