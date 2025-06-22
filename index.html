@@ -3,83 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dream2Build1 Rotating $ Registration</title>
+  <title>Dream2Build1 Full Access Site</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
     h1, h2 { text-align: center; color: #007BFF; }
-    form, table, .admin-section, .admin-login, .paiement-etapes, .admin-table {
-      max-width: 1000px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    .container, .panel, .form-section, form {
+      max-width: 900px; margin: auto; background: white; padding: 20px;
+      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 10px; font-weight: bold; }
     input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
+      border: 1px solid #ccc; border-radius: 4px;
     }
     button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
+      background-color: #28a745; color: white; border: none; padding: 10px 20px;
+      font-size: 16px; border-radius: 5px; cursor: pointer;
     }
     button:hover { background-color: #218838; }
-    .cash-infos, .paiement-etapes, .merci-message {
-      display: none;
-      background: #fff3cd;
-      padding: 10px;
-      border-left: 5px solid #ffc107;
-      margin-bottom: 20px;
-    }
-    .admin-info {
-      margin: 20px auto;
-      max-width: 1000px;
-      background: #e7f3fe;
-      padding: 15px;
-      border-left: 4px solid #2196F3;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    .admin-info strong { color: #007BFF; }
-    .admin-section { display: none; margin-top: 30px; }
-    .admin-login { margin-top: 40px; text-align: center; }
-    .translate-widget { text-align: center; margin-bottom: 20px; }
-    .logout-btn { display: none; text-align: center; margin-top: 10px; }
+    .hidden { display: none; }
+    .logout-btn { text-align: center; margin-top: 20px; }
     .logout-btn button { background-color: #dc3545; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    table, th, td { border: 1px solid #ccc; }
-    th, td { padding: 10px; text-align: center; }
-    .action-btns button { margin: 0 5px; }
+    .role-choice, .translate-widget { text-align: center; margin-bottom: 20px; }
+    .cash-infos, .paiement-etapes, .merci-message {
+      display: none; background: #fff3cd;
+      padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
+
 <div class="translate-widget">
   <div id="google_translate_element"></div>
 </div>
 
-<h1>Dream2Build1 Rotating $ Registration Form</h1>
+<h1>Dream2Build1 Registration & Access Panel</h1>
 
-<div class="admin-info">
-  <strong>Admin Reference:</strong> D2B1-001<br />
-  <strong>Admin Link:</strong> <a href="#" target="_blank">(Hidden for privacy)</a>
+<div class="role-choice">
+  <label>Select your role:</label>
+  <select id="roleSelect" onchange="switchLogin()">
+    <option value="">-- Choose --</option>
+    <option value="ceo">CEO</option>
+    <option value="leader">Team Leader</option>
+  </select>
+</div>
+
+<div id="ceoLogin" class="form-section hidden">
+  <h2>CEO Login</h2>
+  <input type="email" id="ceoEmail" placeholder="CEO Email">
+  <input type="password" id="ceoPassword" placeholder="Password">
+  <button onclick="loginCEO()">Login</button>
+</div>
+
+<div id="leaderLogin" class="form-section hidden">
+  <h2>Team Leader Login</h2>
+  <input type="email" id="leaderEmail" placeholder="Leader Email">
+  <input type="password" id="leaderPassword" placeholder="Password">
+  <button onclick="loginLeader()">Login</button>
 </div>
 
 <form id="inscriptionForm">
+  <h2>Register as New Member</h2>
   <label>Full Name:</label>
   <input name="nom" id="nom" type="text" placeholder="Jean Dupont" required />
 
   <label>Email:</label>
-  <input name="email" id="email" type="email" placeholder="you@example.com" required />
+  <input name="email" id="email" type="email" required />
 
   <label>Reference Code:</label>
   <input name="ref" id="ref" type="text" placeholder="Ref123" />
@@ -106,139 +95,118 @@
     ✅ Thank you for registering. You are about to <strong>Earn with Dream2Build1!</strong>
   </div>
 
-  <button type="button" onclick="soumettreInscription()">Pay & Submit</button>
+  <button type="button" onclick="alert('⏳ Please wait: a leader will validate your registration.')">Pay & Submit</button>
 </form>
 
-<div class="admin-login">
-  <h2>Admin Login</h2>
-  <input type="email" id="adminEmail" placeholder="Enter your admin email">
-  <input type="password" id="adminPassword" placeholder="Enter admin password">
-  <button onclick="verifierAdmin()">Login</button>
+<div id="ceoPanel" class="panel hidden">
+  <h2>👑 CEO Dashboard</h2>
+  <div id="ceoContent">📊 Panel complet des membres, validations, calculs rotatifs à venir...</div>
 </div>
 
-<div class="logout-btn" id="logoutBtn">
-  <button onclick="logoutAdmin()">Logout</button>
+<div id="leaderPanel" class="panel hidden">
+  <h2>👥 Leader Dashboard</h2>
+  <div id="leaderContent">Chargement des membres à valider...</div>
 </div>
 
-<div class="admin-section" id="adminSection">
-  <h2>Dream2Build1 Admin Panel</h2>
-  <button onclick="chargerMembres()">Voir les membres validés</button>
-  <div id="adminTable"></div>
+<div class="logout-btn hidden" id="logoutBtn">
+  <button onclick="logoutUser()">Logout</button>
 </div>
 
 <script>
-  const SCRIPT_URL = "TON_SCRIPT_URL"; // Remplace par ton lien de déploiement Apps Script
+const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+const CEO_EMAIL = "emmanueljeambas@gmail.com";
+const CEO_PASS = "Emmanuel1@";
 
-  function checkPaiement() {
-    const paiement = document.getElementById("paiementSelect").value;
-    const cashDiv = document.getElementById("cashMessage");
-    const etapesDiv = document.getElementById("paiementEtapes");
-    const merciDiv = document.getElementById("merciMessage");
-    cashDiv.style.display = "none";
-    etapesDiv.style.display = "none";
-    merciDiv.style.display = "none";
+const leaders = [
+  { email: "leader1@d2b1.com", password: "leaderpass1" },
+  { email: "leader2@d2b1.com", password: "leaderpass2" }
+  // 👉 Pour ajouter un leader :
+  // { email: "nouveauleader@email.com", password: "sonMotDePasse" }
+];
 
-    if (paiement === "Cash") {
-      cashDiv.style.display = "block";
-    } else if (paiement !== "") {
-      let instructions = "";
-      if (paiement === "MonCash") {
-        instructions = "<strong>MonCash Steps:</strong><ul><li>Send $10 to 509XXXXXXX</li><li>Add your name in the message</li></ul>";
-      } else if (paiement === "PayPal") {
-        instructions = "<strong>PayPal Steps:</strong><ul><li>Send $10 to dream2build@gmail.com</li></ul>";
-      } else if (paiement === "NatCash") {
-        instructions = "<strong>NatCash Steps:</strong><ul><li>Send $10 to NatCash #123456</li></ul>";
-      } else if (paiement === "Mastercard") {
-        instructions = "<strong>Card Steps:</strong><ul><li>Enter your card details securely</li></ul>";
-      }
-      etapesDiv.innerHTML = instructions + '<br><button onclick="validerPaiement()">I have paid</button>';
-      etapesDiv.style.display = "block";
-    }
+function switchLogin() {
+  const role = document.getElementById("roleSelect").value;
+  document.getElementById("ceoLogin").classList.add("hidden");
+  document.getElementById("leaderLogin").classList.add("hidden");
+  if (role === "ceo") document.getElementById("ceoLogin").classList.remove("hidden");
+  else if (role === "leader") document.getElementById("leaderLogin").classList.remove("hidden");
+}
+
+function loginCEO() {
+  const email = document.getElementById("ceoEmail").value;
+  const pass = document.getElementById("ceoPassword").value;
+  if (email === CEO_EMAIL && pass === CEO_PASS) {
+    document.getElementById("ceoPanel").classList.remove("hidden");
+    document.getElementById("logoutBtn").classList.remove("hidden");
+    document.getElementById("ceoLogin").classList.add("hidden");
+  } else {
+    alert("Access denied for CEO");
   }
+}
 
-  function validerPaiement() {
-    document.getElementById("paiementEtapes").style.display = "none";
-    document.getElementById("merciMessage").style.display = "block";
+function loginLeader() {
+  const email = document.getElementById("leaderEmail").value;
+  const pass = document.getElementById("leaderPassword").value;
+  const valid = leaders.find(l => l.email === email && l.password === pass);
+  if (valid) {
+    document.getElementById("leaderPanel").classList.remove("hidden");
+    document.getElementById("logoutBtn").classList.remove("hidden");
+    document.getElementById("leaderLogin").classList.add("hidden");
+    loadLeaderPanel(email);
+  } else {
+    alert("Invalid leader credentials");
   }
+}
 
-  function soumettreInscription() {
-    const nom = document.getElementById("nom").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const ref = document.getElementById("ref").value.trim();
-    const lien = document.getElementById("lien").value.trim();
-    const moyen = document.getElementById("paiementSelect").value;
+function logoutUser() { location.reload(); }
 
-    if (!email || !nom || !moyen) {
-      alert("Please complete the form correctly.");
-      return;
-    }
+function checkPaiement() {
+  const paiement = document.getElementById("paiementSelect").value;
+  const cashDiv = document.getElementById("cashMessage");
+  const etapesDiv = document.getElementById("paiementEtapes");
+  const merciDiv = document.getElementById("merciMessage");
+  cashDiv.style.display = "none";
+  etapesDiv.style.display = "none";
+  merciDiv.style.display = "none";
 
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom, email, ref, lien, moyen })
-    })
-      .then(res => res.text())
-      .then(() => {
-        alert("✅ Registration submitted. Please check your email to confirm.");
-        document.getElementById("inscriptionForm").reset();
-        document.getElementById("merciMessage").style.display = "none";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("❌ Error. Try again.");
-      });
+  if (paiement === "Cash") {
+    cashDiv.style.display = "block";
+  } else {
+    let instructions = `<strong>${paiement} Steps:</strong><ul><li>Send $10 to details provided</li><li>Confirm below once paid.</li></ul>`;
+    etapesDiv.innerHTML = instructions + '<br><button onclick="validerPaiement()">I have paid</button>';
+    etapesDiv.style.display = "block";
   }
+}
 
-  function verifierAdmin() {
-    const email = document.getElementById("adminEmail").value.trim();
-    const password = document.getElementById("adminPassword").value.trim();
-    if (email === "emmanueljeambas@gmail.com" && password === "Emmanuel1@") {
-      document.getElementById("adminSection").style.display = "block";
-      document.getElementById("logoutBtn").style.display = "block";
-      document.querySelector(".admin-login").style.display = "none";
-      chargerMembres();
-    } else {
-      alert("Access denied.");
-    }
-  }
+function validerPaiement() {
+  document.getElementById("paiementEtapes").style.display = "none";
+  document.getElementById("merciMessage").style.display = "block";
+}
 
-  function logoutAdmin() {
-    document.getElementById("adminSection").style.display = "none";
-    document.getElementById("logoutBtn").style.display = "none";
-    document.querySelector(".admin-login").style.display = "block";
-  }
+function loadLeaderPanel(leaderEmail) {
+  document.getElementById("leaderContent").innerHTML = `
+    <div><strong>John Doe</strong> - john@example.com <br>
+    <button onclick="soumettreInscriptionDepuisLeader('John Doe', 'john@example.com', 'Ref123', 'https://ref')">✔️ Submit Registration</button></div>`;
+}
 
-  function chargerMembres() {
-    fetch("https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/gviz/tq?tqx=out:json")
-      .then(res => res.text())
-      .then(text => {
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-        const rows = json.table.rows;
-        let html = '<table><tr><th>Nom</th><th>Email</th><th>Paiement</th><th>Statut Email</th><th>Statut Admin</th></tr>';
-        rows.forEach(r => {
-          const nom = r.c[0]?.v || "";
-          const email = r.c[3]?.v || "";
-          const moyen = r.c[4]?.v || "";
-          const statutEmail = r.c[5]?.v || "";
-          const statutAdmin = r.c[6]?.v || "";
-          if (statutEmail === "Confirmé" && statutAdmin === "Non validé") {
-            html += `<tr><td>${nom}</td><td>${email}</td><td>${moyen}</td><td>${statutEmail}</td><td>${statutAdmin}</td></tr>`;
-          }
-        });
-        html += '</table>';
-        document.getElementById("adminTable").innerHTML = html;
-      })
-      .catch(err => {
-        document.getElementById("adminTable").innerHTML = "Erreur de chargement.";
-      });
-  }
+function soumettreInscriptionDepuisLeader(nom, email, ref, lien) {
+  const moyen = 'ValidatedByLeader';
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nom, email, ref, lien, moyen })
+  })
+    .then(res => res.text())
+    .then(() => alert("✅ Registration submitted by leader!"))
+    .catch(() => alert("❌ Error during leader submission."));
+}
 </script>
+
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script>
-  function googleTranslateElementInit() {
-    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-  }
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
 </script>
 </body>
 </html>
