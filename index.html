@@ -1,292 +1,211 @@
-<!-- Site complet Dream2Build1 avec inscription, paiement, CEO, leaders -->
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dream2Build1 Full Access Site</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
-    h1, h2 { text-align: center; color: #007BFF; }
-    .container, .panel, .form-section, form {
-      max-width: 900px; margin: auto; background: white; padding: 20px;
-      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    input, select, textarea {
-      width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
-      border: 1px solid #ccc; border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #28a745; color: white; border: none; padding: 10px 20px;
-      font-size: 16px; border-radius: 5px; cursor: pointer;
-    }
-    button:hover { background-color: #218838; }
-    .hidden { display: none; }
-    .logout-btn { text-align: center; margin-top: 20px; }
-    .logout-btn button { background-color: #dc3545; }
-    .role-choice, .translate-widget { text-align: center; margin-bottom: 20px; }
-    .cash-infos, .paiement-etapes, .merci-message {
-      display: none; background: #fff3cd;
-      padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
-    }
-    .rotation-box {
-      background: #e9f7ef; padding: 15px; margin-top: 20px; border-left: 5px solid #28a745;
-    }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
-    th { background-color: #007BFF; color: white; }
-    .error-msg { color: red; font-weight: bold; }
-    .success-msg { color: green; font-weight: bold; }
-  </style>
-</head>
-<body>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rotation Dream2Build1</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        padding: 20px;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      input, button {
+        padding: 10px;
+        font-size: 16px;
+        margin: 5px 0;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th, td {
+        border: 1px solid #ccc;
+        padding: 6px;
+        text-align: center;
+      }
+      th {
+        background-color: #333;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
 
-<!-- Widget de traduction Google -->
-<div class="translate-widget">
-  <div id="google_translate_element"></div>
-</div>
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/babel">
+      const { useState } = React;
 
-<!-- Section : Register as New Member -->
-<div class="panel" id="registerMemberPanel">
-  <h2>📄 Register as New Member</h2>
-  <form id="registerForm">
-    <label for="memberFullName">Full Name:</label>
-    <input type="text" id="memberFullName" name="fullname" placeholder="Enter your full name" required>
+      function RotationApp() {
+        const [adminPass, setAdminPass] = useState("");
+        const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+        const [participants, setParticipants] = useState([]);
+        const [name, setName] = useState("");
+        const [rotationIndex, setRotationIndex] = useState(0);
+        const [currentTotal, setCurrentTotal] = useState(0);
+        const [paymentsValidated, setPaymentsValidated] = useState(false);
+        const [history, setHistory] = useState([]);
 
-    <label for="memberEmail">Email:</label>
-    <input type="email" id="memberEmail" name="email" placeholder="Enter your email" required>
+        const loginAdmin = () => {
+          if (adminPass === "d2b1admin") setAdminLoggedIn(true);
+          else alert("Mot de passe incorrect");
+        };
 
-    <label for="paymentMethod">Choose Payment Method:</label>
-    <select id="paymentMethod" name="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
-      <option value="">-- Select Payment Method --</option>
-      <option value="cash">Cash</option>
-      <option value="mastercard">Mastercard / Debit Card</option>
-      <option value="paypal">PayPal</option>
-      <option value="moncash">MonCash</option>
-      <option value="natcash">NatCash</option>
-    </select>
+        const addParticipant = () => {
+          if (!name) return;
+          setParticipants([...participants, { name, day: participants.length + 1 }]);
+          setName("");
+        };
 
-    <div class="paiement-etapes" id="paymentInstructions">
-      <div id="cashInfo" class="hidden">
-        <p><strong>Cash:</strong> A team leader will contact you to validate your payment.</p>
-      </div>
-      <div id="mastercardInfo" class="hidden">
-        <label>Card Number (16 digits):</label>
-        <input type="text" id="cardNumber" maxlength="16" pattern="\\d{16}" placeholder="1234 5678 9012 3456">
-        <label>Expiration Date (MM/YY):</label>
-        <input type="text" id="cardExpiry" maxlength="5" pattern="\\d{2}/\\d{2}" placeholder="MM/YY">
-        <label>CVC:</label>
-        <input type="text" id="cardCVC" maxlength="4" pattern="\\d{3,4}" placeholder="123">
-        <label>Name on Card:</label>
-        <input type="text" id="cardName" placeholder="Name as on card">
-      </div>
-      <div id="paypalInfo" class="hidden">
-        <p><strong>PayPal:</strong> Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
-      </div>
-      <div id="moncashInfo" class="hidden">
-        <p><strong>MonCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
-      </div>
-      <div id="natcashInfo" class="hidden">
-        <p><strong>NatCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
-      </div>
-    </div>
+        const validatePayments = () => {
+          const total = participants.length * 10;
+          const oneThird = total / 3;
+          const tenPercent = oneThird * 0.10;
+          const retained = oneThird - tenPercent;
+          const payout = total - retained;
 
-    <button type="button" onclick="alert('Please wait for a team leader to validate your payment. The submit button is active only for leaders.')">Pay & Submit</button>
-  </form>
-</div>
+          setHistory([
+            ...history,
+            {
+              jour: rotationIndex + 1,
+              total: total.toFixed(2),
+              oneThird: oneThird.toFixed(2),
+              tenPercent: tenPercent.toFixed(2),
+              retained: retained.toFixed(2),
+              payout: payout.toFixed(2),
+              beneficiary: participants[rotationIndex % participants.length]?.name || "",
+            },
+          ]);
+          setCurrentTotal(total);
+          setPaymentsValidated(true);
+        };
 
-<!-- Section : Team Leader Registration -->
-<div class="form-section">
-  <h2>👥 Team Leader Registration</h2>
-  <label for="leaderName">Full Name:</label>
-  <input type="text" id="leaderName" placeholder="Enter full name">
+        const nextDay = () => {
+          if (!paymentsValidated) {
+            alert("Veuillez valider les paiements d'abord.");
+            return;
+          }
+          setRotationIndex(rotationIndex + 1);
+          setPaymentsValidated(false);
+        };
 
-  <label for="leaderEmailReg">Email:</label>
-  <input type="email" id="leaderEmailReg" placeholder="Enter email">
+        const exportToExcel = () => {
+          const ws = XLSX.utils.json_to_sheet(history);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Historique");
+          XLSX.writeFile(wb, "D2B1_Rotation.xlsx");
+        };
 
-  <label for="leaderPass1">Create Password:</label>
-  <input type="password" id="leaderPass1" placeholder="Create password">
+        return (
+          <div>
+            <h1>Système Rotatif Dream2Build1</h1>
 
-  <label for="leaderPass2">Confirm Password:</label>
-  <input type="password" id="leaderPass2" placeholder="Confirm password">
+            {!adminLoggedIn ? (
+              <div className="card">
+                <h2>Connexion Admin</h2>
+                <input
+                  type="password"
+                  placeholder="Mot de passe admin"
+                  value={adminPass}
+                  onChange={(e) => setAdminPass(e.target.value)}
+                />
+                <br />
+                <button onClick={loginAdmin}>Se connecter</button>
+              </div>
+            ) : (
+              <>
+                <div className="card">
+                  <h2>Ajouter un participant</h2>
+                  <input
+                    placeholder="Nom"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  <br />
+                  <button onClick={addParticipant}>Ajouter</button>
+                </div>
 
-  <button onclick="registerLeader()">Register as Team Leader</button>
-  <p id="leaderRegisterMsg"></p>
-</div>
+                <div className="card">
+                  <h2>Actions</h2>
+                  <button onClick={validatePayments} disabled={paymentsValidated}>✅ Valider paiements</button>
+                  <button onClick={nextDay} disabled={!paymentsValidated}>🔁 Jour suivant</button>
+                  <button onClick={exportToExcel}>📤 Exporter Excel</button>
+                </div>
 
-<!-- Section : Team Leader Login -->
-<div class="form-section">
-  <h2>🔐 Team Leader Login</h2>
-  <label for="loginLeaderEmail">Email:</label>
-  <input type="email" id="loginLeaderEmail" placeholder="Enter email">
+                <div className="card">
+                  <h2>Statistiques (Jour {rotationIndex + 1})</h2>
+                  <p>Total: <strong>${currentTotal.toFixed(2)}</strong></p>
+                  <p>1/3 du total: <strong>${(currentTotal/3).toFixed(2)}</strong></p>
+                  <p>10% de 1/3: <strong>${(currentTotal/3*0.10).toFixed(2)}</strong></p>
+                  <p>Montant retenu: <strong>${(currentTotal/3*0.90).toFixed(2)}</strong></p>
+                  <p>Part du bénéficiaire: <strong>${(currentTotal - currentTotal/3*0.90).toFixed(2)}</strong></p>
+                </div>
 
-  <label for="loginLeaderPass">Password:</label>
-  <input type="password" id="loginLeaderPass" placeholder="Enter password">
+                <div className="card">
+                  <h2>Historique des paiements</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Jour</th>
+                        <th>Bénéficiaire</th>
+                        <th>Total</th>
+                        <th>1/3</th>
+                        <th>10%</th>
+                        <th>Retiré</th>
+                        <th>Payé</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((h, i) => (
+                        <tr key={i}>
+                          <td>{h.jour}</td>
+                          <td>{h.beneficiary}</td>
+                          <td>{h.total}</td>
+                          <td>{h.oneThird}</td>
+                          <td>{h.tenPercent}</td>
+                          <td>{h.retained}</td>
+                          <td><strong>{h.payout}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-  <button onclick="loginLeader()">Login</button>
-  <p id="loginMsg"></p>
-</div>
+                <div className="card">
+                  <h2>Participants</h2>
+                  <ul>
+                    {participants.map((p, i) => (
+                      <li key={i}>
+                        Jour {p.day} – {p.name}{" "}
+                        {i === rotationIndex % participants.length && (
+                          <strong>← Bénéficiaire</strong>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
 
-<!-- Section : Team Leader Dashboard -->
-<div id="leaderPanel" class="panel hidden">
-  <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
-  <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
-  <button class="logout-btn" onclick="logoutLeader()">Logout</button>
-  <p>Here you can submit validated new members after their payment.</p>
-  <!-- Add submission form or members list here -->
-</div>
-
-<!-- Section : CEO Dashboard -->
-<div id="ceoPanel" class="panel hidden">
-  <h2>👑 CEO Dashboard</h2>
-  <p>Welcome, CEO!</p>
-  <button onclick="calculRotation()">Show Today's Rotation</button>
-  <button onclick="nextRotation()">➡️ Next Day</button>
-  <div id="rotationResult" class="rotation-box hidden"></div>
-
-  <h3>📋 25-day History:</h3>
-  <table id="historyTable">
-    <thead>
-      <tr>
-        <th>Day</th>
-        <th>Member</th>
-        <th>Total ($)</th>
-        <th>Reserve</th>
-        <th>Withheld (10%)</th>
-        <th>To Receive</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>1</td>
-        <td>Emmanuel Jean</td>
-        <td>100.00</td>
-        <td>33.33</td>
-        <td>3.33</td>
-        <td>66.67</td>
-      </tr>
-      <!-- Other historical rows here -->
-    </tbody>
-  </table>
-</div>
-
-<script>
-  // Show payment instructions based on method selected
-  function showPaymentInstructions(value) {
-    const allDivs = ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'];
-    allDivs.forEach(id => document.getElementById(id).classList.add('hidden'));
-    if(value && allDivs.includes(value + 'Info')) {
-      document.getElementById(value + 'Info').classList.remove('hidden');
-      document.getElementById('paymentInstructions').style.display = 'block';
-    } else {
-      document.getElementById('paymentInstructions').style.display = 'none';
-    }
-  }
-
-  // Team Leader Registration
-  function registerLeader() {
-    const name = document.getElementById('leaderName').value.trim();
-    const email = document.getElementById('leaderEmailReg').value.trim();
-    const pass1 = document.getElementById('leaderPass1').value;
-    const pass2 = document.getElementById('leaderPass2').value;
-    const msg = document.getElementById('leaderRegisterMsg');
-
-    if(!name || !email || !pass1 || !pass2) {
-      msg.textContent = '❌ Please fill all fields';
-      msg.className = 'error-msg';
-      return;
-    }
-    if(pass1 !== pass2) {
-      msg.textContent = '❌ Passwords do not match';
-      msg.className = 'error-msg';
-      return;
-    }
-
-    // Save leader in localStorage (for demo purposes)
-    localStorage.setItem(`leader_${email}`, JSON.stringify({ name, email, password: pass1 }));
-
-    msg.textContent = '✅ Registration successful. You can now login as a Leader.';
-    msg.className = 'success-msg';
-
-    // Clear inputs
-    document.getElementById('leaderName').value = '';
-    document.getElementById('leaderEmailReg').value = '';
-    document.getElementById('leaderPass1').value = '';
-    document.getElementById('leaderPass2').value = '';
-  }
-
-  // Team Leader Login
-  function loginLeader() {
-    const email = document.getElementById('loginLeaderEmail').value.trim();
-    const pass = document.getElementById('loginLeaderPass').value;
-    const msg = document.getElementById('loginMsg');
-    const stored = localStorage.getItem(`leader_${email}`);
-
-    if(!stored) {
-      msg.textContent = '❌ No account found';
-      msg.className = 'error-msg';
-      return;
-    }
-
-    const leader = JSON.parse(stored);
-
-    if(leader.password !== pass) {
-      msg.textContent = '❌ Incorrect password';
-      msg.className = 'error-msg';
-      return;
-    }
-
-    // Clear login form and show leader panel
-    msg.textContent = '';
-    document.getElementById('loginLeaderEmail').value = '';
-    document.getElementById('loginLeaderPass').value = '';
-    document.getElementById('leaderPanel').classList.remove('hidden');
-    document.getElementById('leaderNameDisplay').textContent = leader.name;
-
-    // Hide login form and registration form
-    document.querySelector('div.form-section:nth-of-type(2)').style.display = 'none'; // Login form
-    document.querySelector('div.form-section:nth-of-type(1)').style.display = 'none'; // Registration form
-    document.getElementById('registerMemberPanel').classList.add('hidden');
-    document.getElementById('ceoPanel').classList.add('hidden');
-  }
-
-  // Team Leader Logout
-  function logoutLeader() {
-    document.getElementById('leaderPanel').classList.add('hidden');
-    document.getElementById('leaderNameDisplay').textContent = '';
-    document.querySelector('div.form-section:nth-of-type(2)').style.display = 'block';
-    document.querySelector('div.form-section:nth-of-type(1)').style.display = 'block';
-    document.getElementById('registerMemberPanel').classList.remove('hidden');
-  }
-
-  // CEO Dashboard (simulate showing)
-  function showCEOPanel() {
-    document.getElementById('ceoPanel').classList.remove('hidden');
-    document.getElementById('registerMemberPanel').classList.add('hidden');
-  }
-
-  // Rotation calculation placeholder
-  function calculRotation() {
-    const resultDiv = document.getElementById('rotationResult');
-    resultDiv.textContent = 'Rotation calculation will be implemented here.';
-    resultDiv.classList.remove('hidden');
-  }
-
-  function nextRotation() {
-    alert('Next rotation day functionality coming soon!');
-  }
-
-  // On page load, you might want to show CEO panel if logged in as CEO
-  // For demo, we just show register panel by default
-</script>
-
-</body>
+      ReactDOM.createRoot(document.getElementById("root")).render(<RotationApp />);
+    </script>
+  </body>
 </html>
