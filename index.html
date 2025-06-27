@@ -1,11 +1,12 @@
+
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <meta charset="UTF-2" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>D2B1 - Authentification Sécurisée</title>
+    <title>D2B1 - Secure Authentication</title>
     
-    <!-- EmailJS SDK Script Removed -->
+    <!-- EmailJS SDK Script Removed - Only CallMeBot is used for messaging -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Firebase SDK Imports -->
@@ -140,54 +141,54 @@
 </head>
 <body>
 <!-- Loading Overlay -->
-<div id="loadingOverlay">Chargement des données...</div>
+<div id="loadingOverlay">Loading Data...</div>
 
 <!-- Custom Modal Structure -->
 <div id="customModal">
     <div class="card">
         <p id="modalMessage"></p>
         <div id="modalButtons">
-            <button id="modalConfirmBtn" class="btn-primary">Oui</button>
+            <button id="modalConfirmBtn" class="btn-primary">Yes</button>
             <button id="modalCancelBtn" class="btn-secondary">OK</button>
         </div>
     </div>
 </div>
 
 <div class="card" id="authCard">
-    <h1>Espace Admin Sécurisé</h1>
-    <input type="password" id="adminPass" placeholder="Mot de passe admin" />
-    <button onclick="toggleVisibility('adminPass')" class="btn-secondary">Afficher/Cacher</button>
-    <button onclick="checkAdminStep1()" class="btn-primary">Connexion</button>
-    <div id="forgotSection">Mot de passe oublié ?</div>
+    <h1>Secure Admin Area</h1>
+    <input type="password" id="adminPass" placeholder="Admin Password" />
+    <button onclick="toggleVisibility('adminPass')" class="btn-secondary">Show/Hide</button>
+    <button onclick="checkAdminStep1()" class="btn-primary">Login</button>
+    <div id="forgotSection">Forgot Password?</div>
 </div>
 
 <div class="card" id="codeCard" style="display:none;">
-    <p>Code OTP envoyé à votre WhatsApp</p>
-    <input type="password" id="code2FA" placeholder="Entrez le code OTP" />
-    <button onclick="toggleVisibility('code2FA')" class="btn-secondary">Afficher/Cacher</button>
-    <button onclick="checkAdminStep2()" class="btn-primary">Vérifier</button>
+    <p>OTP code sent to your WhatsApp</p>
+    <input type="password" id="code2FA" placeholder="Enter OTP code" />
+    <button onclick="toggleVisibility('code2FA')" class="btn-secondary">Show/Hide</button>
+    <button onclick="checkAdminStep2()" class="btn-primary">Verify</button>
 </div>
 
 <div class="card" id="mainCard" style="display:none;">
-    <h3>D2B1 - Administration Principale</h3>
-    <input type="text" id="participantName" placeholder="Nom du participant" />
-    <button onclick="addParticipant()" class="btn-primary">Ajouter</button>
-    <button onclick="validatePayments()" class="btn-secondary">Valider Paiement</button>
-    <button onclick="nextDay()" class="btn-secondary">Jour Suivant</button>
-    <button onclick="exportToExcel()" class="btn-primary">Export Historique</button>
-    <button onclick="resetData()" class="btn-danger">Réinitialiser Données</button>
-    <button onclick="logout()" class="btn-danger">Déconnexion</button>
+    <h3>D2B1 - Main Administration</h3>
+    <input type="text" id="participantName" placeholder="Participant Name" />
+    <button onclick="addParticipant()" class="btn-primary">Add</button>
+    <button onclick="validatePayments()" class="btn-secondary">Validate Payments</button>
+    <button onclick="nextDay()" class="btn-secondary">Next Day</button>
+    <button onclick="exportToExcel()" class="btn-primary">Export History</button>
+    <button onclick="resetData()" class="btn-danger">Reset Data</button>
+    <button onclick="logout()" class="btn-danger">Logout</button>
     <div id="stats" style="margin-top:20px;"></div>
 
     <!-- Admin Calculator Section -->
     <div class="card" style="margin-top:20px;">
-        <h4>Calculateur Financier (Admin)</h4>
-        <input type="number" id="calculatorParticipants" placeholder="Nombre de participants" min="0" value="0" />
-        <button onclick="calculateAdminHypotheticalFinance()" class="btn-primary">Calculer</button>
+        <h4>Financial Calculator (Admin)</h4>
+        <input type="number" id="calculatorParticipants" placeholder="Number of Participants" min="0" value="0" />
+        <button onclick="calculateAdminHypotheticalFinance()" class="btn-primary">Calculate</button>
         <div id="calculatorResults" style="margin-top:10px;">
-            <p><strong>Revenus Hypothétiques:</strong> $0.00</p>
-            <p><strong>Part Bénéficiaire Hypothétique:</strong> $0.00</p>
-            <p><strong>Montant Intouchable Hypothétique:</strong> $0.00</p>
+            <p><strong>Hypothetical Investment:</strong> $0.00</p>
+            <p><strong>Hypothetical Beneficiary Share:</strong> $0.00</p>
+            <p><strong>Hypothetical Untouchable Amount:</strong> $0.00</p>
         </div>
     </div>
     <!-- End Admin Calculator Section -->
@@ -197,8 +198,8 @@
 </div>
 
 <div class="card" id="superviseurContainer" style="display:none;">
-    <h3>Ajouter un Superviseur</h3>
-    <button class="btn-primary" onclick="ajouterSuperviseur()">Superviseur +1</button>
+    <h3>Add Supervisor</h3>
+    <button class="btn-primary" onclick="ajouterSuperviseur()">Supervisor +1</button>
     <div id="superviseurs"></div>
 </div>
 
@@ -207,8 +208,6 @@
     document.addEventListener('DOMContentLoaded', async () => {
         // Show loading overlay immediately
         document.getElementById('loadingOverlay').style.display = 'flex';
-
-        // EmailJS initialization is removed as per request.
 
         // Attach event listeners for modal buttons and forgot password
         document.getElementById("modalConfirmBtn").onclick = () => {
@@ -220,7 +219,7 @@
             if (modalResolveCallback) modalResolveCallback(false);
         };
         document.getElementById("forgotSection").onclick = () => {
-            showModal("Veuillez contacter l'administrateur pour réinitialiser votre mot de passe.", "alert");
+            showModal("Please contact the administrator to reset your password.", "alert");
         };
 
         // Initialize Firebase and load app state
@@ -241,8 +240,9 @@
     let currentDay = 1;
     let cooperativeRotationFund = 0;
 
-    let totalParticipantsCount = 0;
-    let dailyRevenue = 0;
+    // These will be calculated and updated by calculateDailyFinance
+    let totalParticipantsCount = 0; // This will now store the REVENUE-GENERATING participant count
+    let dailyInvestment = 0; // Renamed from dailyRevenue to dailyInvestment
     let beneficiaryShare = 0;
     let untouchableAmount = 0;
 
@@ -261,7 +261,7 @@
 
             if (type === "confirm") {
                 modalConfirmBtn.style.display = "inline-block";
-                modalCancelBtn.textContent = "Non";
+                modalCancelBtn.textContent = "No";
             } else { // type === "alert"
                 modalConfirmBtn.style.display = "none";
                 modalCancelBtn.textContent = "OK";
@@ -285,7 +285,7 @@
 
             if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
                 console.error("Firebase config is missing or empty.");
-                showModal("Erreur: Configuration Firebase manquante. La persistance des données ne fonctionnera pas.", "alert");
+                showModal("Error: Firebase configuration missing. Data persistence will not work.", "alert");
                 document.getElementById('loadingOverlay').style.display = 'none'; // Hide loading
                 return;
             }
@@ -304,7 +304,7 @@
                 console.log("Anonymous sign-in successful. User ID:", userId, new Date().toLocaleTimeString());
             } catch (anonError) {
                 console.error("Anonymous sign-in failed:", anonError, new Date().toLocaleTimeString());
-                showModal("Erreur lors de la connexion anonyme: " + anonError.message + ". La persistance des données pourrait ne pas fonctionner.", "alert");
+                showModal("Error during anonymous login: " + anonError.message + ". Data persistence might not work.", "alert");
                 // If anonymous sign-in fails, try custom token as a secondary option, if available.
                 // Note: The `auth/invalid-claims` often comes from custom token issues.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -316,7 +316,7 @@
                         console.log("Custom token sign-in successful. User ID:", userId, new Date().toLocaleTimeString());
                     } catch (tokenError) {
                         console.error("Custom token sign-in failed:", tokenError, new Date().toLocaleTimeString());
-                        showModal("Erreur lors de la connexion avec jeton personnalisé: " + tokenError.message + ". La persistance des données pourrait ne pas fonctionner.", "alert");
+                        showModal("Error during custom token login: " + tokenError.message + ". Data persistence might not work.", "alert");
                     }
                 }
             }
@@ -338,7 +338,7 @@
 
         } catch (error) {
             console.error("Error initializing Firebase (top level catch):", error, new Date().toLocaleTimeString());
-            showModal("Erreur critique lors de l'initialisation de Firebase: " + error.message + ". L'application ne pourra pas sauvegarder/charger de données.", "alert");
+            showModal("Critical error during Firebase initialization: " + error.message + ". The application will not be able to save/load data.", "alert");
             document.getElementById('loadingOverlay').style.display = 'none'; // Ensure loading is hidden on critical error
         }
     }
@@ -352,7 +352,7 @@
             return null;
         }
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Path: /artifacts/{appId}/users/{userId}/d2b1_state/current_state
+        // Path: /artifacts/{appId}/users/${userId}/d2b1_state/current_state
         return window.firebaseDoc(db, `artifacts/${appId}/users/${userId}/d2b1_state/current_state`);
     }
 
@@ -382,7 +382,7 @@
             console.log("Application state saved to Firestore.", new Date().toLocaleTimeString());
         } catch (e) {
             console.error("Error saving application state:", e, new Date().toLocaleTimeString());
-            showModal("Erreur lors de la sauvegarde des données: " + e.message, "alert");
+            showModal("Error saving data: " + e.message, "alert");
         }
     }
 
@@ -428,7 +428,7 @@
             }
         } catch (e) {
             console.error("Error loading application state:", e, new Date().toLocaleTimeString());
-            showModal("Erreur lors du chargement des données: " + e.message + ". L'application va démarrer avec des données vierges.", "alert");
+            showModal("Error loading data: " + e.message + ". The application will start with empty data.", "alert");
             // If loading fails, ensure local state is reset to avoid corrupted display
             resetLocalState();
             updateParticipantsList();
@@ -449,402 +449,4 @@
         history = [];
         currentDay = 1;
         cooperativeRotationFund = 0;
-        totalParticipantsCount = 0;
-        dailyRevenue = 0;
-        beneficiaryShare = 0;
-        untouchableAmount = 0;
-    }
-
-
-    // --- Authentication Functions ---
-    // function sendOTPByEmail(code) {
-    //     emailjs.send("service_3gm6ixa", "template_tq202es", {
-    //         to_name: "Emmanuel",
-    //         to_email: "emmanueljeambas@gmail.com",
-    //         message: "Votre code de vérification est : " + code
-    //     }).then(() => {
-    //         console.log("OTP envoyé par Email");
-    //     }).catch(err => {
-    //         showModal("Erreur envoi Email: " + err.text, "alert");
-    //     });
-    // }
-
-    function sendOTPByWhatsApp(code) {
-        const phone = "+50943260012";
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
-        fetch(url).then(() => {
-            console.log("WhatsApp OTP envoyé");
-        }).catch(e => {
-            showModal("Erreur WhatsApp: " + e.message, "alert");
-        });
-    }
-
-    function checkAdminStep1() {
-        const pass = document.getElementById("adminPass").value;
-        if (pass === "d2b1admin") {
-            otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-            document.getElementById("authCard").style.display = "none";
-            document.getElementById("codeCard").style.display = "block";
-            // sendOTPByEmail(otpCode); // Removed EmailJS call
-            sendOTPByWhatsApp(otpCode);
-        } else {
-            showModal("Mot de passe incorrect", "alert");
-        }
-    }
-
-    function toggleVisibility(id) {
-        const input = document.getElementById(id);
-        input.type = input.type === "password" ? "text" : "password";
-    }
-
-    function checkAdminStep2() {
-        const code = document.getElementById("code2FA").value.trim();
-        if (code === otpCode) {
-            document.getElementById("codeCard").style.display = "none";
-            document.getElementById("mainCard").style.display = "block";
-            document.getElementById("superviseurContainer").style.display = "block";
-            // Ensure all displays are updated upon successful login
-            updateParticipantsList();
-            updateHistoryTable();
-            updateStatsDisplay();
-            calculateAdminHypotheticalFinance();
-        } else {
-            showModal("Code de vérification invalide", "alert");
-        }
-    }
-
-    // --- Financial Calculation Logic ---
-    function calculateDailyFinance() {
-        totalParticipantsCount = participants.length;
-        dailyRevenue = totalParticipantsCount * 10;
-
-        let amountForCalculation = dailyRevenue;
-
-        if (currentDay >= 5 && totalParticipantsCount > 0) {
-            amountForCalculation += 10;
-        }
-
-        amountForCalculation += cooperativeRotationFund; // Add accumulated fund
-
-        const initialDeduction = amountForCalculation * (1 / 3);
-        let currentBeneficiaryShare = amountForCalculation - initialDeduction;
-        const tenPercentOfDeduction = initialDeduction * 0.10;
-        const thirtyPercentOfDeduction = initialDeduction * 0.30;
-
-        untouchableAmount = tenPercentOfDeduction;
-        currentBeneficiaryShare += thirtyPercentOfDeduction;
-        beneficiaryShare = currentBeneficiaryShare;
-
-        if (untouchableAmount < 0) {
-            untouchableAmount = 0;
-        }
-
-        updateStatsDisplay();
-    }
-
-    function calculateHypotheticalFinance(numParticipants, day = currentDay) {
-        let hypotheticalDailyRevenue = numParticipants * 10;
-        let hypotheticalAmountForCalculation = hypotheticalDailyRevenue;
-
-        if (day >= 5 && numParticipants > 0) {
-            hypotheticalAmountForCalculation += 10;
-        }
-
-        hypotheticalAmountForCalculation += cooperativeRotationFund; // Add accumulated fund
-
-        const hypotheticalInitialDeduction = hypotheticalAmountForCalculation * (1 / 3);
-        let hypotheticalBeneficiaryShare = hypotheticalAmountForCalculation - hypotheticalInitialDeduction;
-        const hypotheticalTenPercentOfDeduction = hypotheticalInitialDeduction * 0.10;
-        const hypotheticalThirtyPercentOfDeduction = hypotheticalInitialDeduction * 0.30;
-
-        let hypotheticalUntouchableAmount = hypotheticalTenPercentOfDeduction;
-        hypotheticalBeneficiaryShare += hypotheticalThirtyPercentOfDeduction;
-
-        if (hypotheticalUntouchableAmount < 0) {
-            hypotheticalUntouchableAmount = 0;
-        }
-
-        return {
-            dailyRevenue: hypotheticalDailyRevenue,
-            beneficiaryShare: hypotheticalBeneficiaryShare,
-            untouchableAmount: hypotheticalUntouchableAmount
-        };
-    }
-
-    function updateStatsDisplay() {
-        const statsDiv = document.getElementById("stats");
-        statsDiv.innerHTML = `
-            <h4>Statistiques du Jour ${currentDay}:</h4>
-            <p><strong>Participants:</strong> ${totalParticipantsCount}</p>
-            <p><strong>Revenus Générés:</strong> $${dailyRevenue.toFixed(2)}</p>
-            <p><strong>Part Bénéficiaire:</strong> $${beneficiaryShare.toFixed(2)}</p>
-            <p><strong>Montant Intouchable:</strong> $${untouchableAmount.toFixed(2)}</p>
-        `;
-    }
-
-    function calculateAdminHypotheticalFinance() {
-        const numParticipantsInput = document.getElementById("calculatorParticipants");
-        const numParticipants = parseInt(numParticipantsInput.value) || 0;
-
-        const results = calculateHypotheticalFinance(numParticipants, currentDay);
-
-        const resultsDiv = document.getElementById("calculatorResults");
-        resultsDiv.innerHTML = `
-            <p><strong>Revenus Hypothétiques:</strong> $${results.dailyRevenue.toFixed(2)}</p>
-            <p><strong>Part Bénéficiaire Hypothétique:</strong> $${results.beneficiaryShare.toFixed(2)}</p>
-            <p><strong>Montant Intouchable Hypothétique:</strong> $${results.untouchableAmount.toFixed(2)}</p>
-        `;
-    }
-
-    function calculateIndividualEarnings(investment) {
-        if (investment < 0) return 0;
-
-        const initialDeduction = investment * (1 / 3);
-        let personalShare = investment - initialDeduction;
-        const thirtyPercentOfDeduction = initialDeduction * 0.30;
-        personalShare += thirtyPercentOfDeduction;
-
-        return personalShare;
-    }
-
-    // --- Participant and History Management ---
-    async function addParticipant() {
-        const nameInput = document.getElementById("participantName");
-        const participantName = nameInput.value.trim();
-
-        if (participantName) {
-            participants.push({ name: participantName, paid: false });
-            nameInput.value = "";
-            updateParticipantsList();
-            calculateDailyFinance();
-            await saveAppState(); // Save state after adding
-        } else {
-            showModal("Veuillez entrer un nom de participant.", "alert");
-        }
-    }
-
-    function updateParticipantsList() {
-        const listDiv = document.getElementById("participantsList");
-        listDiv.innerHTML = "<h4>Participants Aujourd'hui:</h4>";
-        if (participants.length === 0) {
-            listDiv.innerHTML += "<p>Aucun participant ajouté pour le moment.</p>";
-            return;
-        }
-        const ul = document.createElement("ul");
-        participants.forEach((p) => {
-            const li = document.createElement("li");
-            li.textContent = `${p.name} - ${p.paid ? "Payé" : "Non Payé"}`;
-            ul.appendChild(li);
-        });
-        listDiv.appendChild(ul);
-    }
-
-    async function validatePayments() {
-        if (participants.length === 0) {
-            showModal("Aucun participant à valider.", "alert");
-            return;
-        }
-        participants.forEach(p => p.paid = true);
-        updateParticipantsList();
-        showModal("Paiements validés pour tous les participants actuels.", "alert");
-        await saveAppState(); // Save state after validating
-    }
-
-    async function nextDay() {
-        history.push({
-            day: currentDay,
-            totalParticipants: participants.length,
-            dailyRevenue: dailyRevenue,
-            beneficiaryShare: beneficiaryShare,
-            untouchableAmount: untouchableAmount
-        });
-
-        cooperativeRotationFund += untouchableAmount;
-
-        currentDay++;
-        participants = [];
-        totalParticipantsCount = 0;
-        dailyRevenue = 0;
-        beneficiaryShare = 0;
-        untouchableAmount = 0;
-
-        updateParticipantsList();
-        updateHistoryTable();
-        updateStatsDisplay();
-        calculateAdminHypotheticalFinance();
-        showModal(`Passage au Jour ${currentDay}. Les participants ont été réinitialisés. Le fond de rotation coopératif est maintenant de $${cooperativeRotationFund.toFixed(2)}.`, "alert");
-        await saveAppState(); // Save state after advancing day
-    }
-
-    function updateHistoryTable() {
-        const historyDiv = document.getElementById("historyTable");
-        historyDiv.innerHTML = "<h4>Historique des Jours Précédents:</h4>";
-        if (history.length === 0) {
-            historyDiv.innerHTML += "<p>Aucun historique disponible.</p>";
-            return;
-        }
-
-        const table = document.createElement("table");
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Jour</th>
-                    <th>Participants</th>
-                    <th>Revenus ($)</th>
-                    <th>Part Bénéficiaire ($)</th>
-                    <th>Intouchable ($)</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        `;
-        const tbody = table.querySelector("tbody");
-        history.forEach(entry => {
-            const row = tbody.insertRow();
-            row.insertCell().textContent = entry.day;
-            row.insertCell().textContent = entry.totalParticipants;
-            row.insertCell().textContent = entry.dailyRevenue.toFixed(2);
-            row.insertCell().textContent = entry.beneficiaryShare.toFixed(2);
-            row.insertCell().textContent = entry.untouchableAmount.toFixed(2);
-        });
-        historyDiv.appendChild(table);
-    }
-
-    function exportToExcel() {
-        if (history.length === 0) {
-            showModal("Aucune donnée historique à exporter.", "alert");
-            return;
-        }
-
-        const ws = XLSX.utils.json_to_sheet(history);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Historique D2B1");
-        XLSX.writeFile(wb, "D2B1_Historique.xlsx");
-        showModal("Historique exporté vers Excel !", "alert");
-    }
-
-    async function resetData() {
-        showModal("Êtes-vous sûr de vouloir réinitialiser toutes les données (participants, historique, et fond coopératif) ? Cette action est irréversible.", "confirm")
-            .then(async (result) => { // Make sure this is async to await save
-                if (result) {
-                    resetLocalState(); // Reset local state first
-                    updateParticipantsList();
-                    updateHistoryTable();
-                    updateStatsDisplay();
-                    calculateAdminHypotheticalFinance();
-                    await saveAppState(); // Save the reset state to Firestore
-                    showModal("Toutes les données ont été réinitialisées.", "alert");
-                }
-            });
-    }
-
-    function logout() {
-        // For a client-side app, reloading effectively logs out (clears in-memory state)
-        // If Firebase Auth state needs to be cleared, use auth.signOut()
-        // However, given the requirement to continue on other PCs, just reloading might be fine
-        // as the state will be reloaded from Firestore on next login.
-        location.reload();
-    }
-
-    // --- Supervisor/Team Leader Management and Request Workflow ---
-    function ajouterSuperviseur() {
-        const container = document.getElementById('superviseurs');
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-            <h4>Superviseur</h4>
-            <input type="text" class="superviseur-name" placeholder="Nom du superviseur" />
-            <button onclick="ajouterTeamLeader(this)" class="btn-primary">Team Leader +1</button>
-            <div class="teamleaders"></div>
-            <button onclick="demanderAction(event, 'reset', 'Superviseur', this.parentNode.querySelector('.superviseur-name').value)" class="btn-danger action-request-btn">Demande Réinitialiser</button>
-            <button onclick="demanderAction(event, 'logout', 'Superviseur', this.parentNode.querySelector('.superviseur-name').value)" class="btn-danger action-request-btn">Demande Déconnexion</button>
-        `;
-        container.appendChild(div);
-    }
-
-    function ajouterTeamLeader(btn) {
-        const container = btn.nextElementSibling;
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-            <input type="text" class="teamleader-name" placeholder="Nom du team leader" />
-            <input type="text" class="participant-input" placeholder="Nom du participant" />
-            <button onclick="addParticipantFromTeamLeader(this)" class="btn-primary">Ajouter</button>
-            <button onclick="validatePaymentsFromTeamLeader(this)" class="btn-secondary">Valider Paiement</button>
-            <button onclick="nextDayFromTeamLeader(this)" class="btn-secondary">Jour Suivant</button>
-            <button onclick="exportToExcelFromTeamLeader(this)" class="btn-primary">Export</button>
-            <label for="tl-investment">Investissement:</label>
-            <input type="number" class="tl-investment" value="10" min="10" step="1" oninput="updateTeamLeaderEarnings(this)" />
-            <p><strong>Gains Personnels:</strong> <span class="tl-earnings">0.00</span> $</p>
-            <button onclick="demanderAction(event, 'reset', 'Team Leader', this.parentNode.querySelector('.teamleader-name').value)" class="btn-danger action-request-btn">Demande Réinitialiser</button>
-            <button onclick="demanderAction(event, 'logout', 'Team Leader', this.parentNode.querySelector('.teamleader-name').value)" class="btn-danger action-request-btn">Demande Déconnexion</button>
-        `;
-        container.appendChild(div);
-        const newInvestmentInput = div.querySelector('.tl-investment');
-        updateTeamLeaderEarnings(newInvestmentInput);
-    }
-
-    // Wrapper functions for Team Leader buttons to use global logic
-    async function addParticipantFromTeamLeader(buttonElement) {
-        const participantInput = buttonElement.parentNode.querySelector('.participant-input');
-        const participantName = participantInput.value.trim();
-        if (participantName) {
-            participants.push({ name: participantName, paid: false });
-            participantInput.value = "";
-            updateParticipantsList();
-            calculateDailyFinance();
-            await saveAppState(); // Save state after adding
-        } else {
-            showModal("Veuillez entrer un nom de participant.", "alert");
-        }
-    }
-
-    async function validatePaymentsFromTeamLeader(buttonElement) {
-        await validatePayments(); // Calls the global function and waits for its save
-    }
-
-    async function nextDayFromTeamLeader(buttonElement) {
-        await nextDay(); // Calls the global function and waits for its save
-    }
-
-    function exportToExcelFromTeamLeader(buttonElement) {
-        exportToExcel(); // Calls the global function
-    }
-
-    function updateTeamLeaderEarnings(investmentInput) {
-        const investment = parseFloat(investmentInput.value) || 0;
-        const earnings = calculateIndividualEarnings(investment);
-        investmentInput.parentNode.querySelector('.tl-earnings').textContent = earnings.toFixed(2);
-    }
-
-    function demanderAction(event, type, senderRole, senderName = "Inconnu") {
-        let subject = "";
-        let message = "";
-        // const adminEmail = "emmanueljeambas@gmail.com"; // Admin email is not used if EmailJS is removed
-
-        if (type === 'reset') {
-            subject = `Demande de Réinitialisation - ${senderRole} (${senderName})`;
-            message = `${senderRole} ${senderName} demande une réinitialisation des données. Veuillez prendre les mesures nécessaires.`;
-        } else if (type === 'logout') {
-            subject = `Demande de Déconnexion - ${senderRole} (${senderName})`;
-            message = `${senderRole} ${senderName} demande une déconnexion de la session.`;
-        } else {
-            showModal("Type d'action inconnu.", "alert");
-            return;
-        }
-
-        // Since EmailJS is removed, we cannot send emails.
-        // You might consider adding a CallMeBot call here if you want to notify via WhatsApp.
-        // For now, I'm just showing a modal.
-        showModal(`Demande de ${type === 'reset' ? 'réinitialisation' : 'déconnexion'} enregistrée. Contactez l'administrateur manuellement.`, "alert");
-
-        const btn = event.target;
-        btn.classList.add('alert-red');
-        setTimeout(() => {
-            btn.classList.remove('alert-red');
-        }, 3000);
-    }
-
-</script>
-</body>
-</html>
+        totalParticipantsCo
