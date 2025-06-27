@@ -17,17 +17,18 @@
     .btn-danger { background-color: #e74c3c; color: white; }
     .btn-primary { background-color: #004080; color: white; }
     .btn-secondary { background-color: #2980b9; color: white; }
-    .alert-error { color: red; font-weight: bold; }
     @media (max-width: 600px) {
       input, button { font-size: 14px; padding: 8px; }
       table { font-size: 0.8em; }
     }
     #forgotSection { text-align: center; margin-top: 10px; font-size: 0.9em; color: #555; cursor: pointer; }
+    .alert-red { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
 <script>
 emailjs.init("M1gXL-2NtM2UnmLXj");
+
 let otpCode = "";
 
 function sendOTPByEmail(code) {
@@ -36,14 +37,14 @@ function sendOTPByEmail(code) {
     to_email: "emmanueljeambas@gmail.com",
     message: "Votre code de vérification est : " + code
   }).then(() => console.log("OTP envoyé par Email"))
-    .catch(err => showError("Erreur envoi Email: " + err.text));
+    .catch(err => alert("Erreur envoi Email: " + err.text));
 }
 
 function sendOTPByWhatsApp(code) {
   const phone = "+50943260012";
   const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
   fetch(url).then(() => console.log("WhatsApp OTP envoyé"))
-    .catch(e => showError("Erreur WhatsApp: " + e.message));
+    .catch(e => alert("Erreur WhatsApp: " + e.message));
 }
 
 function checkAdminStep1() {
@@ -55,8 +56,13 @@ function checkAdminStep1() {
     sendOTPByEmail(otpCode);
     sendOTPByWhatsApp(otpCode);
   } else {
-    showError("Mot de passe incorrect");
+    alert("Mot de passe incorrect");
   }
+}
+
+function toggleVisibility(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === "password" ? "text" : "password";
 }
 
 function checkAdminStep2() {
@@ -66,26 +72,16 @@ function checkAdminStep2() {
     document.getElementById("mainCard").style.display = "block";
     document.getElementById("superviseurContainer").style.display = "block";
   } else {
-    showError("Code de vérification invalide");
+    alert("Code de vérification invalide");
   }
-}
-
-function showError(message) {
-  const errorDiv = document.getElementById("errorMessages");
-  errorDiv.innerHTML = `<div class='alert-error'>${message}</div>`;
-}
-
-function toggleVisibility(id) {
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
 }
 
 function addParticipant() { alert("Fonction addParticipant() à définir"); }
 function validatePayments() { alert("Fonction validatePayments() à définir"); }
 function nextDay() { alert("Fonction nextDay() à définir"); }
 function exportToExcel() { alert("Fonction exportToExcel() à définir"); }
-function resetData() { alert("Demande envoyée à l'administrateur"); }
-function logout() { alert("Déconnexion interdite pour ce rôle"); }
+function resetData() { alert("Fonction resetData() à définir"); }
+function logout() { location.reload(); }
 
 function ajouterSuperviseur() {
   const container = document.getElementById('superviseurs');
@@ -94,9 +90,10 @@ function ajouterSuperviseur() {
   div.innerHTML = `
     <h4>Superviseur</h4>
     <input type="text" placeholder="Nom du superviseur" />
-    <textarea placeholder="Rapport du superviseur (optionnel)"></textarea>
     <button onclick="ajouterTeamLeader(this)" class="btn-primary">👥 Team Leader +1</button>
     <div class="teamleaders"></div>
+    <button onclick="demanderAction('reset')" class="btn-danger">🗑️ Demande Réinitialiser</button>
+    <button onclick="demanderAction('logout')" class="btn-danger">🚪 Demande Déconnexion</button>
   `;
   container.appendChild(div);
 }
@@ -112,13 +109,16 @@ function ajouterTeamLeader(btn) {
     <button class="btn-secondary">✅ Valider Paiement</button>
     <button class="btn-secondary">🔁 Jour Suivant</button>
     <button class="btn-primary">📤 Export</button>
-    <div class="participants"></div>
   `;
   container.appendChild(div);
 }
-</script>
 
-<div id="errorMessages"></div>
+function demanderAction(type) {
+  const msg = type === 'reset' ? 'Demande de réinitialisation envoyée à l’administrateur' : 'Demande de déconnexion envoyée à l’administrateur';
+  alert(msg);
+  // ici en vrai on pourrait envoyer un email ou enregistrer la demande dans un log
+}
+</script>
 
 <div class="card" id="authCard">
   <h1>Espace Admin Sécurisé</h1>
@@ -136,11 +136,14 @@ function ajouterTeamLeader(btn) {
 </div>
 
 <div class="card" id="mainCard" style="display:none;">
+  <h3>D2B1 - Authentification</h3>
   <input type="text" id="participantName" placeholder="Nom du participant" />
   <button onclick="addParticipant()" class="btn-primary">➕ Ajouter</button>
   <button onclick="validatePayments()" class="btn-secondary">✅ Valider Paiement</button>
   <button onclick="nextDay()" class="btn-secondary">🔁 Jour Suivant</button>
   <button onclick="exportToExcel()" class="btn-primary">📤 Export Historique</button>
+  <button onclick="resetData()" class="btn-danger">🗑️ Réinitialiser Données</button>
+  <button onclick="logout()" class="btn-danger">🚪 Déconnexion</button>
   <div id="stats" style="margin-top:20px;"></div>
   <div id="historyTable" style="margin-top:20px;"></div>
   <div id="participantsList" style="margin-top:20px;"></div>
