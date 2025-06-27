@@ -1,158 +1,332 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>D2B1 - Authentification Sécurisée</title>
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f0f4f9; padding: 20px; margin: 0; }
-    .card { background: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1, h3, h4 { text-align: center; color: #004080; }
-    input, button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; box-sizing: border-box; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background-color: #004080; color: white; }
-    .btn-danger { background-color: #e74c3c; color: white; }
-    .btn-primary { background-color: #004080; color: white; }
-    .btn-secondary { background-color: #2980b9; color: white; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Système D2B1 - Gestion</title>
+<style>
+    body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;}
+    h2 { color: #333; text-align: center; }
+    .container { background-color: #fff; padding: 20px; margin: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button, textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 3px; border: 1px solid #ccc; }
+    .input-inline { display: inline-block; width: 48%; }
+    .btn { background-color: #007BFF; color: #fff; border: none; margin: 5px 0; cursor: pointer; }
+    .btn:hover { opacity: 0.9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
+    .hidden { display: none; }
     @media (max-width: 600px) {
-      input, button { font-size: 14px; padding: 8px; }
-      table { font-size: 0.8em; }
+        .input-inline { width: 100%; }
     }
-    #forgotSection { text-align: center; margin-top: 10px; font-size: 0.9em; color: #555; cursor: pointer; }
-    .alert-red { color: red; font-weight: bold; }
-  </style>
+</style>
 </head>
 <body>
+
+<h2>Application D2B1</h2>
+
+<div id="adminSection" class="container hidden">
+    <h3>Zone Administrateur</h3>
+    <p>Demandes de déconnexion/réinitialisation :</p>
+    <table id="adminRequestsTable">
+        <thead><tr><th>Leader</th><th>Type</th><th>Date</th><th>Superviseur</th><th>Action</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="supervisorSection" class="container hidden">
+    <h3>Zone Superviseur</h3>
+    <label>Nom du Superviseur:<input id="supName" type="text"></label>
+    <label>Email du Superviseur:<input id="supEmail" type="email"></label>
+    <button onclick="saveSupervisor()" class="btn">Enregistrer Superviseur</button>
+    <hr>
+    <h4>Team leaders</h4>
+    <div id="leadersList"></div>
+    <button onclick="addTeamLeader()" class="btn">Ajouter Team Leader</button>
+    <hr>
+    <h4>Demandes des leaders</h4>
+    <table id="supervisorRequestsTable">
+        <thead><tr><th>Leader</th><th>Type</th><th>Date</th><th>Transmettre</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="leaderSection" class="container hidden">
+    <h3>Zone Team Leader</h3>
+    <label>Nom du Leader:<input id="leaderName" type="text"></label>
+    <label>Email du Leader:<input id="leaderEmail" type="email"></label>
+    <button onclick="saveLeader()" class="btn">Enregistrer Leader</button>
+    <hr>
+    <h4>Participants</h4>
+    <div id="participantList"></div>
+    <button onclick="addParticipant()" class="btn">Ajouter Participant</button>
+    <hr>
+    <button onclick="requestLogout()" class="btn">Demande Déconnexion</button>
+    <button onclick="requestReset()" class="btn">Demande Réinitialisation</button>
+</div>
+
+<div id="loginAdmin" class="container">
+    <h3>Connexion Administrateur</h3>
+    <button onclick="sendOTP()" class="btn">Envoyer OTP</button>
+    <div id="otpDiv" class="hidden">
+      <label>Code OTP:<input id="otpInput" type="text"></label>
+      <button onclick="verifyOTP()" class="btn">Valider OTP</button>
+    </div>
+</div>
+
+<!-- SDK EmailJS et XLSX (pour export/import si besoin) -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-emailjs.init("M1gXL-2NtM2UnmLXj");
-
-let otpCode = "";
-
-function sendOTPByEmail(code) {
-  emailjs.send("service_3gm6ixa", "template_tq202es", {
-    to_name: "Emmanuel",
-    to_email: "emmanueljeambas@gmail.com",
-    message: "Votre code de vérification est : " + code
-  }).then(() => console.log("OTP envoyé par Email"))
-    .catch(err => alert("Erreur envoi Email: " + err.text));
-}
-
-function sendOTPByWhatsApp(code) {
-  const phone = "+50943260012";
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
-  fetch(url).then(() => console.log("WhatsApp OTP envoyé"))
-    .catch(e => alert("Erreur WhatsApp: " + e.message));
-}
-
-function checkAdminStep1() {
-  const pass = document.getElementById("adminPass").value;
-  if (pass === "d2b1admin") {
-    otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    document.getElementById("authCard").style.display = "none";
-    document.getElementById("codeCard").style.display = "block";
-    sendOTPByEmail(otpCode);
-    sendOTPByWhatsApp(otpCode);
-  } else {
-    alert("Mot de passe incorrect");
-  }
-}
-
-function toggleVisibility(id) {
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
-}
-
-function checkAdminStep2() {
-  const code = document.getElementById("code2FA").value.trim();
-  if (code === otpCode) {
-    document.getElementById("codeCard").style.display = "none";
-    document.getElementById("mainCard").style.display = "block";
-    document.getElementById("superviseurContainer").style.display = "block";
-  } else {
-    alert("Code de vérification invalide");
-  }
-}
-
-function addParticipant() { alert("Fonction addParticipant() à définir"); }
-function validatePayments() { alert("Fonction validatePayments() à définir"); }
-function nextDay() { alert("Fonction nextDay() à définir"); }
-function exportToExcel() { alert("Fonction exportToExcel() à définir"); }
-function resetData() { alert("Fonction resetData() à définir"); }
-function logout() { location.reload(); }
-
-function ajouterSuperviseur() {
-  const container = document.getElementById('superviseurs');
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML = `
-    <h4>Superviseur</h4>
-    <input type="text" placeholder="Nom du superviseur" />
-    <button onclick="ajouterTeamLeader(this)" class="btn-primary">👥 Team Leader +1</button>
-    <div class="teamleaders"></div>
-    <button onclick="demanderAction('reset')" class="btn-danger">🗑️ Demande Réinitialiser</button>
-    <button onclick="demanderAction('logout')" class="btn-danger">🚪 Demande Déconnexion</button>
-  `;
-  container.appendChild(div);
-}
-
-function ajouterTeamLeader(btn) {
-  const container = btn.nextElementSibling;
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML = `
-    <input type="text" placeholder="Nom du team leader" />
-    <input type="text" placeholder="Nom du participant" />
-    <button class="btn-primary">➕ Ajouter</button>
-    <button class="btn-secondary">✅ Valider Paiement</button>
-    <button class="btn-secondary">🔁 Jour Suivant</button>
-    <button class="btn-primary">📤 Export</button>
-  `;
-  container.appendChild(div);
-}
-
-function demanderAction(type) {
-  const msg = type === 'reset' ? 'Demande de réinitialisation envoyée à l’administrateur' : 'Demande de déconnexion envoyée à l’administrateur';
-  alert(msg);
-  // ici en vrai on pourrait envoyer un email ou enregistrer la demande dans un log
-}
+    (function(){
+        emailjs.init({ publicKey: "YOUR_PUBLIC_KEY" });
+    })();
 </script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<div class="card" id="authCard">
-  <h1>Espace Admin Sécurisé</h1>
-  <input type="password" id="adminPass" placeholder="Mot de passe admin" />
-  <button onclick="toggleVisibility('adminPass')" class="btn-secondary">👁️ Afficher/Cacher</button>
-  <button onclick="checkAdminStep1()" class="btn-primary">🔐 Connexion</button>
-  <div id="forgotSection" onclick="alert('Veuillez contacter l\'administrateur pour réinitialiser votre mot de passe.')">Mot de passe oublié ?</div>
-</div>
+<script>
+// Données locales simulées (remplacées par appels API réels)
+let supervisors = [];    // Liste des superviseurs
+let currentSupervisor = null;
+let currentLeader = null;
+let requestsToAdmin = [];
 
-<div class="card" id="codeCard" style="display:none;">
-  <p>📤 Code OTP envoyé à votre email et WhatsApp</p>
-  <input type="password" id="code2FA" placeholder="Entrez le code OTP" />
-  <button onclick="toggleVisibility('code2FA')" class="btn-secondary">👁️ Afficher/Cacher</button>
-  <button onclick="checkAdminStep2()" class="btn-primary">✅ Vérifier</button>
-</div>
+// Afficher une section et masquer les autres
+function showSection(section) {
+    document.getElementById('adminSection').classList.add('hidden');
+    document.getElementById('supervisorSection').classList.add('hidden');
+    document.getElementById('leaderSection').classList.add('hidden');
+    document.getElementById('loginAdmin').classList.add('hidden');
+    section.classList.remove('hidden');
+}
 
-<div class="card" id="mainCard" style="display:none;">
-  <h3>D2B1 - Authentification</h3>
-  <input type="text" id="participantName" placeholder="Nom du participant" />
-  <button onclick="addParticipant()" class="btn-primary">➕ Ajouter</button>
-  <button onclick="validatePayments()" class="btn-secondary">✅ Valider Paiement</button>
-  <button onclick="nextDay()" class="btn-secondary">🔁 Jour Suivant</button>
-  <button onclick="exportToExcel()" class="btn-primary">📤 Export Historique</button>
-  <button onclick="resetData()" class="btn-danger">🗑️ Réinitialiser Données</button>
-  <button onclick="logout()" class="btn-danger">🚪 Déconnexion</button>
-  <div id="stats" style="margin-top:20px;"></div>
-  <div id="historyTable" style="margin-top:20px;"></div>
-  <div id="participantsList" style="margin-top:20px;"></div>
-</div>
+// Enregistrer un superviseur
+function saveSupervisor() {
+    let name = document.getElementById('supName').value;
+    let email = document.getElementById('supEmail').value;
+    if (name && email) {
+        let sup = { name: name, email: email, leaders: [], requests: [] };
+        supervisors.push(sup);
+        currentSupervisor = sup;
+        alert('Superviseur enregistré');
+        renderLeaders();
+    } else {
+        alert('Veuillez saisir le nom et l\'email du superviseur.');
+    }
+}
 
-<div class="card" id="superviseurContainer" style="display:none;">
-  <h3>Ajouter un Superviseur</h3>
-  <button class="btn-primary" onclick="ajouterSuperviseur()">👨‍💼 Superviseur +1</button>
-  <div id="superviseurs"></div>
-</div>
+// Ajouter dynamiquement un formulaire pour créer un team leader (DOM manipulation):contentReference[oaicite:9]{index=9}
+function addTeamLeader() {
+    if (!currentSupervisor) { alert('Enregistrez d\'abord un superviseur.'); return; }
+    let div = document.createElement('div');
+    div.innerHTML = 
+        '<label>Nom Leader:<input type="text" id="leaderNameTemp"></label>' +
+        '<label>Email Leader:<input type="email" id="leaderEmailTemp"></label>' +
+        '<button onclick="confirmAddLeader()" class="btn">Confirmer Leader</button>';
+    document.getElementById('leadersList').appendChild(div);
+}
+
+// Confirmer l'ajout du team leader au superviseur courant
+function confirmAddLeader() {
+    let name = document.getElementById('leaderNameTemp').value;
+    let email = document.getElementById('leaderEmailTemp').value;
+    if (name && email) {
+        let leader = { name: name, email: email, participants: [] };
+        currentSupervisor.leaders.push(leader);
+        currentLeader = leader;
+        alert('Team leader ajouté');
+        renderLeaders();
+    } else {
+        alert('Veuillez saisir le nom et l\'email du leader.');
+    }
+}
+
+// Afficher la liste des leaders pour le superviseur courant
+function renderLeaders() {
+    let container = document.getElementById('leadersList');
+    container.innerHTML = '';
+    currentSupervisor.leaders.forEach((leader, index) => {
+        let div = document.createElement('div');
+        div.innerHTML = '<p>' + leader.name + ' ('+ leader.email + ')</p>' +
+                        '<button onclick="selectLeader(' + index + ')" class="btn">Ouvrir Leader</button>';
+        container.appendChild(div);
+    });
+}
+
+// Sélectionner un leader pour afficher son espace
+function selectLeader(index) {
+    currentLeader = currentSupervisor.leaders[index];
+    document.getElementById('leaderName').value = currentLeader.name;
+    document.getElementById('leaderEmail').value = currentLeader.email;
+    showSection(document.getElementById('leaderSection'));
+    renderParticipants();
+}
+
+// Mettre à jour les infos du leader (modifiables)
+function saveLeader() {
+    if (currentLeader) {
+        currentLeader.name = document.getElementById('leaderName').value;
+        currentLeader.email = document.getElementById('leaderEmail').value;
+        alert('Leader mis à jour');
+    }
+}
+
+// Ajouter un formulaire pour créer un participant
+function addParticipant() {
+    if (!currentLeader) return;
+    let div = document.createElement('div');
+    div.innerHTML = 
+        '<label>Nom Participant:<input type="text" id="partName"></label>' +
+        '<label>Montant Investi:<input type="number" id="partAmount" value="10"></label>' +
+        '<button onclick="confirmAddParticipant()" class="btn">Confirmer Participant</button>';
+    document.getElementById('participantList').appendChild(div);
+}
+
+// Confirmer l'ajout du participant et calculer son gain
+function confirmAddParticipant() {
+    let name = document.getElementById('partName').value;
+    let amount = parseFloat(document.getElementById('partAmount').value);
+    if (name && !isNaN(amount)) {
+        // Calcul du gain = 90% d'un tiers du montant
+        let gain = (amount/3) * 0.90;
+        currentLeader.participants.push({name: name, montant: amount, gain: gain.toFixed(2)});
+        alert('Participant ajouté : Gain calculé = ' + gain.toFixed(2) + '$');
+        renderParticipants();
+        // Ici on pourrait envoyer les données à Google Sheets via l'API en POST
+        // fetch(sheetApiUrl, { method: 'POST', body: JSON.stringify(currentLeader.participants) });
+    } else {
+        alert('Veuillez saisir le nom et le montant valide.');
+    }
+}
+
+// Afficher le tableau des participants
+function renderParticipants() {
+    let list = document.getElementById('participantList');
+    list.innerHTML = '<table><tr><th>Nom</th><th>Investi</th><th>Gain</th></tr></table>';
+    currentLeader.participants.forEach(p => {
+        let table = list.querySelector('table');
+        let row = table.insertRow();
+        row.insertCell(0).innerText = p.name;
+        row.insertCell(1).innerText = p.montant + '$';
+        row.insertCell(2).innerText = p.gain + '$';
+    });
+}
+
+// Demandes de Déconnexion/Réinitialisation (Leader -> Supervisuer)
+function requestLogout() {
+    if (currentLeader) {
+        let req = { leader: currentLeader.name, type: 'Déconnexion', date: new Date().toLocaleString(), supervisor: currentSupervisor.name };
+        currentSupervisor.requests.push(req);
+        requestsToAdmin.push(req);
+        alert('Demande de déconnexion envoyée');
+        renderSupervisorRequests();
+    }
+}
+function requestReset() {
+    if (currentLeader) {
+        let req = { leader: currentLeader.name, type: 'Réinitialisation', date: new Date().toLocaleString(), supervisor: currentSupervisor.name };
+        currentSupervisor.requests.push(req);
+        requestsToAdmin.push(req);
+        alert('Demande de réinitialisation envoyée');
+        renderSupervisorRequests();
+    }
+}
+
+// Afficher les demandes dans le tableau du superviseur
+function renderSupervisorRequests() {
+    let tbody = document.getElementById('supervisorRequestsTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    currentSupervisor.requests.forEach((req,index) => {
+        let row = tbody.insertRow();
+        row.insertCell(0).innerText = req.leader;
+        row.insertCell(1).innerText = req.type;
+        row.insertCell(2).innerText = req.date;
+        let btn = document.createElement('button');
+        btn.innerText = 'Transmettre';
+        btn.className = 'btn';
+        btn.onclick = function(){ forwardToAdmin(index) };
+        row.insertCell(3).appendChild(btn);
+    });
+}
+
+// Transmettre la demande à l'administrateur (ajout dans requestsToAdmin)
+function forwardToAdmin(index) {
+    alert('Demande transmise à l\'administrateur');
+    // Ici on pourrait notifier un back-end ou simplement laisser la requête dans la liste globale
+}
+
+// Afficher toutes les demandes dans le tableau admin
+function renderAdminRequests() {
+    let tbody = document.getElementById('adminRequestsTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    requestsToAdmin.forEach((req,index) => {
+        let row = tbody.insertRow();
+        row.insertCell(0).innerText = req.leader;
+        row.insertCell(1).innerText = req.type;
+        row.insertCell(2).innerText = req.date;
+        row.insertCell(3).innerText = req.supervisor;
+        let btn = document.createElement('button');
+        btn.innerText = 'Accepter';
+        btn.className = 'btn';
+        btn.onclick = function(){ acceptRequest(index) };
+        row.insertCell(4).appendChild(btn);
+    });
+}
+
+// Administrateur accepte la demande (exécuter l'action correspondante)
+function acceptRequest(index) {
+    let req = requestsToAdmin[index];
+    if (req.type === 'Déconnexion') {
+        alert('Leader '+req.leader+' déconnecté.');
+        showSection(document.getElementById('loginAdmin'));
+    } else if (req.type === 'Réinitialisation') {
+        currentLeader.participants = [];
+        renderParticipants();
+        alert('Tableau participants vidé (historique conservé).');
+    }
+    requestsToAdmin.splice(index,1);
+    renderAdminRequests();
+}
+
+// GÉNÉRATION ET ENVOI DE L'OTP POUR ADMIN:contentReference[oaicite:10]{index=10}:contentReference[oaicite:11]{index=11}
+let otpCode = '';
+function generateOTP(digits = 6) {
+    let digitsChars = '0123456789';
+    let otp = '';
+    for (let i = 0; i < digits; i++) {
+        otp += digitsChars[Math.floor(Math.random() * digitsChars.length)];
+    }
+    return otp;
+}
+
+// Envoyer OTP par EmailJS et WhatsApp
+function sendOTP() {
+    otpCode = generateOTP(6);
+    // Envoi par EmailJS (utilisation de emailjs.send avec un template contenant {{otp}}):contentReference[oaicite:12]{index=12}:contentReference[oaicite:13]{index=13}
+    emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {otp: otpCode})
+    .then(function() { alert('OTP envoyé par email'); }, function(error) { console.error('Erreur EmailJS', error); });
+    // Envoi via WhatsApp
+    let adminPhone = '1234567890'; 
+    let whatsappURL = `https://api.whatsapp.com/send?phone=${adminPhone}&text=Votre%20OTP%20est%20${otpCode}`;
+    window.open(whatsappURL, '_blank');
+    document.getElementById('otpDiv').classList.remove('hidden');
+}
+
+// Vérifier l'OTP saisi
+function verifyOTP() {
+    let entered = document.getElementById('otpInput').value;
+    if (entered === otpCode) {
+        alert('Accès administrateur autorisé');
+        showSection(document.getElementById('adminSection'));
+        renderAdminRequests();
+    } else {
+        alert('OTP incorrect');
+    }
+}
+
+// Au chargement, on pourrait synchroniser l'état avec Google Sheets via fetch
+window.onload = function() {
+    // Exemples de récupération : fetch(sheetApiUrl).then(res=>res.json()).then(data=>{...});
+};
+</script>
 </body>
 </html>
