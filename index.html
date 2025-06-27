@@ -214,7 +214,91 @@ async function resetData() {
 
 function logout() {
   location.reload();
+}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D2B1 - Authentification Sécurisée</title>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f4f9; padding: 20px; margin: 0; }
+    .card { background: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #004080; font-size: 1.5em; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; box-sizing: border-box; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background-color: #004080; color: white; }
+    .btn-danger { background-color: #e74c3c; color: white; }
+    .btn-primary { background-color: #004080; color: white; }
+    .btn-secondary { background-color: #2980b9; color: white; }
+    @media (max-width: 600px) {
+      input, button { font-size: 14px; padding: 8px; }
+      table { font-size: 0.8em; }
+    }
+    #forgotSection { text-align: center; margin-top: 10px; font-size: 0.9em; color: #555; cursor: pointer; }
+  </style>
+</head>
+<body>
+<script>
+emailjs.init("M1gXL-2NtM2UnmLXj");
+
+function checkAdminStep1() {
+  const pass = document.getElementById("adminPass").value;
+  if (pass === "d2b1admin") {
+    document.getElementById("authCard").style.display = "none";
+    document.getElementById("codeCard").style.display = "block";
+    // Simuler l'envoi de code OTP ici si besoin
+    alert("Code OTP envoyé: 123456");
+  } else {
+    alert("Mot de passe incorrect");
+  }
 }
+
+function checkAdminStep2() {
+  const code = document.getElementById("code2FA").value.trim();
+  if (code === "123456") {
+    document.getElementById("codeCard").style.display = "none";
+    document.getElementById("mainCard").style.display = "block";
+  } else {
+    alert("Code de vérification invalide");
+  }
+}
+
+function addParticipant() { alert("Fonction addParticipant() à définir"); }
+function validatePayments() { alert("Fonction validatePayments() à définir"); }
+function nextDay() { alert("Fonction nextDay() à définir"); }
+function exportToExcel() { alert("Fonction exportToExcel() à définir"); }
+function resetData() { alert("Fonction resetData() à définir"); }
+function logout() { location.reload(); }
+</script>
+<h1>D2B1 - Authentification Sécurisée</h1>
+<div class="card" id="authCard">
+  <input type="password" id="adminPass" placeholder="Mot de passe admin" />
+  <button onclick="checkAdminStep1()" class="btn-primary">🔐 Connexion</button>
+  <div id="forgotSection" onclick="alert('Veuillez contacter l\'administrateur pour réinitialiser votre mot de passe.')">Mot de passe oublié ?</div>
+</div>
+<div class="card" id="codeCard" style="display:none;">
+  <p>📤 Code OTP envoyé par email et WhatsApp</p>
+  <input type="text" id="code2FA" placeholder="Entrez le code OTP" />
+  <button onclick="checkAdminStep2()" class="btn-primary">✅ Vérifier</button>
+</div>
+<div class="card" id="mainCard" style="display:none;">
+  <input type="text" id="participantName" placeholder="Nom du participant" />
+  <button onclick="addParticipant()" class="btn-primary">➕ Ajouter</button>
+  <button onclick="validatePayments()" class="btn-secondary">✅ Valider Paiement</button>
+  <button onclick="nextDay()" class="btn-secondary">🔁 Jour Suivant</button>
+  <button onclick="exportToExcel()" class="btn-primary">📤 Export Historique</button>
+  <button onclick="resetData()" class="btn-danger">🗑️ Réinitialiser Données</button>
+  <button onclick="logout()" class="btn-danger">🚪 Déconnexion</button>
+  <div id="stats" style="margin-top:20px;"></div>
+  <div id="historyTable" style="margin-top:20px;"></div>
+  <div id="participantsList" style="margin-top:20px;"></div>
+</div>
+</body>
+</html>
+
 </script>
 </body>
 </html>
