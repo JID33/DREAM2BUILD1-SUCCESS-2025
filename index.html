@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dream2Build1 - Authentication</title>
+    <title>Dream2Build1 - Authentication & Payment</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
         h1, h2 { text-align: center; color: #007BFF; }
@@ -36,11 +36,28 @@
             font-size: 1.2em;
             color: #007BFF;
         }
+        .paiement-etapes {
+            display: none; /* Hidden by default, shown by JS */
+            background: #fff3cd;
+            padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
+        }
+        .paiement-etapes .hidden {
+            display: none;
+        }
+        .paiement-etapes div {
+            margin-top: 10px;
+        }
+        .paiement-submit-btn {
+            background-color: #007BFF; /* Blue for payment */
+        }
+        .paiement-submit-btn:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
 
-<h1>Dream2Build1 - Authentication System</h1>
+<h1>Dream2Build1 - Authentication & Payment System</h1>
 
 <div class="form-section" id="signUpPanel">
     <h2>📝 Sign Up for Access</h2>
@@ -79,6 +96,9 @@
         <p id="loginMsg" class="hidden"></p>
     </form>
     <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showSignUp()">Sign Up here</a></p>
+    <p style="text-align: center; margin-top: 20px;">
+        <button style="background-color: #6c757d;" onclick="showAdminLoginRegister()">Admin / Leader Access</button>
+    </p>
 </div>
 
 <div class="panel hidden" id="verificationMessagePanel">
@@ -88,10 +108,61 @@
     <button onclick="showLogin()">Go to Login (After Verification)</button>
 </div>
 
+<div class="panel hidden" id="paymentPanel">
+    <h2>💳 Complete Your Payment</h2>
+    <p>Welcome, <span id="paymentUserName"></span>! To access the full platform, please complete your payment.</p>
+    <form id="paymentForm">
+        <label for="paymentMethod">Choose Payment Method:</label>
+        <select id="paymentMethod" name="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
+            <option value="">-- Select Payment Method --</option>
+            <option value="cash">Cash</option>
+            <option value="mastercard">Mastercard / Debit Card</option>
+            <option value="paypal">PayPal</option>
+            <option value="moncash">MonCash</option>
+            <option value="natcash">NatCash</option>
+        </select>
+
+        <div class="paiement-etapes" id="paymentInstructions">
+            <div id="cashInfo" class="hidden">
+                <p><strong>Cash:</strong> A team leader will contact you to validate your payment.</p>
+                <p>Once validated, your account will be fully activated. Click "Submit Payment Info" below to confirm your intent to pay by cash.</p>
+            </div>
+            <div id="mastercardInfo" class="hidden">
+                <label>Card Number (16 digits):</label>
+                <input type="text" id="cardNumber" maxlength="16" pattern="\d{16}" placeholder="1234 5678 9012 3456">
+                <label>Expiration Date (MM/YY):</label>
+                <input type="text" id="cardExpiry" maxlength="5" pattern="\d{2}/\d{2}" placeholder="MM/YY">
+                <label>CVC:</label>
+                <input type="text" id="cardCVC" maxlength="4" pattern="\d{3,4}" placeholder="123">
+                <label>Name on Card:</label>
+                <input type="text" id="cardName" placeholder="Name as on card">
+            </div>
+            <div id="paypalInfo" class="hidden">
+                <p><strong>PayPal:</strong> Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
+                <p>After sending payment, click "Submit Payment Info" below.</p>
+            </div>
+            <div id="moncashInfo" class="hidden">
+                <p><strong>MonCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+                <p>After sending payment, click "Submit Payment Info" below.</p>
+            </div>
+            <div id="natcashInfo" class="hidden">
+                <p><strong>NatCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+                <p>After sending payment, click "Submit Payment Info" below.</p>
+            </div>
+        </div>
+        <button type="submit" class="paiement-submit-btn">Submit Payment Info</button>
+        <p id="paymentMsg" class="hidden"></p>
+    </form>
+    <div class="logout-btn">
+        <button onclick="logoutUser()">Log Out</button>
+    </div>
+</div>
+
+
 <div class="panel hidden" id="mainPlatformPanel">
     <h2>Bienvenue sur Dream2Build1, <span id="loggedInUserName"></span>!</h2>
     <div id="mainPlatform">
-        <p>This is your main platform content, accessible only after successful login.</p>
+        <p>This is your main platform content, accessible only after successful login and payment.</p>
         <p>Here you can explore all features, except the administration area.</p>
         <p>🚀 Ready to build your dreams!</p>
     </div>
@@ -128,14 +199,19 @@
 
     <button onclick="loginLeader()">Login</button>
     <p id="leaderLoginMsg"></p>
+    <button style="background-color: #6c757d; margin-top: 10px;" onclick="showCEOPanel()">Login as CEO</button>
 </div>
 
 <div id="leaderPanel" class="panel hidden">
     <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
     <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
     <button class="logout-btn" onclick="logoutLeader()">Logout</button>
-    <p>Here you can submit validated new members after their payment.</p>
-    </div>
+    <p>Here you can manage member payments and accounts.</p>
+    <h3>Pending Payments:</h3>
+    <ul id="pendingPaymentsList">
+        </ul>
+    <p id="noPendingPayments" style="font-style: italic;">No pending payments.</p>
+</div>
 
 <div id="ceoPanel" class="panel hidden">
     <h2>👑 CEO Dashboard</h2>
@@ -178,11 +254,12 @@
         document.getElementById('signUpPanel').classList.add('hidden');
         document.getElementById('loginPanel').classList.add('hidden');
         document.getElementById('verificationMessagePanel').classList.add('hidden');
+        document.getElementById('paymentPanel').classList.add('hidden'); // New payment panel
         document.getElementById('mainPlatformPanel').classList.add('hidden');
-        document.getElementById('leaderRegisterPanel').classList.add('hidden'); // Admin
-        document.getElementById('leaderLoginPanel').classList.add('hidden');   // Admin
-        document.getElementById('leaderPanel').classList.add('hidden');      // Admin
-        document.getElementById('ceoPanel').classList.add('hidden');         // Admin
+        document.getElementById('leaderRegisterPanel').classList.add('hidden');
+        document.getElementById('leaderLoginPanel').classList.add('hidden');
+        document.getElementById('leaderPanel').classList.add('hidden');
+        document.getElementById('ceoPanel').classList.add('hidden');
     }
 
     function showSignUp() {
@@ -195,16 +272,29 @@
         document.getElementById('loginPanel').classList.remove('hidden');
     }
 
+    function showVerificationMessage(email) {
+        hideAllPanels();
+        document.getElementById('verificationMessagePanel').classList.remove('hidden');
+        document.getElementById('verificationEmailDisplay').textContent = email;
+    }
+
+    function showPaymentPanel(userName, userEmail) {
+        hideAllPanels();
+        document.getElementById('paymentPanel').classList.remove('hidden');
+        document.getElementById('paymentUserName').textContent = userName;
+        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail; // Store email for form
+    }
+
     function showMainPlatform(userName) {
         hideAllPanels();
         document.getElementById('mainPlatformPanel').classList.remove('hidden');
         document.getElementById('loggedInUserName').textContent = userName;
     }
 
-    function showVerificationMessage(email) {
+    function showAdminLoginRegister() {
         hideAllPanels();
-        document.getElementById('verificationMessagePanel').classList.remove('hidden');
-        document.getElementById('verificationEmailDisplay').textContent = email;
+        document.getElementById('leaderLoginPanel').classList.remove('hidden');
+        document.getElementById('leaderRegisterPanel').classList.remove('hidden');
     }
 
     // --- User Authentication (Sign Up & Login) ---
@@ -212,9 +302,10 @@
     // Simulate user storage (for demo purposes)
     const users = JSON.parse(localStorage.getItem('users')) || {};
     const admins = JSON.parse(localStorage.getItem('admins')) || {}; // For leaders/CEO
+    const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {}; // For leader to validate
 
     document.getElementById('signUpForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
         const fullName = document.getElementById('fullName').value.trim();
         const phoneNumber = document.getElementById('phoneNumber').value.trim();
@@ -223,7 +314,7 @@
         const confirmPassword = document.getElementById('confirmPassword').value;
         const msg = document.getElementById('signUpMsg');
 
-        msg.classList.add('hidden'); // Hide previous messages
+        msg.classList.add('hidden');
 
         if (!fullName || !phoneNumber || !email || !password || !confirmPassword) {
             msg.textContent = '❌ Please fill in all fields.';
@@ -246,12 +337,12 @@
             return;
         }
 
-        // Simulate email verification by marking user as 'unverified'
         users[email] = {
             fullName: fullName,
             phoneNumber: phoneNumber,
-            password: password, // In a real app, hash this password!
-            verified: false // Set to false initially
+            password: password,
+            verified: false, // Set to false initially
+            paid: false      // Set to false initially
         };
         localStorage.setItem('users', JSON.stringify(users));
 
@@ -259,24 +350,22 @@
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
 
-        // Simulate sending verification email and then redirecting to login after "verification"
-        // In a real app, this would be a backend call to send an email with a unique link.
+        // Simulate email verification and then direct to login
         setTimeout(() => {
-            // Simulate email verification happening
-            users[email].verified = true;
+            users[email].verified = true; // Simulate verification
             localStorage.setItem('users', JSON.stringify(users));
             showVerificationMessage(email);
-        }, 1000); // Small delay to show success message before "redirecting"
+        }, 1000);
     });
 
     document.getElementById('loginForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         const msg = document.getElementById('loginMsg');
 
-        msg.classList.add('hidden'); // Hide previous messages
+        msg.classList.add('hidden');
 
         const user = users[email];
 
@@ -294,26 +383,88 @@
             return;
         }
 
-        if (user.password !== password) { // In a real app: compare hashed passwords!
+        if (user.password !== password) {
             msg.textContent = '❌ Incorrect password.';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
             return;
         }
 
-        // Successful Login for general user
+        // Successful Login - now check payment status
         localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
-        showMainPlatform(user.fullName);
+
+        if (user.paid) {
+            showMainPlatform(user.fullName);
+        } else {
+            showPaymentPanel(user.fullName, user.email);
+        }
     });
 
     function logoutUser() {
         localStorage.removeItem('currentUser');
-        showLogin(); // Go back to login page
+        showLogin();
     }
 
-    // --- Admin (Team Leader / CEO) Logic (kept from your original, slightly adapted) ---
-    // Note: This logic assumes admin roles are separate from regular users
-    // For a real system, you might integrate roles within a single user management system.
+    // --- Payment Logic ---
+    function showPaymentInstructions(value) {
+        const allDivs = ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'];
+        allDivs.forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('paymentInstructions').style.display = 'block';
+
+        if(value && allDivs.includes(value + 'Info')) {
+            document.getElementById(value + 'Info').classList.remove('hidden');
+        } else {
+            document.getElementById('paymentInstructions').style.display = 'none';
+        }
+    }
+
+    document.getElementById('paymentForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const currentUserEmail = document.getElementById('paymentPanel').dataset.currentUserEmail;
+        const msg = document.getElementById('paymentMsg');
+        msg.classList.add('hidden');
+
+        if (!paymentMethod) {
+            msg.textContent = '❌ Please select a payment method.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        // In a real app, process payment details here
+        // For Mastercard, validate card number, expiry, CVC etc.
+        // For PayPal, MonCash, NatCash, typically you'd redirect to their service or confirm details.
+
+        // Simulate payment submission (marks user for leader validation for cash, otherwise "instant")
+        if (paymentMethod === 'cash') {
+            pendingPayments[currentUserEmail] = {
+                email: currentUserEmail,
+                method: 'Cash',
+                status: 'pending_leader_validation',
+                timestamp: new Date().toLocaleString()
+            };
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+            msg.textContent = '✅ Payment method submitted. A team leader will validate your cash payment soon.';
+            msg.classList.remove('hidden', 'error-msg');
+            msg.classList.add('success-msg');
+        } else {
+            // For other methods, we'll simulate instant payment success for demo
+            const user = users[currentUserEmail];
+            if (user) {
+                user.paid = true;
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' })); // Update current user
+                msg.textContent = '✅ Payment successful! Redirecting to platform...';
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                setTimeout(() => showMainPlatform(user.fullName), 1500);
+            }
+        }
+    });
+
+
+    // --- Admin (Team Leader / CEO) Logic ---
 
     function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
@@ -353,7 +504,7 @@
     function loginLeader() {
         const email = document.getElementById('loginLeaderEmail').value.trim();
         const pass = document.getElementById('loginLeaderPass').value;
-        const msg = document.getElementById('leaderLoginMsg'); // Changed ID for clarity
+        const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
         if(!stored) {
@@ -372,18 +523,62 @@
         hideAllPanels();
         document.getElementById('leaderPanel').classList.remove('hidden');
         document.getElementById('leaderNameDisplay').textContent = stored.name;
+        loadPendingPayments(); // Load payments for leader
     }
 
     function logoutLeader() {
         localStorage.removeItem('currentAdmin');
-        showLogin(); // Redirect to main login page
+        showLogin();
     }
 
-    // CEO Specific (assuming a fixed CEO account or separate login)
+    function loadPendingPayments() {
+        const list = document.getElementById('pendingPaymentsList');
+        list.innerHTML = ''; // Clear previous list
+        let hasPending = false;
+
+        for (const email in pendingPayments) {
+            const payment = pendingPayments[email];
+            if (payment.status === 'pending_leader_validation') {
+                hasPending = true;
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    ${payment.email} (${users[email]?.fullName || 'Unknown'}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
+                    <button style="margin-left: 10px; background-color: #28a745;" onclick="validatePayment('${email}')">Validate</button>
+                    <button style="margin-left: 5px; background-color: #dc3545;" onclick="rejectPayment('${email}')">Reject</button>
+                `;
+                list.appendChild(listItem);
+            }
+        }
+
+        document.getElementById('noPendingPayments').classList.toggle('hidden', hasPending);
+    }
+
+    function validatePayment(email) {
+        if (users[email]) {
+            users[email].paid = true;
+            localStorage.setItem('users', JSON.stringify(users));
+            delete pendingPayments[email]; // Remove from pending
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+            alert(`Payment for ${email} validated! User now has full access.`);
+            loadPendingPayments(); // Refresh list
+        }
+    }
+
+    function rejectPayment(email) {
+        if (users[email]) {
+            // Optionally, you might set a status like 'payment_rejected' or remove the payment request
+            delete pendingPayments[email]; // Remove from pending
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+            alert(`Payment for ${email} rejected. User needs to resubmit.`);
+            loadPendingPayments(); // Refresh list
+        }
+    }
+
+    // CEO Specific
     function showCEOPanel() {
-        // For demo, let's say CEO email is 'ceo@dream2build.com' and password is 'admin123'
+        // For demo, assume a fixed CEO account
         const ceoEmail = 'ceo@dream2build.com';
-        const ceoPassword = 'admin123'; // NEVER hardcode passwords in real apps!
+        const ceoPassword = 'admin123';
 
         const email = prompt("Enter CEO Email:");
         const password = prompt("Enter CEO Password:");
@@ -399,7 +594,7 @@
 
     function logoutCEO() {
         localStorage.removeItem('currentAdmin');
-        showLogin(); // Redirect to main login page
+        showLogin();
     }
 
     // Rotation calculation placeholder (from your original)
@@ -419,12 +614,24 @@
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
 
         if (currentUser && currentUser.role === 'user') {
-            showMainPlatform(currentUser.name);
+            const user = users[currentUser.email];
+            if (user && user.verified) { // Ensure user is verified even if logged in
+                if (user.paid) {
+                    showMainPlatform(user.fullName);
+                } else {
+                    showPaymentPanel(user.fullName, user.email);
+                }
+            } else {
+                // If somehow current user is not verified, send them back to login/signup
+                localStorage.removeItem('currentUser');
+                showLogin();
+            }
         } else if (currentAdmin) {
             if (currentAdmin.role === 'leader') {
                 hideAllPanels();
                 document.getElementById('leaderPanel').classList.remove('hidden');
                 document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
+                loadPendingPayments();
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
@@ -432,32 +639,6 @@
         } else {
             showSignUp(); // Default to sign-up page
         }
-
-        // For demo, you can add a way to access admin login directly
-        // For example, an invisible link or a special key combination for testing.
-        // For now, let's add a button to reveal admin login/register.
-        const adminAccessButton = document.createElement('button');
-        adminAccessButton.textContent = 'Admin / Leader Access';
-        adminAccessButton.style.marginTop = '20px';
-        adminAccessButton.style.display = 'block';
-        adminAccessButton.style.marginLeft = 'auto';
-        adminAccessButton.style.marginRight = 'auto';
-        adminAccessButton.onclick = function() {
-            hideAllPanels();
-            document.getElementById('leaderLoginPanel').classList.remove('hidden');
-            document.getElementById('leaderRegisterPanel').classList.remove('hidden');
-             // Add a CEO login button here too for convenience
-            const ceoLoginBtn = document.createElement('button');
-            ceoLoginBtn.textContent = 'Login as CEO';
-            ceoLoginBtn.style.marginTop = '10px';
-            ceoLoginBtn.style.backgroundColor = '#6c757d'; // Gray color
-            ceoLoginBtn.onclick = showCEOPanel;
-            if (!document.getElementById('leaderLoginPanel').querySelector('#ceoLoginBtn')) {
-                document.getElementById('leaderLoginPanel').appendChild(ceoLoginBtn);
-                ceoLoginBtn.id = 'ceoLoginBtn'; // Assign an ID to prevent duplicates
-            }
-        };
-        document.body.appendChild(adminAccessButton);
     };
 </script>
 
