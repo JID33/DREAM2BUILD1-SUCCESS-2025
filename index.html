@@ -199,8 +199,24 @@
 
     <button onclick="loginLeader()">Login</button>
     <p id="leaderLoginMsg"></p>
-    <button style="background-color: #6c757d; margin-top: 10px;" onclick="showCEOPanel()">Login as CEO</button>
+    <button style="background-color: #6c757d; margin-top: 10px;" onclick="showCEOLogin()">Login as CEO</button>
 </div>
+
+<div class="form-section hidden" id="ceoLoginPanel">
+    <h2>👑 CEO Login</h2>
+    <form id="ceoLoginForm">
+        <label for="ceoLoginEmail">Email:</label>
+        <input type="email" id="ceoLoginEmail" name="ceoLoginEmail" placeholder="Enter CEO email" required>
+
+        <label for="ceoLoginPassword">Password:</label>
+        <input type="password" id="ceoLoginPassword" name="ceoLoginPassword" placeholder="Enter CEO password" required>
+
+        <button type="submit">Log In as CEO</button>
+        <p id="ceoLoginMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showAdminLoginRegister()">Back to Admin/Leader Login</a></p>
+</div>
+
 
 <div id="leaderPanel" class="panel hidden">
     <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
@@ -254,10 +270,11 @@
         document.getElementById('signUpPanel').classList.add('hidden');
         document.getElementById('loginPanel').classList.add('hidden');
         document.getElementById('verificationMessagePanel').classList.add('hidden');
-        document.getElementById('paymentPanel').classList.add('hidden'); // New payment panel
+        document.getElementById('paymentPanel').classList.add('hidden');
         document.getElementById('mainPlatformPanel').classList.add('hidden');
         document.getElementById('leaderRegisterPanel').classList.add('hidden');
         document.getElementById('leaderLoginPanel').classList.add('hidden');
+        document.getElementById('ceoLoginPanel').classList.add('hidden'); // New CEO login panel
         document.getElementById('leaderPanel').classList.add('hidden');
         document.getElementById('ceoPanel').classList.add('hidden');
     }
@@ -297,12 +314,17 @@
         document.getElementById('leaderRegisterPanel').classList.remove('hidden');
     }
 
+    function showCEOLogin() {
+        hideAllPanels();
+        document.getElementById('ceoLoginPanel').classList.remove('hidden');
+    }
+
     // --- User Authentication (Sign Up & Login) ---
 
     // Simulate user storage (for demo purposes)
     const users = JSON.parse(localStorage.getItem('users')) || {};
-    const admins = JSON.parse(localStorage.getItem('admins')) || {}; // For leaders/CEO
-    const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {}; // For leader to validate
+    let admins = JSON.parse(localStorage.getItem('admins')) || {}; // Use `let` so we can reassign if default CEO is added
+    const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
 
     document.getElementById('signUpForm').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -341,8 +363,8 @@
             fullName: fullName,
             phoneNumber: phoneNumber,
             password: password,
-            verified: false, // Set to false initially
-            paid: false      // Set to false initially
+            verified: false,
+            paid: false
         };
         localStorage.setItem('users', JSON.stringify(users));
 
@@ -350,9 +372,8 @@
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
 
-        // Simulate email verification and then direct to login
         setTimeout(() => {
-            users[email].verified = true; // Simulate verification
+            users[email].verified = true;
             localStorage.setItem('users', JSON.stringify(users));
             showVerificationMessage(email);
         }, 1000);
@@ -390,7 +411,6 @@
             return;
         }
 
-        // Successful Login - now check payment status
         localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
 
         if (user.paid) {
@@ -432,11 +452,6 @@
             return;
         }
 
-        // In a real app, process payment details here
-        // For Mastercard, validate card number, expiry, CVC etc.
-        // For PayPal, MonCash, NatCash, typically you'd redirect to their service or confirm details.
-
-        // Simulate payment submission (marks user for leader validation for cash, otherwise "instant")
         if (paymentMethod === 'cash') {
             pendingPayments[currentUserEmail] = {
                 email: currentUserEmail,
@@ -449,12 +464,11 @@
             msg.classList.remove('hidden', 'error-msg');
             msg.classList.add('success-msg');
         } else {
-            // For other methods, we'll simulate instant payment success for demo
             const user = users[currentUserEmail];
             if (user) {
                 user.paid = true;
                 localStorage.setItem('users', JSON.stringify(users));
-                localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' })); // Update current user
+                localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
                 msg.textContent = '✅ Payment successful! Redirecting to platform...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
@@ -507,7 +521,7 @@
         const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
-        if(!stored) {
+        if(!stored || stored.role !== 'leader') { // Ensure it's a leader role
             msg.textContent = '❌ No leader account found with this email.';
             msg.className = 'error-msg';
             return;
@@ -523,7 +537,7 @@
         hideAllPanels();
         document.getElementById('leaderPanel').classList.remove('hidden');
         document.getElementById('leaderNameDisplay').textContent = stored.name;
-        loadPendingPayments(); // Load payments for leader
+        loadPendingPayments();
     }
 
     function logoutLeader() {
@@ -533,7 +547,7 @@
 
     function loadPendingPayments() {
         const list = document.getElementById('pendingPaymentsList');
-        list.innerHTML = ''; // Clear previous list
+        list.innerHTML = '';
         let hasPending = false;
 
         for (const email in pendingPayments) {
@@ -557,40 +571,53 @@
         if (users[email]) {
             users[email].paid = true;
             localStorage.setItem('users', JSON.stringify(users));
-            delete pendingPayments[email]; // Remove from pending
+            delete pendingPayments[email];
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
             alert(`Payment for ${email} validated! User now has full access.`);
-            loadPendingPayments(); // Refresh list
+            loadPendingPayments();
         }
     }
 
     function rejectPayment(email) {
         if (users[email]) {
-            // Optionally, you might set a status like 'payment_rejected' or remove the payment request
-            delete pendingPayments[email]; // Remove from pending
+            delete pendingPayments[email];
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
             alert(`Payment for ${email} rejected. User needs to resubmit.`);
-            loadPendingPayments(); // Refresh list
+            loadPendingPayments();
         }
     }
 
-    // CEO Specific
-    function showCEOPanel() {
-        // For demo, assume a fixed CEO account
-        const ceoEmail = 'ceo@dream2build.com';
-        const ceoPassword = 'admin123';
+    // CEO Login Logic
+    document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const email = document.getElementById('ceoLoginEmail').value.trim();
+        const password = document.getElementById('ceoLoginPassword').value;
+        const msg = document.getElementById('ceoLoginMsg');
+        msg.classList.add('hidden');
 
-        const email = prompt("Enter CEO Email:");
-        const password = prompt("Enter CEO Password:");
+        const ceoAccount = admins[email];
 
-        if (email === ceoEmail && password === ceoPassword) {
-            localStorage.setItem('currentAdmin', JSON.stringify({ email: ceoEmail, name: 'CEO', role: 'ceo' }));
-            hideAllPanels();
-            document.getElementById('ceoPanel').classList.remove('hidden');
-        } else {
-            alert("Invalid CEO credentials.");
+        if (!ceoAccount || ceoAccount.role !== 'ceo') {
+            msg.textContent = '❌ No CEO account found with this email.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
         }
-    }
+
+        if (ceoAccount.password !== password) {
+            msg.textContent = '❌ Incorrect password.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        localStorage.setItem('currentAdmin', JSON.stringify({ email: ceoAccount.email, name: ceoAccount.name, role: ceoAccount.role }));
+        hideAllPanels();
+        document.getElementById('ceoPanel').classList.remove('hidden');
+        msg.textContent = ''; // Clear message on success
+        document.getElementById('ceoLoginEmail').value = ''; // Clear inputs
+        document.getElementById('ceoLoginPassword').value = '';
+    });
 
     function logoutCEO() {
         localStorage.removeItem('currentAdmin');
@@ -610,19 +637,25 @@
 
     // --- Initial Load Logic ---
     window.onload = function() {
+        // Ensure a default CEO account exists for demo purposes
+        if (!admins['ceo@dream2build.com'] || admins['ceo@dream2build.com'].role !== 'ceo') {
+            admins['ceo@dream2build.com'] = { name: 'CEO Admin', email: 'ceo@dream2build.com', password: 'admin123', role: 'ceo' };
+            localStorage.setItem('admins', JSON.stringify(admins));
+            console.log("Default CEO account created: ceo@dream2build.com / admin123");
+        }
+
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
 
         if (currentUser && currentUser.role === 'user') {
             const user = users[currentUser.email];
-            if (user && user.verified) { // Ensure user is verified even if logged in
+            if (user && user.verified) {
                 if (user.paid) {
                     showMainPlatform(user.fullName);
                 } else {
                     showPaymentPanel(user.fullName, user.email);
                 }
             } else {
-                // If somehow current user is not verified, send them back to login/signup
                 localStorage.removeItem('currentUser');
                 showLogin();
             }
@@ -637,7 +670,7 @@
                 document.getElementById('ceoPanel').classList.remove('hidden');
             }
         } else {
-            showSignUp(); // Default to sign-up page
+            showSignUp();
         }
     };
 </script>
