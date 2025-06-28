@@ -449,4 +449,258 @@
         history = [];
         currentDay = 1;
         cooperativeRotationFund = 0;
-        totalParticipantsCo
+        totalParticipantsCount = 0; 
+        dailyInvestment = 0; 
+        beneficiaryShare = 0; 
+        untouchableAmount = 0; 
+    }
+
+
+    // --- Authentication Functions ---
+    function sendOTPByWhatsApp(code) {
+        const phone = "+50943260012";
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Your+OTP+code+is+${code}&apikey=3854603`;
+        fetch(url).then(() => {
+            console.log("WhatsApp OTP sent");
+        }).catch(e => {
+            showModal("WhatsApp Error: " + e.message, "alert");
+        });
+    }
+
+    function checkAdminStep1() {
+        const pass = document.getElementById("adminPass").value;
+        if (pass === "d2b1admin") {
+            otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById("authCard").style.display = "none";
+            document.getElementById("codeCard").style.display = "block";
+            sendOTPByWhatsApp(otpCode);
+        } else {
+            showModal("Incorrect password", "alert");
+        }
+    }
+
+    function toggleVisibility(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function checkAdminStep2() {
+        const code = document.getElementById("code2FA").value.trim();
+        if (code === otpCode) {
+            document.getElementById("codeCard").style.display = "none";
+            document.getElementById("mainCard").style.display = "block";
+            document.getElementById("superviseurContainer").style.display = "block";
+            // Ensure all displays are updated upon successful login
+            updateParticipantsList();
+            updateHistoryTable();
+            updateStatsDisplay();
+            calculateAdminHypotheticalFinance();
+        } else {
+            showModal("Invalid verification code", "alert");
+        }
+    }
+
+    // --- Financial Calculation Logic ---
+    function calculateDailyFinance() {
+        const actualTotalParticipants = participants.length; 
+
+        let participantsForInvestmentCalculation = actualTotalParticipants;
+
+        // Rule: For the first 4 days, investment is calculated based on a maximum of 10 participants.
+        if (currentDay <= 4) {
+            participantsForInvestmentCalculation = Math.min(actualTotalParticipants, 10);
+        }
+        
+        // Update global totalParticipantsCount to reflect the number used for investment calculation
+        totalParticipantsCount = participantsForInvestmentCalculation;
+
+        dailyInvestment = participantsForInvestmentCalculation * 10; 
+
+        let amountForCalculation = dailyInvestment; 
+
+        // Add the cooperative rotation fund to the main calculation pool
+        amountForCalculation += cooperativeRotationFund;
+
+        // Rule: +10 is specific to Day 5 and onwards, and if there are participants
+        if (currentDay >= 5 && totalParticipantsCount > 0) { 
+            amountForCalculation += 10; // Fixed $10 added only from Day 5+
+            // "net 1/3 without the decimal" of the previous day's untouchable amount
+            if (history.length > 0) { // Check if there's a previous day's history
+                const previousDayUntouchable = history[history.length - 1].untouchableAmount;
+                const untouchableCarryOver = Math.floor(previousDayUntouchable / 3); // Take only the integer part
+                amountForCalculation += untouchableCarryOver; 
+            }
+        }
+
+        // Apply the deduction and distribution logic (reverting to older model)
+        const initialDeductionAmount = amountForCalculation / 3; // Exactly 1/3 of the total amount
+        
+        untouchableAmount = initialDeductionAmount * 0.10; // 10% of the initial 1/3 deduction
+        
+        // The beneficiary share gets the remainder after initial deduction + 30% of that deduction
+        beneficiaryShare = (amountForCalculation - initialDeductionAmount) + (initialDeductionAmount * 0.30);
+
+        // Ensure untouchable amount doesn't go negative
+        if (untouchableAmount < 0) { 
+            untouchableAmount = 0;
+        }
+
+        updateStatsDisplay();
+    }
+
+    function calculateHypotheticalFinance(numParticipants, day = currentDay) {
+        let hypotheticalParticipantsForInvestment = numParticipants;
+
+        // Rule: For the first 4 days, hypothetical investment is calculated based on a maximum of 10 participants.
+        if (day <= 4) {
+            hypotheticalParticipantsForInvestment = Math.min(numParticipants, 10);
+        }
+
+        let hypotheticalDailyInvestmentFromParticipants = hypotheticalParticipantsForInvestment * 10;
+        let hypotheticalAmountForCalculation = hypotheticalDailyInvestmentFromParticipants;
+
+        hypotheticalAmountForCalculation += cooperativeRotationFund;
+
+        // Rule: +10 is specific to Day 5 and onwards, and if there are participants
+        if (day >= 5 && numParticipants > 0) {
+            hypotheticalAmountForCalculation += 10; // Fixed $10 added only from Day 5+
+            // For hypothetical calculation, if history exists, use the last untouchable amount with Math.floor
+            if (history.length > 0) {
+                const previousDayUntouchable = history[history.length - 1].untouchableAmount;
+                const untouchableCarryOver = Math.floor(previousDayUntouchable / 3); // Take only the integer part
+                hypotheticalAmountForCalculation += untouchableCarryOver;
+            }
+        }
+
+        // Apply the deduction and distribution logic (reverting to older model)
+        const hypotheticalInitialDeduction = hypotheticalAmountForCalculation / 3;
+        
+        let hypotheticalUntouchableAmount = hypotheticalInitialDeduction * 0.10;
+        
+        // The beneficiary share gets the remainder after initial deduction + 30% of that deduction
+        let hypotheticalBeneficiaryShare = (hypotheticalAmountForCalculation - hypotheticalInitialDeduction) + (hypotheticalInitialDeduction * 0.30);
+
+        if (hypotheticalUntouchableAmount < 0) {
+            hypotheticalUntouchableAmount = 0;
+        }
+
+        return {
+            dailyInvestment: hypotheticalDailyInvestmentFromParticipants, 
+            beneficiaryShare: hypotheticalBeneficiaryShare,
+            untouchableAmount: hypotheticalUntouchableAmount
+        };
+    }
+
+    function updateStatsDisplay() {
+        const statsDiv = document.getElementById("stats");
+        statsDiv.innerHTML = `
+            <h4>Day ${currentDay} Statistics:</h4>
+            <p><strong>Participants:</strong> ${totalParticipantsCount}</p>
+            <p><strong>Investment:</strong> $${dailyInvestment.toFixed(2)}</p>
+            <p><strong>Beneficiary Share:</strong> $${beneficiaryShare.toFixed(2)}</p>
+            <p><strong>Untouchable Amount:</strong> $${untouchableAmount.toFixed(2)}</p>
+            <p><strong>Accumulated Cooperative Rotation Fund:</strong> $${cooperativeRotationFund.toFixed(2)}</p>
+        `;
+    }
+
+    function calculateAdminHypotheticalFinance() {
+        const numParticipantsInput = document.getElementById("calculatorParticipants");
+        const numParticipants = parseInt(numParticipantsInput.value) || 0;
+
+        const results = calculateHypotheticalFinance(numParticipants, currentDay);
+
+        const resultsDiv = document.getElementById("calculatorResults");
+        resultsDiv.innerHTML = `
+            <p><strong>Hypothetical Investment:</strong> $${results.dailyInvestment.toFixed(2)}</p>
+            <p><strong>Hypothetical Beneficiary Share:</strong> $${results.beneficiaryShare.toFixed(2)}</p>
+            <p><strong>Hypothetical Untouchable Amount:</strong> $${results.untouchableAmount.toFixed(2)}</p>
+        `;
+    }
+
+    function calculateIndividualEarnings(investment) {
+        if (investment < 0) return 0;
+
+        // Apply the 1/3 deduction for an individual investment
+        const individualDeduction = investment / 3;
+        
+        // Add 30% of that deduction back to the personal share
+        let personalShare = (investment - individualDeduction) + (individualDeduction * 0.30);
+
+        return personalShare;
+    }
+
+    // --- Participant and History Management ---
+    async function addParticipant() {
+        const nameInput = document.getElementById("participantName");
+        const participantName = nameInput.value.trim();
+
+        if (participantName) {
+            participants.push({ name: participantName, paid: false });
+            nameInput.value = "";
+            updateParticipantsList();
+            calculateDailyFinance(); 
+            await saveAppState(); 
+        } else {
+            showModal("Please enter a participant name.", "alert");
+        }
+    }
+
+    function updateParticipantsList() {
+        const listDiv = document.getElementById("participantsList");
+        listDiv.innerHTML = "<h4>Participants Today:</h4>";
+        if (participants.length === 0) {
+            listDiv.innerHTML += "<p>No participants added yet.</p>";
+            return;
+        }
+        const ul = document.createElement("ul");
+        participants.forEach((p) => {
+            const li = document.createElement("li");
+            li.textContent = `${p.name} - ${p.paid ? "Paid" : "Unpaid"}`;
+            ul.appendChild(li);
+        });
+        listDiv.appendChild(ul);
+    }
+
+    async function validatePayments() {
+        if (participants.length === 0) {
+            showModal("No participants to validate.", "alert");
+            return;
+        }
+        participants.forEach(p => p.paid = true);
+        updateParticipantsList();
+        showModal("Payments validated for all current participants.", "alert");
+        await saveAppState(); 
+    }
+
+    async function nextDay() {
+        const fundAtEndOfPreviousDay = cooperativeRotationFund;
+
+        history.push({
+            day: currentDay,
+            totalParticipants: totalParticipantsCount, 
+            dailyInvestment: dailyInvestment, // Renamed in history
+            beneficiaryShare: beneficiaryShare,
+            untouchableAmount: untouchableAmount,
+            cooperativeFundAtDayEnd: fundAtEndOfPreviousDay + untouchableAmount 
+        });
+
+        cooperativeRotationFund += untouchableAmount;
+
+        currentDay++;
+        participants = []; 
+        
+        calculateDailyFinance(); 
+
+        updateParticipantsList();
+        updateHistoryTable();
+        updateStatsDisplay();
+        calculateAdminHypotheticalFinance();
+        showModal(`Proceeding to Day ${currentDay}. Participants have been reset. The accumulated cooperative rotation fund is now $${cooperativeRotationFund.toFixed(2)}.`, "alert");
+        await saveAppState(); 
+    }
+
+    function updateHistoryTable() {
+        const historyDiv = document.getElementById("historyTable");
+        historyDiv.innerHTML = "<h4>Previous Days History:</h4>";
+        if (history.length === 0) {
+            historyDiv.innerHTML += "<p>No history ava
