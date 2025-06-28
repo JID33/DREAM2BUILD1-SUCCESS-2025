@@ -507,7 +507,7 @@
         event.preventDefault();
 
         const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword'].value;
+        const password = document.getElementById('loginPassword').value; // Corrected: Used .value instead of ].value
         const msg = document.getElementById('loginMsg');
 
         msg.classList.add('hidden');
@@ -618,8 +618,8 @@
     function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
         const email = document.getElementById('leaderEmailReg').value.trim();
-        const pass1 = document.getElementById('leaderPass1'].value;
-        const pass2 = document.getElementById('leaderPass2'].value;
+        const pass1 = document.getElementById('leaderPass1').value; // Corrected
+        const pass2 = document.getElementById('leaderPass2').value; // Corrected
         const msg = document.getElementById('leaderRegisterMsg');
 
         if(!name || !email || !pass1 || !pass2) {
@@ -646,13 +646,13 @@
 
         document.getElementById('leaderName').value = '';
         document.getElementById('leaderEmailReg').value = '';
-        document.getElementById('leaderPass1'].value = '';
-        document.getElementById('leaderPass2'].value = '';
+        document.getElementById('leaderPass1').value = '';
+        document.getElementById('leaderPass2').value = '';
     }
 
     function loginLeader() {
         const email = document.getElementById('loginLeaderEmail').value.trim();
-        const pass = document.getElementById('loginLeaderPass'].value;
+        const pass = document.getElementById('loginLeaderPass').value; // Corrected
         const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
@@ -733,7 +733,7 @@
     document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const email = document.getElementById('ceoLoginEmail').value.trim();
-        const password = document.getElementById('ceoLoginPassword'].value;
+        const password = document.getElementById('ceoLoginPassword').value; // Corrected
         const msg = document.getElementById('ceoLoginMsg');
         msg.classList.add('hidden');
 
@@ -757,8 +757,8 @@
         hideAllPanels();
         document.getElementById('ceoPanel').classList.remove('hidden');
         msg.textContent = '';
-        document.getElementById('ceoLoginEmail'].value = '';
-        document.getElementById('ceoLoginPassword'].value = '';
+        document.getElementById('ceoLoginEmail').value = '';
+        document.getElementById('ceoLoginPassword').value = '';
         displayRotationHistory(); // Call this on CEO login
     });
 
@@ -777,7 +777,7 @@
 
     function saveRotationSettings() {
         const invest = parseFloat(document.getElementById('dailyInvest').value);
-        const gain = parseFloat(document.getElementById('dailyGain'].value);
+        const gain = parseFloat(document.getElementById('dailyGain').value);
         const msg = document.getElementById('rotationSettingsMsg');
         msg.classList.add('hidden');
 
