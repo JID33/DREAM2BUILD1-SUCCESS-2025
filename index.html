@@ -194,7 +194,8 @@
         <p id="loginMsg" class="hidden"></p>
     </form>
     <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showSignUp()">Sign Up here</a></p>
-    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showContactAdmin()">Contact Support</a></p> <p style="text-align: center; margin-top: 20px;">
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showContactAdmin()">Contact Support</a></p>
+    <p style="text-align: center; margin-top: 20px;">
         <button style="background-color: #6c757d;" onclick="showAdminLoginRegister()">Admin / Leader Access</button>
     </p>
 </div>
@@ -432,7 +433,7 @@
         document.getElementById('ceoLoginPanel').classList.add('hidden');
         document.getElementById('leaderPanel').classList.add('hidden');
         document.getElementById('ceoPanel').classList.add('hidden');
-        document.getElementById('contactAdminPanel').classList.add('hidden'); // NEW
+        document.getElementById('contactAdminPanel').classList.add('hidden');
     }
 
     function showSignUp() {
@@ -475,7 +476,6 @@
         document.getElementById('ceoLoginPanel').classList.remove('hidden');
     }
 
-    // NEW: Function to show Contact Admin panel
     function showContactAdmin() {
         hideAllPanels();
         document.getElementById('contactAdminPanel').classList.remove('hidden');
@@ -485,7 +485,7 @@
     const users = JSON.parse(localStorage.getItem('users')) || {};
     let admins = JSON.parse(localStorage.getItem('admins')) || {};
     const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
-    let adminMessages = JSON.parse(localStorage.getItem('adminMessages')) || {}; // NEW: Storage for user messages
+    let adminMessages = JSON.parse(localStorage.getItem('adminMessages')) || {};
 
     let rotationSettings = JSON.parse(localStorage.getItem('rotationSettings')) || {
         invest: 100,
@@ -540,16 +540,13 @@
         };
         localStorage.setItem('users', JSON.stringify(users));
 
-        // Adjusted message to reflect simulation
         msg.textContent = '✅ Sign up successful! Your account is automatically verified for this demo. Please proceed to login.';
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
 
-        // Simulate immediate verification for demo purposes
         setTimeout(() => {
             users[email].verified = true;
             localStorage.setItem('users', JSON.stringify(users));
-            // Show verification panel briefly, then direct to login
             showVerificationMessage(email);
         }, 1000);
     });
@@ -662,7 +659,7 @@
     });
 
 
-    // --- User Message System (NEW) ---
+    // --- User Message System ---
     document.getElementById('contactAdminForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -680,14 +677,14 @@
             return;
         }
 
-        const messageId = Date.now().toString() + Math.random().toString(36).substr(2, 5); // Simple unique ID
+        const messageId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
         adminMessages[messageId] = {
             id: messageId,
             fromEmail: email,
             subject: subject,
             message: messageText,
             timestamp: new Date().toLocaleString(),
-            status: 'unread' // 'unread', 'read'
+            status: 'unread'
         };
         localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
 
@@ -695,7 +692,6 @@
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
 
-        // Clear form
         document.getElementById('contactEmail').value = '';
         document.getElementById('contactSubject').value = '';
         document.getElementById('contactMessage').value = '';
@@ -771,7 +767,7 @@
         loadRotationSettings();
         loadAvailableMembersForRotation();
         displayRotationParticipants();
-        loadUserMessages(); // NEW: Load user messages on leader login
+        loadUserMessages();
     }
 
     function logoutLeader() {
@@ -812,9 +808,19 @@
             delete pendingPayments[email];
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
 
-            alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
+            // --- NEW LOGIC: Automatically add validated user to active rotation if not already there ---
+            if (!activeRotationMembers.includes(email)) {
+                activeRotationMembers.push(email);
+                localStorage.setItem('activeRotationMembers', JSON.stringify(activeRotationMembers));
+                alert(`Payment for ${users[email].fullName} (${email}) validated! User has been added to rotation and now has full access.`);
+            } else {
+                alert(`Payment for ${users[email].fullName} (${email}) validated! User already in rotation. User now has full access.`);
+            }
+            // --- END NEW LOGIC ---
+
             loadPendingPayments();
-            loadAvailableMembersForRotation();
+            loadAvailableMembersForRotation(); // This will refresh the dropdown (the user just added should no longer be in it)
+            displayRotationParticipants(); // This will update the list of participants shown on the dashboard
         } else {
             alert(`Error: User with email ${email} not found.`);
         }
@@ -829,14 +835,12 @@
         }
     }
 
-    // NEW: Functions for User Messages (Leader Dashboard)
     function loadUserMessages() {
         const list = document.getElementById('userMessagesList');
         list.innerHTML = '';
         let unreadCount = 0;
         let hasMessages = false;
 
-        // Convert object to array for sorting by timestamp (most recent first)
         const messagesArray = Object.values(adminMessages).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         messagesArray.forEach(message => {
@@ -845,7 +849,7 @@
                 unreadCount++;
             }
             const listItem = document.createElement('li');
-            listItem.classList.toggle('unread', message.status === 'unread'); // Add 'unread' class for styling
+            listItem.classList.toggle('unread', message.status === 'unread');
             listItem.innerHTML = `
                 <strong>From:</strong> ${message.fromEmail}<br>
                 <strong>Subject:</strong> ${message.subject}<br>
@@ -865,7 +869,7 @@
         if (adminMessages[messageId]) {
             adminMessages[messageId].status = 'read';
             localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
-            loadUserMessages(); // Refresh the list
+            loadUserMessages();
         }
     }
 
@@ -873,7 +877,7 @@
         if (confirm('Are you sure you want to delete this message?')) {
             delete adminMessages[messageId];
             localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
-            loadUserMessages(); // Refresh the list
+            loadUserMessages();
         }
     }
 
@@ -908,7 +912,7 @@
         msg.textContent = '';
         document.getElementById('ceoLoginEmail').value = '';
         document.getElementById('ceoLoginPassword').value = '';
-        displayRotationHistory(); // Call this on CEO login
+        displayRotationHistory();
     });
 
     function logoutCEO() {
@@ -952,7 +956,6 @@
 
         for (const email in users) {
             const user = users[email];
-            // Only add verified and paid users who are NOT ALREADY in the active rotation
             if (user.verified && user.paid && !activeRotationMembers.includes(email)) {
                 const option = document.createElement('option');
                 option.value = email;
@@ -960,7 +963,6 @@
                 select.appendChild(option);
             }
         }
-        // If no members, ensure the "No participants in rotation" message is visible if not hidden by other means
         document.getElementById('noActiveParticipants').classList.toggle('hidden', select.options.length > 1 || activeRotationMembers.length > 0);
     }
 
@@ -992,8 +994,8 @@
         msg.classList.add('success-msg');
         setTimeout(() => msg.classList.add('hidden'), 2000);
 
-        loadAvailableMembersForRotation(); // Refresh the dropdown
-        displayRotationParticipants(); // Refresh the list of active participants
+        loadAvailableMembersForRotation();
+        displayRotationParticipants();
     }
 
     function displayRotationParticipants() {
@@ -1128,7 +1130,7 @@
                 loadRotationSettings();
                 loadAvailableMembersForRotation();
                 displayRotationParticipants();
-                loadUserMessages(); // IMPORTANT: Load user messages when leader logs in
+                loadUserMessages();
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
