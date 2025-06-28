@@ -507,7 +507,7 @@
         event.preventDefault();
 
         const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value; // Corrected: Used .value instead of ].value
+        const password = document.getElementById('loginPassword').value;
         const msg = document.getElementById('loginMsg');
 
         msg.classList.add('hidden');
@@ -576,10 +576,15 @@
             return;
         }
 
+        // --- IMPORTANT FIX HERE: Ensure cash payment properly stores user details ---
         if (paymentMethod === 'cash') {
             if (!pendingPayments[currentUserEmail]) {
+                // Get user's full name from the 'users' object
+                const userName = users[currentUserEmail] ? users[currentUserEmail].fullName : 'Unknown User';
+
                 pendingPayments[currentUserEmail] = {
                     email: currentUserEmail,
+                    name: userName, // Store user's name for display in leader panel
                     method: 'Cash',
                     status: 'pending_leader_validation',
                     timestamp: new Date().toLocaleString()
@@ -618,8 +623,8 @@
     function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
         const email = document.getElementById('leaderEmailReg').value.trim();
-        const pass1 = document.getElementById('leaderPass1').value; // Corrected
-        const pass2 = document.getElementById('leaderPass2').value; // Corrected
+        const pass1 = document.getElementById('leaderPass1').value;
+        const pass2 = document.getElementById('leaderPass2').value;
         const msg = document.getElementById('leaderRegisterMsg');
 
         if(!name || !email || !pass1 || !pass2) {
@@ -652,7 +657,7 @@
 
     function loginLeader() {
         const email = document.getElementById('loginLeaderEmail').value.trim();
-        const pass = document.getElementById('loginLeaderPass').value; // Corrected
+        const pass = document.getElementById('loginLeaderPass').value;
         const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
@@ -692,10 +697,11 @@
             const payment = pendingPayments[email];
             if (payment.status === 'pending_leader_validation') {
                 hasPending = true;
-                const userFullName = users[email]?.fullName || 'Unknown User';
+                // --- FIX HERE: Use payment.name (stored during cash submission) or fallback to users[email]?.fullName ---
+                const userDisplayName = payment.name || users[email]?.fullName || 'Unknown User';
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    <strong>${userFullName}</strong> (${payment.email}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
+                    <strong>${userDisplayName}</strong> (${payment.email}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
                     <div>
                         <button style="background-color: #28a745;" onclick="validatePayment('${email}')">Validate</button>
                         <button style="background-color: #dc3545; margin-left: 5px;" onclick="rejectPayment('${email}')">Reject</button>
@@ -710,13 +716,17 @@
 
     function validatePayment(email) {
         if (users[email]) {
-            users[email].paid = true;
-            localStorage.setItem('users', JSON.stringify(users));
-            delete pendingPayments[email];
-            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+            users[email].paid = true; // Mark user as paid
+            localStorage.setItem('users', JSON.stringify(users)); // Save updated user status
+
+            delete pendingPayments[email]; // Remove from pending
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments)); // Save updated pending list
+
             alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
-            loadPendingPayments();
-            loadAvailableMembersForRotation();
+            loadPendingPayments(); // Refresh pending list
+            loadAvailableMembersForRotation(); // Refresh available members for rotation
+        } else {
+            alert(`Error: User with email ${email} not found.`);
         }
     }
 
@@ -733,7 +743,7 @@
     document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const email = document.getElementById('ceoLoginEmail').value.trim();
-        const password = document.getElementById('ceoLoginPassword').value; // Corrected
+        const password = document.getElementById('ceoLoginPassword').value;
         const msg = document.getElementById('ceoLoginMsg');
         msg.classList.add('hidden');
 
@@ -810,6 +820,8 @@
                 select.appendChild(option);
             }
         }
+        // If no members, ensure the "No participants in rotation" message is visible if not hidden by other means
+        document.getElementById('noActiveParticipants').classList.toggle('hidden', select.options.length > 1 || activeRotationMembers.length > 0);
     }
 
     function addParticipantToRotation() {
@@ -840,8 +852,8 @@
         msg.classList.add('success-msg');
         setTimeout(() => msg.classList.add('hidden'), 2000);
 
-        loadAvailableMembersForRotation();
-        displayRotationParticipants();
+        loadAvailableMembersForRotation(); // Refresh the dropdown
+        displayRotationParticipants(); // Refresh the list of active participants
     }
 
     function displayRotationParticipants() {
