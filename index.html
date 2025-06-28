@@ -113,6 +113,31 @@
             padding: 2px 5px;
             border-radius: 3px;
         }
+        /* CEO Rotation History Table */
+        #ceoRotationHistoryTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #ceoRotationHistoryTable th,
+        #ceoRotationHistoryTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #ceoRotationHistoryTable th {
+            background-color: #007BFF;
+            color: white;
+        }
+        #ceoRotationHistoryTable tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #noRotationHistory {
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -329,36 +354,29 @@
 <div id="ceoPanel" class="panel hidden">
     <h2>👑 CEO Dashboard</h2>
     <p>Welcome, CEO!</p>
-    <button onclick="calculRotation()">Show Today's Rotation</button>
-    <button onclick="nextRotation()">➡️ Next Day</button>
-    <div id="rotationResult" class="rotation-box hidden"></div>
-
-    <h3>📋 25-day History:</h3>
-    <table id="historyTable">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Member</th>
-                <th>Total ($)</th>
-                <th>Reserve</th>
-                <th>Withheld (10%)</th>
-                <th>To Receive</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td>Emmanuel Jean</td>
-                <td>100.00</td>
-                <td>33.33</td>
-                <td>3.33</td>
-                <td>66.67</td>
-            </tr>
-            </tbody>
-    </table>
     <div class="logout-btn">
         <button onclick="logoutCEO()">Logout CEO</button>
     </div>
+
+    <hr>
+    <h3>📈 Rotation History (Last 25 Days):</h3>
+    <table id="ceoRotationHistoryTable">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Recipient</th>
+                <th>Invest ($)</th>
+                <th>Gain ($)</th>
+                <th>Date/Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+    <p id="noRotationHistory" class="hidden">No rotation history available yet.</p>
+
+    <button style="margin-top: 20px;" onclick="calculRotation()">Generate Comprehensive Report (Future Feature)</button>
+    <p id="ceoReportMsg" class="hidden" style="margin-top: 10px;"></p>
 </div>
 
 <script>
@@ -425,10 +443,10 @@
         invest: 100,
         gain: 1000,
         currentDay: 0,
-        lastPaidMemberIndex: -1 // To track who was last paid
+        lastPaidMemberIndex: -1
     };
     let activeRotationMembers = JSON.parse(localStorage.getItem('activeRotationMembers')) || [];
-    let rotationHistory = JSON.parse(localStorage.getItem('rotationHistory')) || []; // For tracking past rotations
+    let rotationHistory = JSON.parse(localStorage.getItem('rotationHistory')) || [];
 
     // --- User Authentication (Sign Up & Login) ---
 
@@ -489,7 +507,7 @@
         event.preventDefault();
 
         const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
+        const password = document.getElementById('loginPassword'].value;
         const msg = document.getElementById('loginMsg');
 
         msg.classList.add('hidden');
@@ -600,8 +618,8 @@
     function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
         const email = document.getElementById('leaderEmailReg').value.trim();
-        const pass1 = document.getElementById('leaderPass1').value;
-        const pass2 = document.getElementById('leaderPass2').value;
+        const pass1 = document.getElementById('leaderPass1'].value;
+        const pass2 = document.getElementById('leaderPass2'].value;
         const msg = document.getElementById('leaderRegisterMsg');
 
         if(!name || !email || !pass1 || !pass2) {
@@ -628,13 +646,13 @@
 
         document.getElementById('leaderName').value = '';
         document.getElementById('leaderEmailReg').value = '';
-        document.getElementById('leaderPass1').value = '';
-        document.getElementById('leaderPass2').value = '';
+        document.getElementById('leaderPass1'].value = '';
+        document.getElementById('leaderPass2'].value = '';
     }
 
     function loginLeader() {
         const email = document.getElementById('loginLeaderEmail').value.trim();
-        const pass = document.getElementById('loginLeaderPass').value;
+        const pass = document.getElementById('loginLeaderPass'].value;
         const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
@@ -655,9 +673,9 @@
         document.getElementById('leaderPanel').classList.remove('hidden');
         document.getElementById('leaderNameDisplay').textContent = stored.name;
         loadPendingPayments();
-        loadRotationSettings(); // Load rotation settings for the leader
-        loadAvailableMembersForRotation(); // Load members eligible for rotation
-        displayRotationParticipants(); // Display current participants
+        loadRotationSettings();
+        loadAvailableMembersForRotation();
+        displayRotationParticipants();
     }
 
     function logoutLeader() {
@@ -698,7 +716,7 @@
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
             alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
             loadPendingPayments();
-            loadAvailableMembersForRotation(); // Refresh available members after validation
+            loadAvailableMembersForRotation();
         }
     }
 
@@ -739,8 +757,9 @@
         hideAllPanels();
         document.getElementById('ceoPanel').classList.remove('hidden');
         msg.textContent = '';
-        document.getElementById('ceoLoginEmail').value = '';
+        document.getElementById('ceoLoginEmail'].value = '';
         document.getElementById('ceoLoginPassword'].value = '';
+        displayRotationHistory(); // Call this on CEO login
     });
 
     function logoutCEO() {
@@ -748,7 +767,7 @@
         showLogin();
     }
 
-    // --- Rotation Management Logic (New) ---
+    // --- Rotation Management Logic ---
 
     function loadRotationSettings() {
         document.getElementById('dailyInvest').value = rotationSettings.invest;
@@ -758,7 +777,7 @@
 
     function saveRotationSettings() {
         const invest = parseFloat(document.getElementById('dailyInvest').value);
-        const gain = parseFloat(document.getElementById('dailyGain').value);
+        const gain = parseFloat(document.getElementById('dailyGain'].value);
         const msg = document.getElementById('rotationSettingsMsg');
         msg.classList.add('hidden');
 
@@ -780,9 +799,8 @@
 
     function loadAvailableMembersForRotation() {
         const select = document.getElementById('availableMembersSelect');
-        select.innerHTML = '<option value="">-- Select Paid Member --</option>'; // Clear existing options
+        select.innerHTML = '<option value="">-- Select Paid Member --</option>';
 
-        // Filter users who are verified, paid, and NOT ALREADY in activeRotationMembers
         for (const email in users) {
             const user = users[email];
             if (user.verified && user.paid && !activeRotationMembers.includes(email)) {
@@ -822,7 +840,6 @@
         msg.classList.add('success-msg');
         setTimeout(() => msg.classList.add('hidden'), 2000);
 
-        // Re-render lists
         loadAvailableMembersForRotation();
         displayRotationParticipants();
     }
@@ -860,19 +877,22 @@
             return;
         }
 
-        // Increment current day
-        rotationSettings.currentDay++;
-
-        // Determine the next recipient
+        // --- Start of where sophisticated rotation rules would go ---
+        // Currently, it's a simple round-robin.
+        // Future enhancements could consider:
+        // - Priority based on recent activity or specific tiers.
+        // - Ensuring a minimum number of days between payouts for a single user.
+        // - Dynamically adjusting nextIndex based on user-specific conditions.
         let nextIndex = (rotationSettings.lastPaidMemberIndex + 1) % activeRotationMembers.length;
+        // --- End of where sophisticated rotation rules would go ---
+
         const recipientEmail = activeRotationMembers[nextIndex];
         const recipientName = users[recipientEmail]?.fullName || 'Unknown';
 
-        // Update last paid member index
+        rotationSettings.currentDay++;
         rotationSettings.lastPaidMemberIndex = nextIndex;
         localStorage.setItem('rotationSettings', JSON.stringify(rotationSettings));
 
-        // Record history
         rotationHistory.push({
             day: rotationSettings.currentDay,
             recipientEmail: recipientEmail,
@@ -881,29 +901,56 @@
             gain: rotationSettings.gain,
             timestamp: new Date().toLocaleString()
         });
+        // Keep history to a reasonable size (e.g., last 25 entries for the table)
+        if (rotationHistory.length > 25) {
+            rotationHistory.shift(); // Remove the oldest entry
+        }
         localStorage.setItem('rotationHistory', JSON.stringify(rotationHistory));
 
-        msg.textContent = `✅ Day ${rotationSettings.currentDay}: ${recipientName} (${recipientEmail}) is the next recipient! Gain: $${rotationSettings.gain}`;
+        msg.textContent = `✅ Day ${rotationSettings.currentDay}: ${recipientName} (${recipientEmail}) is the next recipient! Gain: $${rotationSettings.gain.toFixed(2)}`;
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
         setTimeout(() => msg.classList.add('hidden'), 3000);
 
-        loadRotationSettings(); // Update current day display
-        displayRotationParticipants(); // Highlight the current recipient
+        loadRotationSettings();
+        displayRotationParticipants();
+        displayRotationHistory(); // Update CEO history too
     }
 
 
-    // --- CEO Specific Functions (kept for structure) ---
+    // --- CEO Specific Functions ---
+
+    function displayRotationHistory() {
+        const tableBody = document.querySelector('#ceoRotationHistoryTable tbody');
+        tableBody.innerHTML = ''; // Clear existing rows
+        const noHistoryMsg = document.getElementById('noRotationHistory');
+
+        if (rotationHistory.length === 0) {
+            noHistoryMsg.classList.remove('hidden');
+            return;
+        } else {
+            noHistoryMsg.classList.add('hidden');
+        }
+
+        // Display history in reverse chronological order (most recent first)
+        [...rotationHistory].reverse().forEach(entry => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = entry.day;
+            row.insertCell().textContent = `${entry.recipientName} (${entry.recipientEmail})`;
+            row.insertCell().textContent = entry.invest.toFixed(2);
+            row.insertCell().textContent = entry.gain.toFixed(2);
+            row.insertCell().textContent = entry.timestamp;
+        });
+    }
+
     function calculRotation() {
-        const resultDiv = document.getElementById('rotationResult');
-        resultDiv.textContent = 'This will show detailed rotation calculations (e.g., total funds, next payout details).';
-        resultDiv.classList.remove('hidden');
+        const msg = document.getElementById('ceoReportMsg');
+        msg.textContent = 'This button can be expanded to generate more complex reports (e.g., total funds, financial projections). For now, view the history above.';
+        msg.classList.remove('hidden');
+        msg.classList.remove('success-msg');
+        msg.classList.add('error-msg'); // Use error style to make it noticeable as a placeholder
+        setTimeout(() => msg.classList.add('hidden'), 4000);
     }
-
-    function nextRotation() {
-        alert('This button is now handled by "Next Participant" in Leader Panel. This CEO button can be repurposed for a global daily reset or advanced features.');
-    }
-
 
     // --- Initial Load Logic ---
     window.onload = function() {
@@ -935,12 +982,13 @@
                 document.getElementById('leaderPanel').classList.remove('hidden');
                 document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
                 loadPendingPayments();
-                loadRotationSettings(); // Initialize settings display
-                loadAvailableMembersForRotation(); // Populate dropdown
-                displayRotationParticipants(); // Show current rotation members
+                loadRotationSettings();
+                loadAvailableMembersForRotation();
+                displayRotationParticipants();
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
+                displayRotationHistory(); // Display history when CEO logs in
             }
         } else {
             showSignUp();
