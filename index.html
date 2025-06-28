@@ -1,706 +1,465 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>D2B1 - Secure Authentication</title>
-    
-    <!-- EmailJS SDK Script Removed - Only CallMeBot is used for messaging -->
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase SDK Imports -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
-
-        // Expose Firebase objects globally for use in the main script block
-        window.firebaseApp = initializeApp;
-        window.firebaseAuth = getAuth;
-        window.firebaseSignInAnonymously = signInAnonymously;
-        window.firebaseSignInWithCustomToken = signInWithCustomToken;
-        window.firebaseOnAuthStateChanged = onAuthStateChanged;
-        window.firebaseFirestore = getFirestore;
-        window.firebaseDoc = doc;
-        window.firebaseGetDoc = getDoc;
-        window.firebaseSetDoc = setDoc;
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream2Build1 - Authentication</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f4f9; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
-        .card { background: white; padding: 20px; margin: 15px auto; max-width: 600px; width: 90%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
-        h1, h3, h4 { text-align: center; color: #004080; margin-bottom: 15px; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; font-size: 16px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; transition: all 0.3s ease; }
-        input[type="number"] { /* Specific style for number input */
-            -moz-appearance: textfield; /* Firefox */
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
+        h1, h2 { text-align: center; color: #007BFF; }
+        .container, .panel, .form-section {
+            max-width: 900px; margin: auto; background: white; padding: 20px;
+            border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { /* Webkit (Chrome, Safari) */
-            -webkit-appearance: none;
-            margin: 0;
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
+            border: 1px solid #ccc; border-radius: 4px;
+            box-sizing: border-box;
         }
-
-        input:focus { border-color: #004080; box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.2); outline: none; }
         button {
-            border: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            background-size: 200% auto;
-            border-radius: 8px;
-            padding: 12px 20px;
-            transition: all 0.3s ease;
+            background-color: #28a745; color: white; border: none; padding: 10px 20px;
+            font-size: 16px; border-radius: 5px; cursor: pointer;
         }
-        button:hover { background-position: right center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        button:hover { background-color: #218838; }
+        .hidden { display: none; }
+        .logout-btn button { background-color: #dc3545; }
+        .error-msg { color: red; font-weight: bold; }
+        .success-msg { color: green; font-weight: bold; }
 
-        .btn-primary { background-image: linear-gradient(to right, #004080 0%, #0056b3 50%, #004080 100%); }
-        .btn-secondary { background-image: linear-gradient(to right, #2980b9 0%, #3498db 50%, #2980b9 100%); }
-        .btn-danger { background-image: linear-gradient(to right, #e74c3c 0%, #c0392b 50%, #e74c3c 100%); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; border-radius: 8px; overflow: hidden; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
-        th { background-color: #004080; color: white; font-weight: bold; }
-        tr:nth-child(even) { background-color: #f8f8f8; }
-
-        .superviseur-name, .teamleader-name, .participant-input { margin-bottom: 10px; }
-        #forgotSection { text-align: center; margin-top: 15px; font-size: 0.9em; color: #555; cursor: pointer; transition: color 0.3s ease; }
-        #forgotSection:hover { color: #004080; }
-
-        /* Custom Modal Styling */
-        #customModal {
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        #customModal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        #customModal .card {
-            max-width: 450px;
+        /* Specific styles for the main platform content */
+        #mainPlatform {
+            border: 1px dashed #007BFF;
             padding: 30px;
             text-align: center;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease;
-        }
-        #customModal.show .card {
-            transform: translateY(0);
-        }
-        #modalButtons button {
-            display: inline-block;
-            width: auto;
-            padding: 10px 25px;
-            margin: 0 8px;
-        }
-
-        /* CSS for flashing effect */
-        .action-request-btn.alert-red {
-            animation: flashRed 1s infinite alternate;
-        }
-        @keyframes flashRed {
-            from { background-color: #e74c3c; }
-            to { background-color: #ffcccc; }
-        }
-
-        #loadingOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             font-size: 1.2em;
-            font-weight: bold;
-            color: #004080;
-            z-index: 1001;
-        }
-
-        @media (max-width: 600px) {
-            .card { padding: 15px; margin: 10px auto; width: 95%; }
-            input, button { font-size: 14px; padding: 10px; }
-            table { font-size: 0.85em; }
-            th, td { padding: 8px; }
-            #modalButtons button { padding: 8px 15px; margin: 0 5px; }
+            color: #007BFF;
         }
     </style>
 </head>
 <body>
-<!-- Loading Overlay -->
-<div id="loadingOverlay">Loading Data...</div>
 
-<!-- Custom Modal Structure -->
-<div id="customModal">
-    <div class="card">
-        <p id="modalMessage"></p>
-        <div id="modalButtons">
-            <button id="modalConfirmBtn" class="btn-primary">Yes</button>
-            <button id="modalCancelBtn" class="btn-secondary">OK</button>
-        </div>
+<h1>Dream2Build1 - Authentication System</h1>
+
+<div class="form-section" id="signUpPanel">
+    <h2>📝 Sign Up for Access</h2>
+    <form id="signUpForm">
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="e.g., +150912345678" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Create your password" required>
+
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+
+        <button type="submit">Sign Up</button>
+        <p id="signUpMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;">Already have an account? <a href="#" onclick="showLogin()">Login here</a></p>
+</div>
+
+<div class="form-section hidden" id="loginPanel">
+    <h2>🔐 Log In to Your Account</h2>
+    <form id="loginForm">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" name="loginEmail" placeholder="Enter your email" required>
+
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password" required>
+
+        <button type="submit">Log In</button>
+        <p id="loginMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showSignUp()">Sign Up here</a></p>
+</div>
+
+<div class="panel hidden" id="verificationMessagePanel">
+    <h2>📧 Verify Your Email</h2>
+    <p>A verification email has been sent to <strong id="verificationEmailDisplay"></strong>. Please check your inbox and click the verification link to activate your account.</p>
+    <p>After verification, you will be redirected to the login page.</p>
+    <button onclick="showLogin()">Go to Login (After Verification)</button>
+</div>
+
+<div class="panel hidden" id="mainPlatformPanel">
+    <h2>Bienvenue sur Dream2Build1, <span id="loggedInUserName"></span>!</h2>
+    <div id="mainPlatform">
+        <p>This is your main platform content, accessible only after successful login.</p>
+        <p>Here you can explore all features, except the administration area.</p>
+        <p>🚀 Ready to build your dreams!</p>
+    </div>
+    <div class="logout-btn">
+        <button onclick="logoutUser()">Log Out</button>
     </div>
 </div>
 
-<div class="card" id="authCard">
-    <h1>Secure Admin Area</h1>
-    <input type="password" id="adminPass" placeholder="Admin Password" />
-    <button onclick="toggleVisibility('adminPass')" class="btn-secondary">Show/Hide</button>
-    <button onclick="checkAdminStep1()" class="btn-primary">Login</button>
-    <div id="forgotSection">Forgot Password?</div>
+<div class="form-section hidden" id="leaderRegisterPanel">
+    <h2>👥 Team Leader Registration (Admin Only)</h2>
+    <label for="leaderName">Full Name:</label>
+    <input type="text" id="leaderName" placeholder="Enter full name">
+
+    <label for="leaderEmailReg">Email:</label>
+    <input type="email" id="leaderEmailReg" placeholder="Enter email">
+
+    <label for="leaderPass1">Create Password:</label>
+    <input type="password" id="leaderPass1" placeholder="Create password">
+
+    <label for="leaderPass2">Confirm Password:</label>
+    <input type="password" id="leaderPass2" placeholder="Confirm password">
+
+    <button onclick="registerLeader()">Register as Team Leader</button>
+    <p id="leaderRegisterMsg"></p>
 </div>
 
-<div class="card" id="codeCard" style="display:none;">
-    <p>OTP code sent to your WhatsApp</p>
-    <input type="password" id="code2FA" placeholder="Enter OTP code" />
-    <button onclick="toggleVisibility('code2FA')" class="btn-secondary">Show/Hide</button>
-    <button onclick="checkAdminStep2()" class="btn-primary">Verify</button>
+<div class="form-section hidden" id="leaderLoginPanel">
+    <h2>🔐 Team Leader Login (Admin Only)</h2>
+    <label for="loginLeaderEmail">Email:</label>
+    <input type="email" id="loginLeaderEmail" placeholder="Enter email">
+
+    <label for="loginLeaderPass">Password:</label>
+    <input type="password" id="loginLeaderPass" placeholder="Enter password">
+
+    <button onclick="loginLeader()">Login</button>
+    <p id="leaderLoginMsg"></p>
 </div>
 
-<div class="card" id="mainCard" style="display:none;">
-    <h3>D2B1 - Main Administration</h3>
-    <input type="text" id="participantName" placeholder="Participant Name" />
-    <button onclick="addParticipant()" class="btn-primary">Add</button>
-    <button onclick="validatePayments()" class="btn-secondary">Validate Payments</button>
-    <button onclick="nextDay()" class="btn-secondary">Next Day</button>
-    <button onclick="exportToExcel()" class="btn-primary">Export History</button>
-    <button onclick="resetData()" class="btn-danger">Reset Data</button>
-    <button onclick="logout()" class="btn-danger">Logout</button>
-    <div id="stats" style="margin-top:20px;"></div>
-
-    <!-- Admin Calculator Section -->
-    <div class="card" style="margin-top:20px;">
-        <h4>Financial Calculator (Admin)</h4>
-        <input type="number" id="calculatorParticipants" placeholder="Number of Participants" min="0" value="0" />
-        <button onclick="calculateAdminHypotheticalFinance()" class="btn-primary">Calculate</button>
-        <div id="calculatorResults" style="margin-top:10px;">
-            <p><strong>Hypothetical Investment:</strong> $0.00</p>
-            <p><strong>Hypothetical Beneficiary Share:</strong> $0.00</p>
-            <p><strong>Hypothetical Untouchable Amount:</strong> $0.00</p>
-        </div>
+<div id="leaderPanel" class="panel hidden">
+    <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
+    <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
+    <button class="logout-btn" onclick="logoutLeader()">Logout</button>
+    <p>Here you can submit validated new members after their payment.</p>
     </div>
-    <!-- End Admin Calculator Section -->
 
-    <div id="historyTable" style="margin-top:20px;"></div>
-    <div id="participantsList" style="margin-top:20px;"></div>
-</div>
+<div id="ceoPanel" class="panel hidden">
+    <h2>👑 CEO Dashboard</h2>
+    <p>Welcome, CEO!</p>
+    <button onclick="calculRotation()">Show Today's Rotation</button>
+    <button onclick="nextRotation()">➡️ Next Day</button>
+    <div id="rotationResult" class="rotation-box hidden"></div>
 
-<div class="card" id="superviseurContainer" style="display:none;">
-    <h3>Add Supervisor</h3>
-    <button class="btn-primary" onclick="ajouterSuperviseur()">Supervisor +1</button>
-    <div id="superviseurs"></div>
+    <h3>📋 25-day History:</h3>
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Member</th>
+                <th>Total ($)</th>
+                <th>Reserve</th>
+                <th>Withheld (10%)</th>
+                <th>To Receive</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Emmanuel Jean</td>
+                <td>100.00</td>
+                <td>33.33</td>
+                <td>3.33</td>
+                <td>66.67</td>
+            </tr>
+            </tbody>
+    </table>
+    <div class="logout-btn">
+        <button onclick="logoutCEO()">Logout CEO</button>
+    </div>
 </div>
 
 <script>
-    // Initial load logic when DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Show loading overlay immediately
-        document.getElementById('loadingOverlay').style.display = 'flex';
+    // --- Helper Functions to Toggle Panels ---
+    function hideAllPanels() {
+        document.getElementById('signUpPanel').classList.add('hidden');
+        document.getElementById('loginPanel').classList.add('hidden');
+        document.getElementById('verificationMessagePanel').classList.add('hidden');
+        document.getElementById('mainPlatformPanel').classList.add('hidden');
+        document.getElementById('leaderRegisterPanel').classList.add('hidden'); // Admin
+        document.getElementById('leaderLoginPanel').classList.add('hidden');   // Admin
+        document.getElementById('leaderPanel').classList.add('hidden');      // Admin
+        document.getElementById('ceoPanel').classList.add('hidden');         // Admin
+    }
 
-        // Attach event listeners for modal buttons and forgot password
-        document.getElementById("modalConfirmBtn").onclick = () => {
-            hideModal();
-            if (modalResolveCallback) modalResolveCallback(true);
-        };
-        document.getElementById("modalCancelBtn").onclick = () => {
-            hideModal();
-            if (modalResolveCallback) modalResolveCallback(false);
-        };
-        document.getElementById("forgotSection").onclick = () => {
-            showModal("Please contact the administrator to reset your password.", "alert");
-        };
+    function showSignUp() {
+        hideAllPanels();
+        document.getElementById('signUpPanel').classList.remove('hidden');
+    }
 
-        // Initialize Firebase and load app state
-        await initializeFirebase();
+    function showLogin() {
+        hideAllPanels();
+        document.getElementById('loginPanel').classList.remove('hidden');
+    }
+
+    function showMainPlatform(userName) {
+        hideAllPanels();
+        document.getElementById('mainPlatformPanel').classList.remove('hidden');
+        document.getElementById('loggedInUserName').textContent = userName;
+    }
+
+    function showVerificationMessage(email) {
+        hideAllPanels();
+        document.getElementById('verificationMessagePanel').classList.remove('hidden');
+        document.getElementById('verificationEmailDisplay').textContent = email;
+    }
+
+    // --- User Authentication (Sign Up & Login) ---
+
+    // Simulate user storage (for demo purposes)
+    const users = JSON.parse(localStorage.getItem('users')) || {};
+    const admins = JSON.parse(localStorage.getItem('admins')) || {}; // For leaders/CEO
+
+    document.getElementById('signUpForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        const fullName = document.getElementById('fullName').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const msg = document.getElementById('signUpMsg');
+
+        msg.classList.add('hidden'); // Hide previous messages
+
+        if (!fullName || !phoneNumber || !email || !password || !confirmPassword) {
+            msg.textContent = '❌ Please fill in all fields.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            msg.textContent = '❌ Passwords do not match.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        if (users[email]) {
+            msg.textContent = '❌ This email is already registered.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        // Simulate email verification by marking user as 'unverified'
+        users[email] = {
+            fullName: fullName,
+            phoneNumber: phoneNumber,
+            password: password, // In a real app, hash this password!
+            verified: false // Set to false initially
+        };
+        localStorage.setItem('users', JSON.stringify(users));
+
+        msg.textContent = '✅ Sign up successful! Please check your email for verification.';
+        msg.classList.remove('hidden', 'error-msg');
+        msg.classList.add('success-msg');
+
+        // Simulate sending verification email and then redirecting to login after "verification"
+        // In a real app, this would be a backend call to send an email with a unique link.
+        setTimeout(() => {
+            // Simulate email verification happening
+            users[email].verified = true;
+            localStorage.setItem('users', JSON.stringify(users));
+            showVerificationMessage(email);
+        }, 1000); // Small delay to show success message before "redirecting"
     });
 
-    // Firebase variables (will be initialized on DOMContentLoaded)
-    let firebaseAppInstance;
-    let auth;
-    let db;
-    let userId;
-    let isAuthReady = false; // Flag to indicate Firebase Auth is ready
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
 
-    // Global Variables (Application State)
-    let otpCode = "";
-    let participants = [];
-    let history = [];
-    let currentDay = 1;
-    let cooperativeRotationFund = 0;
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const msg = document.getElementById('loginMsg');
 
-    // These will be calculated and updated by calculateDailyFinance
-    let totalParticipantsCount = 0; // This will now store the REVENUE-GENERATING participant count
-    let dailyInvestment = 0; // Renamed from dailyRevenue to dailyInvestment
-    let beneficiaryShare = 0;
-    let untouchableAmount = 0;
+        msg.classList.add('hidden'); // Hide previous messages
 
-    // --- Custom Modal Logic ---
-    let modalResolveCallback = null;
+        const user = users[email];
 
-    function showModal(message, type) {
-        return new Promise((resolve) => {
-            const modal = document.getElementById("customModal");
-            const modalMessage = document.getElementById("modalMessage");
-            const modalConfirmBtn = document.getElementById("modalConfirmBtn");
-            const modalCancelBtn = document.getElementById("modalCancelBtn");
-
-            modalMessage.textContent = message;
-            modalResolveCallback = resolve;
-
-            if (type === "confirm") {
-                modalConfirmBtn.style.display = "inline-block";
-                modalCancelBtn.textContent = "No";
-            } else { // type === "alert"
-                modalConfirmBtn.style.display = "none";
-                modalCancelBtn.textContent = "OK";
-            }
-
-            modal.classList.add('show');
-        });
-    }
-
-    function hideModal() {
-        document.getElementById("customModal").classList.remove('show');
-        modalResolveCallback = null;
-    }
-
-    // --- Firebase Initialization and Data Persistence ---
-    async function initializeFirebase() {
-        console.log("Initialize Firebase started:", new Date().toLocaleTimeString());
-        try {
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-            if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is missing or empty.");
-                showModal("Error: Firebase configuration missing. Data persistence will not work.", "alert");
-                document.getElementById('loadingOverlay').style.display = 'none'; // Hide loading
-                return;
-            }
-
-            firebaseAppInstance = window.firebaseApp(firebaseConfig);
-            db = window.firebaseFirestore(firebaseAppInstance);
-            auth = window.firebaseAuth(firebaseAppInstance);
-
-            // Attempt to sign in anonymously first. This is generally more reliable in environments
-            // where custom tokens might be single-use or time-sensitive.
-            try {
-                console.log("Attempting anonymous sign-in...", new Date().toLocaleTimeString());
-                await window.firebaseSignInAnonymously(auth);
-                userId = auth.currentUser?.uid;
-                isAuthReady = true;
-                console.log("Anonymous sign-in successful. User ID:", userId, new Date().toLocaleTimeString());
-            } catch (anonError) {
-                console.error("Anonymous sign-in failed:", anonError, new Date().toLocaleTimeString());
-                showModal("Error during anonymous login: " + anonError.message + ". Data persistence might not work.", "alert");
-                // If anonymous sign-in fails, try custom token as a secondary option, if available.
-                // Note: The `auth/invalid-claims` often comes from custom token issues.
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try {
-                        console.log("Attempting custom token sign-in as fallback...", new Date().toLocaleTimeString());
-                        await window.firebaseSignInWithCustomToken(auth, __initial_auth_token);
-                        userId = auth.currentUser?.uid;
-                        isAuthReady = true;
-                        console.log("Custom token sign-in successful. User ID:", userId, new Date().toLocaleTimeString());
-                    } catch (tokenError) {
-                        console.error("Custom token sign-in failed:", tokenError, new Date().toLocaleTimeString());
-                        showModal("Error during custom token login: " + tokenError.message + ". Data persistence might not work.", "alert");
-                    }
-                }
-            }
-
-            // After attempting sign-in, try to load app state if a user is available
-            if (isAuthReady && userId) {
-                console.log("Auth ready, attempting to load app state...", new Date().toLocaleTimeString());
-                await loadAppState();
-            } else {
-                console.log("Auth not ready or no user, starting with fresh local state.", new Date().toLocaleTimeString());
-                resetLocalState();
-                updateParticipantsList();
-                updateHistoryTable();
-                updateStatsDisplay();
-                calculateAdminHypotheticalFinance();
-                document.getElementById('loadingOverlay').style.display = 'none'; // Hide loading if no auth/data load
-            }
-
-
-        } catch (error) {
-            console.error("Error initializing Firebase (top level catch):", error, new Date().toLocaleTimeString());
-            showModal("Critical error during Firebase initialization: " + error.message + ". The application will not be able to save/load data.", "alert");
-            document.getElementById('loadingOverlay').style.display = 'none'; // Ensure loading is hidden on critical error
-        }
-    }
-
-    /**
-     * Constructs the Firestore document reference for the current user's app state.
-     */
-    function getAppStateDocRef() {
-        if (!db || !userId) {
-            console.error("Firestore DB or User ID not available for doc ref.");
-            return null;
-        }
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Path: /artifacts/{appId}/users/${userId}/d2b1_state/current_state
-        return window.firebaseDoc(db, `artifacts/${appId}/users/${userId}/d2b1_state/current_state`);
-    }
-
-    /**
-     * Saves the current application state to Firestore.
-     */
-    async function saveAppState() {
-        if (!isAuthReady || !userId) {
-            console.log("Firebase Auth not ready or no user, skipping save.");
-            return;
-        }
-        const docRef = getAppStateDocRef();
-        if (!docRef) {
-            console.error("Failed to get app state doc ref, skipping save.");
+        if (!user) {
+            msg.textContent = '❌ No account found with this email.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
             return;
         }
 
-        const appState = {
-            participants: participants,
-            history: history,
-            currentDay: currentDay,
-            cooperativeRotationFund: cooperativeRotationFund
+        if (!user.verified) {
+            msg.textContent = '❌ Please verify your email first. Check your inbox!';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        if (user.password !== password) { // In a real app: compare hashed passwords!
+            msg.textContent = '❌ Incorrect password.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        // Successful Login for general user
+        localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
+        showMainPlatform(user.fullName);
+    });
+
+    function logoutUser() {
+        localStorage.removeItem('currentUser');
+        showLogin(); // Go back to login page
+    }
+
+    // --- Admin (Team Leader / CEO) Logic (kept from your original, slightly adapted) ---
+    // Note: This logic assumes admin roles are separate from regular users
+    // For a real system, you might integrate roles within a single user management system.
+
+    function registerLeader() {
+        const name = document.getElementById('leaderName').value.trim();
+        const email = document.getElementById('leaderEmailReg').value.trim();
+        const pass1 = document.getElementById('leaderPass1').value;
+        const pass2 = document.getElementById('leaderPass2').value;
+        const msg = document.getElementById('leaderRegisterMsg');
+
+        if(!name || !email || !pass1 || !pass2) {
+            msg.textContent = '❌ Please fill all fields';
+            msg.className = 'error-msg';
+            return;
+        }
+        if(pass1 !== pass2) {
+            msg.textContent = '❌ Passwords do not match';
+            msg.className = 'error-msg';
+            return;
+        }
+        if (admins[email]) {
+            msg.textContent = '❌ This email is already registered as an admin.';
+            msg.className = 'error-msg';
+            return;
+        }
+
+        admins[email] = { name, email, password: pass1, role: 'leader' };
+        localStorage.setItem('admins', JSON.stringify(admins));
+
+        msg.textContent = '✅ Registration successful. You can now login as a Leader.';
+        msg.className = 'success-msg';
+
+        document.getElementById('leaderName').value = '';
+        document.getElementById('leaderEmailReg').value = '';
+        document.getElementById('leaderPass1').value = '';
+        document.getElementById('leaderPass2').value = '';
+    }
+
+    function loginLeader() {
+        const email = document.getElementById('loginLeaderEmail').value.trim();
+        const pass = document.getElementById('loginLeaderPass').value;
+        const msg = document.getElementById('leaderLoginMsg'); // Changed ID for clarity
+        const stored = admins[email];
+
+        if(!stored) {
+            msg.textContent = '❌ No leader account found with this email.';
+            msg.className = 'error-msg';
+            return;
+        }
+
+        if(stored.password !== pass) {
+            msg.textContent = '❌ Incorrect password.';
+            msg.className = 'error-msg';
+            return;
+        }
+
+        localStorage.setItem('currentAdmin', JSON.stringify({ email: stored.email, name: stored.name, role: stored.role }));
+        hideAllPanels();
+        document.getElementById('leaderPanel').classList.remove('hidden');
+        document.getElementById('leaderNameDisplay').textContent = stored.name;
+    }
+
+    function logoutLeader() {
+        localStorage.removeItem('currentAdmin');
+        showLogin(); // Redirect to main login page
+    }
+
+    // CEO Specific (assuming a fixed CEO account or separate login)
+    function showCEOPanel() {
+        // For demo, let's say CEO email is 'ceo@dream2build.com' and password is 'admin123'
+        const ceoEmail = 'ceo@dream2build.com';
+        const ceoPassword = 'admin123'; // NEVER hardcode passwords in real apps!
+
+        const email = prompt("Enter CEO Email:");
+        const password = prompt("Enter CEO Password:");
+
+        if (email === ceoEmail && password === ceoPassword) {
+            localStorage.setItem('currentAdmin', JSON.stringify({ email: ceoEmail, name: 'CEO', role: 'ceo' }));
+            hideAllPanels();
+            document.getElementById('ceoPanel').classList.remove('hidden');
+        } else {
+            alert("Invalid CEO credentials.");
+        }
+    }
+
+    function logoutCEO() {
+        localStorage.removeItem('currentAdmin');
+        showLogin(); // Redirect to main login page
+    }
+
+    // Rotation calculation placeholder (from your original)
+    function calculRotation() {
+        const resultDiv = document.getElementById('rotationResult');
+        resultDiv.textContent = 'Rotation calculation will be implemented here.';
+        resultDiv.classList.remove('hidden');
+    }
+
+    function nextRotation() {
+        alert('Next rotation day functionality coming soon!');
+    }
+
+    // --- Initial Load Logic ---
+    window.onload = function() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
+
+        if (currentUser && currentUser.role === 'user') {
+            showMainPlatform(currentUser.name);
+        } else if (currentAdmin) {
+            if (currentAdmin.role === 'leader') {
+                hideAllPanels();
+                document.getElementById('leaderPanel').classList.remove('hidden');
+                document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
+            } else if (currentAdmin.role === 'ceo') {
+                hideAllPanels();
+                document.getElementById('ceoPanel').classList.remove('hidden');
+            }
+        } else {
+            showSignUp(); // Default to sign-up page
+        }
+
+        // For demo, you can add a way to access admin login directly
+        // For example, an invisible link or a special key combination for testing.
+        // For now, let's add a button to reveal admin login/register.
+        const adminAccessButton = document.createElement('button');
+        adminAccessButton.textContent = 'Admin / Leader Access';
+        adminAccessButton.style.marginTop = '20px';
+        adminAccessButton.style.display = 'block';
+        adminAccessButton.style.marginLeft = 'auto';
+        adminAccessButton.style.marginRight = 'auto';
+        adminAccessButton.onclick = function() {
+            hideAllPanels();
+            document.getElementById('leaderLoginPanel').classList.remove('hidden');
+            document.getElementById('leaderRegisterPanel').classList.remove('hidden');
+             // Add a CEO login button here too for convenience
+            const ceoLoginBtn = document.createElement('button');
+            ceoLoginBtn.textContent = 'Login as CEO';
+            ceoLoginBtn.style.marginTop = '10px';
+            ceoLoginBtn.style.backgroundColor = '#6c757d'; // Gray color
+            ceoLoginBtn.onclick = showCEOPanel;
+            if (!document.getElementById('leaderLoginPanel').querySelector('#ceoLoginBtn')) {
+                document.getElementById('leaderLoginPanel').appendChild(ceoLoginBtn);
+                ceoLoginBtn.id = 'ceoLoginBtn'; // Assign an ID to prevent duplicates
+            }
         };
+        document.body.appendChild(adminAccessButton);
+    };
+</script>
 
-        try {
-            await window.firebaseSetDoc(docRef, appState);
-            console.log("Application state saved to Firestore.", new Date().toLocaleTimeString());
-        } catch (e) {
-            console.error("Error saving application state:", e, new Date().toLocaleTimeString());
-            showModal("Error saving data: " + e.message, "alert");
-        }
-    }
-
-    /**
-     * Loads the application state from Firestore.
-     */
-    async function loadAppState() {
-        if (!isAuthReady || !userId) {
-            console.log("Firebase Auth not ready or no user, cannot load.");
-            document.getElementById('loadingOverlay').style.display = 'none'; // Hide if cannot load
-            return;
-        }
-        const docRef = getAppStateDocRef();
-        if (!docRef) {
-            console.error("Failed to get app state doc ref, skipping load.");
-            document.getElementById('loadingOverlay').style.display = 'none'; // Hide if cannot load
-            return;
-        }
-
-        try {
-            console.log("Fetching app state from Firestore...", new Date().toLocaleTimeString());
-            const docSnap = await window.firebaseGetDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                participants = data.participants || [];
-                history = data.history || [];
-                currentDay = data.currentDay || 1;
-                cooperativeRotationFund = data.cooperativeRotationFund || 0;
-                console.log("Application state loaded from Firestore.", data, new Date().toLocaleTimeString());
-
-                // Update all displays after loading
-                updateParticipantsList();
-                updateHistoryTable();
-                updateStatsDisplay();
-                calculateAdminHypotheticalFinance();
-            } else {
-                console.log("No existing application state found in Firestore. Starting fresh.", new Date().toLocaleTimeString());
-                resetLocalState();
-                updateParticipantsList();
-                updateHistoryTable();
-                updateStatsDisplay();
-                calculateAdminHypotheticalFinance();
-            }
-        } catch (e) {
-            console.error("Error loading application state:", e, new Date().toLocaleTimeString());
-            showModal("Error loading data: " + e.message + ". The application will start with empty data.", "alert");
-            // If loading fails, ensure local state is reset to avoid corrupted display
-            resetLocalState();
-            updateParticipantsList();
-            updateHistoryTable();
-            updateStatsDisplay();
-            calculateAdminHypotheticalFinance();
-        } finally {
-            document.getElementById('loadingOverlay').style.display = 'none'; // Ensure loading overlay is hidden
-            console.log("Loading overlay hidden.", new Date().toLocaleTimeString());
-        }
-    }
-
-    /**
-     * Resets local application state variables. Does NOT affect Firestore.
-     */
-    function resetLocalState() {
-        participants = [];
-        history = [];
-        currentDay = 1;
-        cooperativeRotationFund = 0;
-        totalParticipantsCount = 0; 
-        dailyInvestment = 0; 
-        beneficiaryShare = 0; 
-        untouchableAmount = 0; 
-    }
-
-
-    // --- Authentication Functions ---
-    function sendOTPByWhatsApp(code) {
-        const phone = "+50943260012";
-        const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Your+OTP+code+is+${code}&apikey=3854603`;
-        fetch(url).then(() => {
-            console.log("WhatsApp OTP sent");
-        }).catch(e => {
-            showModal("WhatsApp Error: " + e.message, "alert");
-        });
-    }
-
-    function checkAdminStep1() {
-        const pass = document.getElementById("adminPass").value;
-        if (pass === "d2b1admin") {
-            otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-            document.getElementById("authCard").style.display = "none";
-            document.getElementById("codeCard").style.display = "block";
-            sendOTPByWhatsApp(otpCode);
-        } else {
-            showModal("Incorrect password", "alert");
-        }
-    }
-
-    function toggleVisibility(id) {
-        const input = document.getElementById(id);
-        input.type = input.type === "password" ? "text" : "password";
-    }
-
-    function checkAdminStep2() {
-        const code = document.getElementById("code2FA").value.trim();
-        if (code === otpCode) {
-            document.getElementById("codeCard").style.display = "none";
-            document.getElementById("mainCard").style.display = "block";
-            document.getElementById("superviseurContainer").style.display = "block";
-            // Ensure all displays are updated upon successful login
-            updateParticipantsList();
-            updateHistoryTable();
-            updateStatsDisplay();
-            calculateAdminHypotheticalFinance();
-        } else {
-            showModal("Invalid verification code", "alert");
-        }
-    }
-
-    // --- Financial Calculation Logic ---
-    function calculateDailyFinance() {
-        const actualTotalParticipants = participants.length; 
-
-        let participantsForInvestmentCalculation = actualTotalParticipants;
-
-        // Rule: For the first 4 days, investment is calculated based on a maximum of 10 participants.
-        if (currentDay <= 4) {
-            participantsForInvestmentCalculation = Math.min(actualTotalParticipants, 10);
-        }
-        
-        // Update global totalParticipantsCount to reflect the number used for investment calculation
-        totalParticipantsCount = participantsForInvestmentCalculation;
-
-        dailyInvestment = participantsForInvestmentCalculation * 10; 
-
-        let amountForCalculation = dailyInvestment; 
-
-        // Add the cooperative rotation fund to the main calculation pool
-        amountForCalculation += cooperativeRotationFund;
-
-        // Rule: +10 is specific to Day 5 and onwards, and if there are participants
-        if (currentDay >= 5 && totalParticipantsCount > 0) { 
-            amountForCalculation += 10; // Fixed $10 added only from Day 5+
-            // "net 1/3 without the decimal" of the previous day's untouchable amount
-            if (history.length > 0) { // Check if there's a previous day's history
-                const previousDayUntouchable = history[history.length - 1].untouchableAmount;
-                const untouchableCarryOver = Math.floor(previousDayUntouchable / 3); // Take only the integer part
-                amountForCalculation += untouchableCarryOver; 
-            }
-        }
-
-        // Apply the deduction and distribution logic (reverting to older model)
-        const initialDeductionAmount = amountForCalculation / 3; // Exactly 1/3 of the total amount
-        
-        untouchableAmount = initialDeductionAmount * 0.10; // 10% of the initial 1/3 deduction
-        
-        // The beneficiary share gets the remainder after initial deduction + 30% of that deduction
-        beneficiaryShare = (amountForCalculation - initialDeductionAmount) + (initialDeductionAmount * 0.30);
-
-        // Ensure untouchable amount doesn't go negative
-        if (untouchableAmount < 0) { 
-            untouchableAmount = 0;
-        }
-
-        updateStatsDisplay();
-    }
-
-    function calculateHypotheticalFinance(numParticipants, day = currentDay) {
-        let hypotheticalParticipantsForInvestment = numParticipants;
-
-        // Rule: For the first 4 days, hypothetical investment is calculated based on a maximum of 10 participants.
-        if (day <= 4) {
-            hypotheticalParticipantsForInvestment = Math.min(numParticipants, 10);
-        }
-
-        let hypotheticalDailyInvestmentFromParticipants = hypotheticalParticipantsForInvestment * 10;
-        let hypotheticalAmountForCalculation = hypotheticalDailyInvestmentFromParticipants;
-
-        hypotheticalAmountForCalculation += cooperativeRotationFund;
-
-        // Rule: +10 is specific to Day 5 and onwards, and if there are participants
-        if (day >= 5 && numParticipants > 0) {
-            hypotheticalAmountForCalculation += 10; // Fixed $10 added only from Day 5+
-            // For hypothetical calculation, if history exists, use the last untouchable amount with Math.floor
-            if (history.length > 0) {
-                const previousDayUntouchable = history[history.length - 1].untouchableAmount;
-                const untouchableCarryOver = Math.floor(previousDayUntouchable / 3); // Take only the integer part
-                hypotheticalAmountForCalculation += untouchableCarryOver;
-            }
-        }
-
-        // Apply the deduction and distribution logic (reverting to older model)
-        const hypotheticalInitialDeduction = hypotheticalAmountForCalculation / 3;
-        
-        let hypotheticalUntouchableAmount = hypotheticalInitialDeduction * 0.10;
-        
-        // The beneficiary share gets the remainder after initial deduction + 30% of that deduction
-        let hypotheticalBeneficiaryShare = (hypotheticalAmountForCalculation - hypotheticalInitialDeduction) + (hypotheticalInitialDeduction * 0.30);
-
-        if (hypotheticalUntouchableAmount < 0) {
-            hypotheticalUntouchableAmount = 0;
-        }
-
-        return {
-            dailyInvestment: hypotheticalDailyInvestmentFromParticipants, 
-            beneficiaryShare: hypotheticalBeneficiaryShare,
-            untouchableAmount: hypotheticalUntouchableAmount
-        };
-    }
-
-    function updateStatsDisplay() {
-        const statsDiv = document.getElementById("stats");
-        statsDiv.innerHTML = `
-            <h4>Day ${currentDay} Statistics:</h4>
-            <p><strong>Participants:</strong> ${totalParticipantsCount}</p>
-            <p><strong>Investment:</strong> $${dailyInvestment.toFixed(2)}</p>
-            <p><strong>Beneficiary Share:</strong> $${beneficiaryShare.toFixed(2)}</p>
-            <p><strong>Untouchable Amount:</strong> $${untouchableAmount.toFixed(2)}</p>
-            <p><strong>Accumulated Cooperative Rotation Fund:</strong> $${cooperativeRotationFund.toFixed(2)}</p>
-        `;
-    }
-
-    function calculateAdminHypotheticalFinance() {
-        const numParticipantsInput = document.getElementById("calculatorParticipants");
-        const numParticipants = parseInt(numParticipantsInput.value) || 0;
-
-        const results = calculateHypotheticalFinance(numParticipants, currentDay);
-
-        const resultsDiv = document.getElementById("calculatorResults");
-        resultsDiv.innerHTML = `
-            <p><strong>Hypothetical Investment:</strong> $${results.dailyInvestment.toFixed(2)}</p>
-            <p><strong>Hypothetical Beneficiary Share:</strong> $${results.beneficiaryShare.toFixed(2)}</p>
-            <p><strong>Hypothetical Untouchable Amount:</strong> $${results.untouchableAmount.toFixed(2)}</p>
-        `;
-    }
-
-    function calculateIndividualEarnings(investment) {
-        if (investment < 0) return 0;
-
-        // Apply the 1/3 deduction for an individual investment
-        const individualDeduction = investment / 3;
-        
-        // Add 30% of that deduction back to the personal share
-        let personalShare = (investment - individualDeduction) + (individualDeduction * 0.30);
-
-        return personalShare;
-    }
-
-    // --- Participant and History Management ---
-    async function addParticipant() {
-        const nameInput = document.getElementById("participantName");
-        const participantName = nameInput.value.trim();
-
-        if (participantName) {
-            participants.push({ name: participantName, paid: false });
-            nameInput.value = "";
-            updateParticipantsList();
-            calculateDailyFinance(); 
-            await saveAppState(); 
-        } else {
-            showModal("Please enter a participant name.", "alert");
-        }
-    }
-
-    function updateParticipantsList() {
-        const listDiv = document.getElementById("participantsList");
-        listDiv.innerHTML = "<h4>Participants Today:</h4>";
-        if (participants.length === 0) {
-            listDiv.innerHTML += "<p>No participants added yet.</p>";
-            return;
-        }
-        const ul = document.createElement("ul");
-        participants.forEach((p) => {
-            const li = document.createElement("li");
-            li.textContent = `${p.name} - ${p.paid ? "Paid" : "Unpaid"}`;
-            ul.appendChild(li);
-        });
-        listDiv.appendChild(ul);
-    }
-
-    async function validatePayments() {
-        if (participants.length === 0) {
-            showModal("No participants to validate.", "alert");
-            return;
-        }
-        participants.forEach(p => p.paid = true);
-        updateParticipantsList();
-        showModal("Payments validated for all current participants.", "alert");
-        await saveAppState(); 
-    }
-
-    async function nextDay() {
-        const fundAtEndOfPreviousDay = cooperativeRotationFund;
-
-        history.push({
-            day: currentDay,
-            totalParticipants: totalParticipantsCount, 
-            dailyInvestment: dailyInvestment, // Renamed in history
-            beneficiaryShare: beneficiaryShare,
-            untouchableAmount: untouchableAmount,
-            cooperativeFundAtDayEnd: fundAtEndOfPreviousDay + untouchableAmount 
-        });
-
-        cooperativeRotationFund += untouchableAmount;
-
-        currentDay++;
-        participants = []; 
-        
-        calculateDailyFinance(); 
-
-        updateParticipantsList();
-        updateHistoryTable();
-        updateStatsDisplay();
-        calculateAdminHypotheticalFinance();
-        showModal(`Proceeding to Day ${currentDay}. Participants have been reset. The accumulated cooperative rotation fund is now $${cooperativeRotationFund.toFixed(2)}.`, "alert");
-        await saveAppState(); 
-    }
-
-    function updateHistoryTable() {
-        const historyDiv = document.getElementById("historyTable");
-        historyDiv.innerHTML = "<h4>Previous Days History:</h4>";
-        if (history.length === 0) {
-            historyDiv.innerHTML += "<p>No history ava
+</body>
+</html>
