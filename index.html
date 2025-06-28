@@ -53,6 +53,20 @@
         .paiement-submit-btn:hover {
             background-color: #0056b3;
         }
+        #pendingPaymentsList li {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #pendingPaymentsList li button {
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -274,7 +288,7 @@
         document.getElementById('mainPlatformPanel').classList.add('hidden');
         document.getElementById('leaderRegisterPanel').classList.add('hidden');
         document.getElementById('leaderLoginPanel').classList.add('hidden');
-        document.getElementById('ceoLoginPanel').classList.add('hidden'); // New CEO login panel
+        document.getElementById('ceoLoginPanel').classList.add('hidden');
         document.getElementById('leaderPanel').classList.add('hidden');
         document.getElementById('ceoPanel').classList.add('hidden');
     }
@@ -299,7 +313,7 @@
         hideAllPanels();
         document.getElementById('paymentPanel').classList.remove('hidden');
         document.getElementById('paymentUserName').textContent = userName;
-        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail; // Store email for form
+        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
     }
 
     function showMainPlatform(userName) {
@@ -321,9 +335,8 @@
 
     // --- User Authentication (Sign Up & Login) ---
 
-    // Simulate user storage (for demo purposes)
     const users = JSON.parse(localStorage.getItem('users')) || {};
-    let admins = JSON.parse(localStorage.getItem('admins')) || {}; // Use `let` so we can reassign if default CEO is added
+    let admins = JSON.parse(localStorage.getItem('admins')) || {};
     const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
 
     document.getElementById('signUpForm').addEventListener('submit', function(event) {
@@ -453,16 +466,22 @@
         }
 
         if (paymentMethod === 'cash') {
-            pendingPayments[currentUserEmail] = {
-                email: currentUserEmail,
-                method: 'Cash',
-                status: 'pending_leader_validation',
-                timestamp: new Date().toLocaleString()
-            };
-            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-            msg.textContent = '✅ Payment method submitted. A team leader will validate your cash payment soon.';
-            msg.classList.remove('hidden', 'error-msg');
-            msg.classList.add('success-msg');
+            if (!pendingPayments[currentUserEmail]) { // Only add if not already pending
+                pendingPayments[currentUserEmail] = {
+                    email: currentUserEmail,
+                    method: 'Cash',
+                    status: 'pending_leader_validation',
+                    timestamp: new Date().toLocaleString()
+                };
+                localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
+                msg.textContent = '✅ Payment method submitted. A team leader will validate your cash payment soon.';
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+            } else {
+                msg.textContent = 'ℹ️ Your cash payment is already pending validation.';
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg'); // Use error style for info to make it noticeable
+            }
         } else {
             const user = users[currentUserEmail];
             if (user) {
@@ -521,7 +540,7 @@
         const msg = document.getElementById('leaderLoginMsg');
         const stored = admins[email];
 
-        if(!stored || stored.role !== 'leader') { // Ensure it's a leader role
+        if(!stored || stored.role !== 'leader') {
             msg.textContent = '❌ No leader account found with this email.';
             msg.className = 'error-msg';
             return;
@@ -537,7 +556,7 @@
         hideAllPanels();
         document.getElementById('leaderPanel').classList.remove('hidden');
         document.getElementById('leaderNameDisplay').textContent = stored.name;
-        loadPendingPayments();
+        loadPendingPayments(); // Crucial: Load payments when leader logs in
     }
 
     function logoutLeader() {
@@ -547,18 +566,21 @@
 
     function loadPendingPayments() {
         const list = document.getElementById('pendingPaymentsList');
-        list.innerHTML = '';
+        list.innerHTML = ''; // Clear previous list
         let hasPending = false;
 
         for (const email in pendingPayments) {
             const payment = pendingPayments[email];
             if (payment.status === 'pending_leader_validation') {
                 hasPending = true;
+                const userFullName = users[email]?.fullName || 'Unknown User'; // Get full name
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    ${payment.email} (${users[email]?.fullName || 'Unknown'}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
-                    <button style="margin-left: 10px; background-color: #28a745;" onclick="validatePayment('${email}')">Validate</button>
-                    <button style="margin-left: 5px; background-color: #dc3545;" onclick="rejectPayment('${email}')">Reject</button>
+                    <strong>${userFullName}</strong> (${payment.email}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
+                    <div>
+                        <button style="background-color: #28a745;" onclick="validatePayment('${email}')">Validate</button>
+                        <button style="background-color: #dc3545; margin-left: 5px;" onclick="rejectPayment('${email}')">Reject</button>
+                    </div>
                 `;
                 list.appendChild(listItem);
             }
@@ -571,19 +593,20 @@
         if (users[email]) {
             users[email].paid = true;
             localStorage.setItem('users', JSON.stringify(users));
-            delete pendingPayments[email];
+            delete pendingPayments[email]; // Remove from pending
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-            alert(`Payment for ${email} validated! User now has full access.`);
-            loadPendingPayments();
+            alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
+            loadPendingPayments(); // Refresh list to reflect changes
         }
     }
 
     function rejectPayment(email) {
         if (users[email]) {
-            delete pendingPayments[email];
+            // You might want to add a 'rejected' status to the user or payment record for auditing
+            delete pendingPayments[email]; // Remove from pending
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-            alert(`Payment for ${email} rejected. User needs to resubmit.`);
-            loadPendingPayments();
+            alert(`Payment for ${users[email].fullName} (${email}) rejected. User needs to resubmit.`);
+            loadPendingPayments(); // Refresh list
         }
     }
 
@@ -614,8 +637,8 @@
         localStorage.setItem('currentAdmin', JSON.stringify({ email: ceoAccount.email, name: ceoAccount.name, role: ceoAccount.role }));
         hideAllPanels();
         document.getElementById('ceoPanel').classList.remove('hidden');
-        msg.textContent = ''; // Clear message on success
-        document.getElementById('ceoLoginEmail').value = ''; // Clear inputs
+        msg.textContent = '';
+        document.getElementById('ceoLoginEmail').value = '';
         document.getElementById('ceoLoginPassword').value = '';
     });
 
@@ -624,7 +647,6 @@
         showLogin();
     }
 
-    // Rotation calculation placeholder (from your original)
     function calculRotation() {
         const resultDiv = document.getElementById('rotationResult');
         resultDiv.textContent = 'Rotation calculation will be implemented here.';
@@ -664,7 +686,7 @@
                 hideAllPanels();
                 document.getElementById('leaderPanel').classList.remove('hidden');
                 document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
-                loadPendingPayments();
+                loadPendingPayments(); // Load payments on leader login
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
