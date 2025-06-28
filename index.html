@@ -138,6 +138,19 @@
             text-align: center;
             margin-top: 15px;
         }
+
+        /* Styles for User Messages list */
+        #userMessagesList li {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        #userMessagesList li.unread {
+            background-color: #fffde7; /* Light yellow for unread */
+            border-color: #ffe082;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -181,15 +194,15 @@
         <p id="loginMsg" class="hidden"></p>
     </form>
     <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showSignUp()">Sign Up here</a></p>
-    <p style="text-align: center; margin-top: 20px;">
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showContactAdmin()">Contact Support</a></p> <p style="text-align: center; margin-top: 20px;">
         <button style="background-color: #6c757d;" onclick="showAdminLoginRegister()">Admin / Leader Access</button>
     </p>
 </div>
 
 <div class="panel hidden" id="verificationMessagePanel">
     <h2>📧 Verify Your Email</h2>
-    <p>A verification email has been sent to <strong id="verificationEmailDisplay"></strong>. Please check your inbox and click the verification link to activate your account.</p>
-    <p>After verification, you will be redirected to the login page.</p>
+    <p>A verification message has been simulated for <strong id="verificationEmailDisplay"></strong>. In a real system, you'd receive an email to verify your account.</p>
+    <p>For this demo, your account is automatically considered verified.</p>
     <button onclick="showLogin()">Go to Login (After Verification)</button>
 </div>
 
@@ -213,6 +226,7 @@
                 <p>Once validated, your account will be fully activated. Click "Submit Payment Info" below to confirm your intent to pay by cash.</p>
             </div>
             <div id="mastercardInfo" class="hidden">
+                <p><strong>Mastercard / Debit Card:</strong> (Simulated payment)</p>
                 <label>Card Number (16 digits):</label>
                 <input type="text" id="cardNumber" maxlength="16" pattern="\d{16}" placeholder="1234 5678 9012 3456">
                 <label>Expiration Date (MM/YY):</label>
@@ -223,16 +237,17 @@
                 <input type="text" id="cardName" placeholder="Name as on card">
             </div>
             <div id="paypalInfo" class="hidden">
-                <p><strong>PayPal:</strong> Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
-                <p>After sending payment, click "Submit Payment Info" below.</p>
+                <p><strong>PayPal:</strong> (Simulated payment)</p>
+                <p>In a real system, you would be redirected to PayPal. For this demo, simply submit.</p>
+                <p>Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
             </div>
             <div id="moncashInfo" class="hidden">
-                <p><strong>MonCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
-                <p>After sending payment, click "Submit Payment Info" below.</p>
+                <p><strong>MonCash:</strong> (Simulated payment)</p>
+                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
             </div>
             <div id="natcashInfo" class="hidden">
-                <p><strong>NatCash:</strong> Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
-                <p>After sending payment, click "Submit Payment Info" below.</p>
+                <p><strong>NatCash:</strong> (Simulated payment)</p>
+                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
             </div>
         </div>
         <button type="submit" class="paiement-submit-btn">Submit Payment Info</button>
@@ -254,6 +269,25 @@
     <div class="logout-btn">
         <button onclick="logoutUser()">Log Out</button>
     </div>
+</div>
+
+<div class="form-section hidden" id="contactAdminPanel">
+    <h2>📧 Contact Support</h2>
+    <p>Have a question or an issue? Send us a message!</p>
+    <form id="contactAdminForm">
+        <label for="contactEmail">Your Email:</label>
+        <input type="email" id="contactEmail" name="contactEmail" placeholder="Enter your email" required>
+
+        <label for="contactSubject">Subject:</label>
+        <input type="text" id="contactSubject" name="contactSubject" placeholder="e.g., Payment issue, Account problem" required>
+
+        <label for="contactMessage">Message:</label>
+        <textarea id="contactMessage" name="contactMessage" rows="5" placeholder="Type your message here..." required></textarea>
+
+        <button type="submit">Send Message</button>
+        <p id="contactAdminMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showLogin()">Back to Login</a></p>
 </div>
 
 <div class="form-section hidden" id="leaderRegisterPanel">
@@ -319,6 +353,12 @@
     <ul id="pendingPaymentsList">
         </ul>
     <p id="noPendingPayments" style="font-style: italic;">No pending payments.</p>
+
+    <hr>
+    <h3>✉️ User Messages: <span id="unreadMessageCount">(0 unread)</span></h3>
+    <ul id="userMessagesList">
+        </ul>
+    <p id="noUserMessages" style="font-style: italic;">No new messages.</p>
 
     <hr>
     <div class="rotation-section">
@@ -392,6 +432,7 @@
         document.getElementById('ceoLoginPanel').classList.add('hidden');
         document.getElementById('leaderPanel').classList.add('hidden');
         document.getElementById('ceoPanel').classList.add('hidden');
+        document.getElementById('contactAdminPanel').classList.add('hidden'); // NEW
     }
 
     function showSignUp() {
@@ -434,10 +475,17 @@
         document.getElementById('ceoLoginPanel').classList.remove('hidden');
     }
 
+    // NEW: Function to show Contact Admin panel
+    function showContactAdmin() {
+        hideAllPanels();
+        document.getElementById('contactAdminPanel').classList.remove('hidden');
+    }
+
     // --- Data Storage (Client-Side Simulation) ---
     const users = JSON.parse(localStorage.getItem('users')) || {};
     let admins = JSON.parse(localStorage.getItem('admins')) || {};
     const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
+    let adminMessages = JSON.parse(localStorage.getItem('adminMessages')) || {}; // NEW: Storage for user messages
 
     let rotationSettings = JSON.parse(localStorage.getItem('rotationSettings')) || {
         invest: 100,
@@ -492,13 +540,16 @@
         };
         localStorage.setItem('users', JSON.stringify(users));
 
-        msg.textContent = '✅ Sign up successful! Please check your email for verification.';
+        // Adjusted message to reflect simulation
+        msg.textContent = '✅ Sign up successful! Your account is automatically verified for this demo. Please proceed to login.';
         msg.classList.remove('hidden', 'error-msg');
         msg.classList.add('success-msg');
 
+        // Simulate immediate verification for demo purposes
         setTimeout(() => {
             users[email].verified = true;
             localStorage.setItem('users', JSON.stringify(users));
+            // Show verification panel briefly, then direct to login
             showVerificationMessage(email);
         }, 1000);
     });
@@ -522,7 +573,7 @@
         }
 
         if (!user.verified) {
-            msg.textContent = '❌ Please verify your email first. Check your inbox!';
+            msg.textContent = '❌ Please verify your email first. (In a real system, you\'d check your inbox!)';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
             return;
@@ -576,15 +627,13 @@
             return;
         }
 
-        // --- IMPORTANT FIX HERE: Ensure cash payment properly stores user details ---
         if (paymentMethod === 'cash') {
             if (!pendingPayments[currentUserEmail]) {
-                // Get user's full name from the 'users' object
                 const userName = users[currentUserEmail] ? users[currentUserEmail].fullName : 'Unknown User';
 
                 pendingPayments[currentUserEmail] = {
                     email: currentUserEmail,
-                    name: userName, // Store user's name for display in leader panel
+                    name: userName,
                     method: 'Cash',
                     status: 'pending_leader_validation',
                     timestamp: new Date().toLocaleString()
@@ -612,6 +661,47 @@
         }
     });
 
+
+    // --- User Message System (NEW) ---
+    document.getElementById('contactAdminForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('contactEmail').value.trim();
+        const subject = document.getElementById('contactSubject').value.trim();
+        const messageText = document.getElementById('contactMessage').value.trim();
+        const msg = document.getElementById('contactAdminMsg');
+
+        msg.classList.add('hidden');
+
+        if (!email || !subject || !messageText) {
+            msg.textContent = '❌ Please fill in all fields.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        const messageId = Date.now().toString() + Math.random().toString(36).substr(2, 5); // Simple unique ID
+        adminMessages[messageId] = {
+            id: messageId,
+            fromEmail: email,
+            subject: subject,
+            message: messageText,
+            timestamp: new Date().toLocaleString(),
+            status: 'unread' // 'unread', 'read'
+        };
+        localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
+
+        msg.textContent = '✅ Your message has been sent to support!';
+        msg.classList.remove('hidden', 'error-msg');
+        msg.classList.add('success-msg');
+
+        // Clear form
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('contactSubject').value = '';
+        document.getElementById('contactMessage').value = '';
+
+        setTimeout(() => msg.classList.add('hidden'), 3000);
+    });
 
     // --- Admin (Team Leader / CEO) Logic ---
 
@@ -681,6 +771,7 @@
         loadRotationSettings();
         loadAvailableMembersForRotation();
         displayRotationParticipants();
+        loadUserMessages(); // NEW: Load user messages on leader login
     }
 
     function logoutLeader() {
@@ -697,7 +788,6 @@
             const payment = pendingPayments[email];
             if (payment.status === 'pending_leader_validation') {
                 hasPending = true;
-                // --- FIX HERE: Use payment.name (stored during cash submission) or fallback to users[email]?.fullName ---
                 const userDisplayName = payment.name || users[email]?.fullName || 'Unknown User';
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
@@ -716,15 +806,15 @@
 
     function validatePayment(email) {
         if (users[email]) {
-            users[email].paid = true; // Mark user as paid
-            localStorage.setItem('users', JSON.stringify(users)); // Save updated user status
+            users[email].paid = true;
+            localStorage.setItem('users', JSON.stringify(users));
 
-            delete pendingPayments[email]; // Remove from pending
-            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments)); // Save updated pending list
+            delete pendingPayments[email];
+            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
 
             alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
-            loadPendingPayments(); // Refresh pending list
-            loadAvailableMembersForRotation(); // Refresh available members for rotation
+            loadPendingPayments();
+            loadAvailableMembersForRotation();
         } else {
             alert(`Error: User with email ${email} not found.`);
         }
@@ -738,6 +828,55 @@
             loadPendingPayments();
         }
     }
+
+    // NEW: Functions for User Messages (Leader Dashboard)
+    function loadUserMessages() {
+        const list = document.getElementById('userMessagesList');
+        list.innerHTML = '';
+        let unreadCount = 0;
+        let hasMessages = false;
+
+        // Convert object to array for sorting by timestamp (most recent first)
+        const messagesArray = Object.values(adminMessages).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        messagesArray.forEach(message => {
+            hasMessages = true;
+            if (message.status === 'unread') {
+                unreadCount++;
+            }
+            const listItem = document.createElement('li');
+            listItem.classList.toggle('unread', message.status === 'unread'); // Add 'unread' class for styling
+            listItem.innerHTML = `
+                <strong>From:</strong> ${message.fromEmail}<br>
+                <strong>Subject:</strong> ${message.subject}<br>
+                <strong>Message:</strong> ${message.message}<br>
+                <small><em>Sent: ${message.timestamp} - Status: ${message.status.toUpperCase()}</em></small><br>
+                <button style="margin-top: 5px; background-color: #007bff; font-size: 0.9em; padding: 5px 10px;" onclick="markMessageAsRead('${message.id}')">Mark as Read</button>
+                <button style="margin-top: 5px; background-color: #dc3545; font-size: 0.9em; padding: 5px 10px; margin-left: 5px;" onclick="deleteMessage('${message.id}')">Delete</button>
+            `;
+            list.appendChild(listItem);
+        });
+
+        document.getElementById('unreadMessageCount').textContent = `(${unreadCount} unread)`;
+        document.getElementById('noUserMessages').classList.toggle('hidden', hasMessages);
+    }
+
+    function markMessageAsRead(messageId) {
+        if (adminMessages[messageId]) {
+            adminMessages[messageId].status = 'read';
+            localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
+            loadUserMessages(); // Refresh the list
+        }
+    }
+
+    function deleteMessage(messageId) {
+        if (confirm('Are you sure you want to delete this message?')) {
+            delete adminMessages[messageId];
+            localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
+            loadUserMessages(); // Refresh the list
+        }
+    }
+
 
     // CEO Login Logic
     document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
@@ -813,6 +952,7 @@
 
         for (const email in users) {
             const user = users[email];
+            // Only add verified and paid users who are NOT ALREADY in the active rotation
             if (user.verified && user.paid && !activeRotationMembers.includes(email)) {
                 const option = document.createElement('option');
                 option.value = email;
@@ -889,14 +1029,7 @@
             return;
         }
 
-        // --- Start of where sophisticated rotation rules would go ---
-        // Currently, it's a simple round-robin.
-        // Future enhancements could consider:
-        // - Priority based on recent activity or specific tiers.
-        // - Ensuring a minimum number of days between payouts for a single user.
-        // - Dynamically adjusting nextIndex based on user-specific conditions.
         let nextIndex = (rotationSettings.lastPaidMemberIndex + 1) % activeRotationMembers.length;
-        // --- End of where sophisticated rotation rules would go ---
 
         const recipientEmail = activeRotationMembers[nextIndex];
         const recipientName = users[recipientEmail]?.fullName || 'Unknown';
@@ -913,9 +1046,8 @@
             gain: rotationSettings.gain,
             timestamp: new Date().toLocaleString()
         });
-        // Keep history to a reasonable size (e.g., last 25 entries for the table)
         if (rotationHistory.length > 25) {
-            rotationHistory.shift(); // Remove the oldest entry
+            rotationHistory.shift();
         }
         localStorage.setItem('rotationHistory', JSON.stringify(rotationHistory));
 
@@ -926,7 +1058,7 @@
 
         loadRotationSettings();
         displayRotationParticipants();
-        displayRotationHistory(); // Update CEO history too
+        displayRotationHistory();
     }
 
 
@@ -934,7 +1066,7 @@
 
     function displayRotationHistory() {
         const tableBody = document.querySelector('#ceoRotationHistoryTable tbody');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         const noHistoryMsg = document.getElementById('noRotationHistory');
 
         if (rotationHistory.length === 0) {
@@ -944,7 +1076,6 @@
             noHistoryMsg.classList.add('hidden');
         }
 
-        // Display history in reverse chronological order (most recent first)
         [...rotationHistory].reverse().forEach(entry => {
             const row = tableBody.insertRow();
             row.insertCell().textContent = entry.day;
@@ -960,7 +1091,7 @@
         msg.textContent = 'This button can be expanded to generate more complex reports (e.g., total funds, financial projections). For now, view the history above.';
         msg.classList.remove('hidden');
         msg.classList.remove('success-msg');
-        msg.classList.add('error-msg'); // Use error style to make it noticeable as a placeholder
+        msg.classList.add('error-msg');
         setTimeout(() => msg.classList.add('hidden'), 4000);
     }
 
@@ -997,10 +1128,11 @@
                 loadRotationSettings();
                 loadAvailableMembersForRotation();
                 displayRotationParticipants();
+                loadUserMessages(); // IMPORTANT: Load user messages when leader logs in
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
-                displayRotationHistory(); // Display history when CEO logs in
+                displayRotationHistory();
             }
         } else {
             showSignUp();
