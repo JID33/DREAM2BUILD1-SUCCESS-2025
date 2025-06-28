@@ -67,6 +67,52 @@
             padding: 5px 10px;
             font-size: 0.9em;
         }
+        /* New styles for Rotation Management */
+        .rotation-section {
+            background: #e9f7ef;
+            border: 1px solid #d4edda;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .rotation-section label {
+            width: auto;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        .rotation-section input {
+            width: calc(50% - 70px); /* Adjust width to fit with label */
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .rotation-section button {
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        #rotationParticipantsList {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px dashed #28a745;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 5px;
+        }
+        #rotationParticipantsList li {
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        #rotationParticipantsList li:last-child {
+            border-bottom: none;
+        }
+        .current-recipient {
+            background-color: #d4edda;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -205,15 +251,19 @@
 
 <div class="form-section hidden" id="leaderLoginPanel">
     <h2>🔐 Team Leader Login (Admin Only)</h2>
-    <label for="loginLeaderEmail">Email:</label>
-    <input type="email" id="loginLeaderEmail" placeholder="Enter email">
+    <form id="leaderLoginForm">
+        <label for="loginLeaderEmail">Email:</label>
+        <input type="email" id="loginLeaderEmail" name="loginLeaderEmail" placeholder="Enter email" required>
 
-    <label for="loginLeaderPass">Password:</label>
-    <input type="password" id="loginLeaderPass" placeholder="Enter password">
+        <label for="loginLeaderPass">Password:</label>
+        <input type="password" id="loginLeaderPass" name="loginLeaderPass" placeholder="Enter password" required>
 
-    <button onclick="loginLeader()">Login</button>
-    <p id="leaderLoginMsg"></p>
-    <button style="background-color: #6c757d; margin-top: 10px;" onclick="showCEOLogin()">Login as CEO</button>
+        <button type="submit">Login</button>
+        <p id="leaderLoginMsg"></p>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">
+        <button style="background-color: #6c757d;" onclick="showCEOLogin()">Login as CEO</button>
+    </p>
 </div>
 
 <div class="form-section hidden" id="ceoLoginPanel">
@@ -235,12 +285,45 @@
 <div id="leaderPanel" class="panel hidden">
     <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
     <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
-    <button class="logout-btn" onclick="logoutLeader()">Logout</button>
-    <p>Here you can manage member payments and accounts.</p>
-    <h3>Pending Payments:</h3>
+    <div class="logout-btn">
+        <button onclick="logoutLeader()">Logout</button>
+    </div>
+
+    <hr>
+    <h3>💸 Pending Payments:</h3>
     <ul id="pendingPaymentsList">
         </ul>
     <p id="noPendingPayments" style="font-style: italic;">No pending payments.</p>
+
+    <hr>
+    <div class="rotation-section">
+        <h3>🔄 Rotation Management</h3>
+        <p>Current Rotation Day: <strong id="currentRotationDay">0</strong></p>
+        <label for="dailyInvest">Daily Investment ($):</label>
+        <input type="number" id="dailyInvest" value="100" min="0" step="0.01">
+
+        <label for="dailyGain">Daily Gain ($):</label>
+        <input type="number" id="dailyGain" value="1000" min="0" step="0.01">
+
+        <button onclick="saveRotationSettings()">Update Settings</button>
+        <p id="rotationSettingsMsg" class="hidden"></p>
+
+        <hr>
+        <h4>Participants in Rotation:</h4>
+        <select id="availableMembersSelect" style="width: 70%; display: inline-block; margin-right: 10px;">
+            <option value="">-- Select Paid Member --</option>
+            </select>
+        <button style="background-color: #007BFF; width: auto; padding: 10px 15px; margin-right: 0;" onclick="addParticipantToRotation()">Add Participant</button>
+        <p id="addParticipantMsg" class="hidden"></p>
+
+        <ul id="rotationParticipantsList">
+            </ul>
+        <p id="noActiveParticipants" style="font-style: italic;">No participants in rotation.</p>
+
+        <button style="background-color: #ffc107;" onclick="nextParticipant()">Next Participant (Rotate)</button>
+        <p id="rotationStatusMsg" class="hidden"></p>
+    </div>
+
 </div>
 
 <div id="ceoPanel" class="panel hidden">
@@ -333,11 +416,21 @@
         document.getElementById('ceoLoginPanel').classList.remove('hidden');
     }
 
-    // --- User Authentication (Sign Up & Login) ---
-
+    // --- Data Storage (Client-Side Simulation) ---
     const users = JSON.parse(localStorage.getItem('users')) || {};
     let admins = JSON.parse(localStorage.getItem('admins')) || {};
     const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
+
+    let rotationSettings = JSON.parse(localStorage.getItem('rotationSettings')) || {
+        invest: 100,
+        gain: 1000,
+        currentDay: 0,
+        lastPaidMemberIndex: -1 // To track who was last paid
+    };
+    let activeRotationMembers = JSON.parse(localStorage.getItem('activeRotationMembers')) || [];
+    let rotationHistory = JSON.parse(localStorage.getItem('rotationHistory')) || []; // For tracking past rotations
+
+    // --- User Authentication (Sign Up & Login) ---
 
     document.getElementById('signUpForm').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -466,7 +559,7 @@
         }
 
         if (paymentMethod === 'cash') {
-            if (!pendingPayments[currentUserEmail]) { // Only add if not already pending
+            if (!pendingPayments[currentUserEmail]) {
                 pendingPayments[currentUserEmail] = {
                     email: currentUserEmail,
                     method: 'Cash',
@@ -480,7 +573,7 @@
             } else {
                 msg.textContent = 'ℹ️ Your cash payment is already pending validation.';
                 msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg'); // Use error style for info to make it noticeable
+                msg.classList.add('error-msg');
             }
         } else {
             const user = users[currentUserEmail];
@@ -498,6 +591,11 @@
 
 
     // --- Admin (Team Leader / CEO) Logic ---
+
+    document.getElementById('leaderLoginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        loginLeader();
+    });
 
     function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
@@ -556,7 +654,10 @@
         hideAllPanels();
         document.getElementById('leaderPanel').classList.remove('hidden');
         document.getElementById('leaderNameDisplay').textContent = stored.name;
-        loadPendingPayments(); // Crucial: Load payments when leader logs in
+        loadPendingPayments();
+        loadRotationSettings(); // Load rotation settings for the leader
+        loadAvailableMembersForRotation(); // Load members eligible for rotation
+        displayRotationParticipants(); // Display current participants
     }
 
     function logoutLeader() {
@@ -566,14 +667,14 @@
 
     function loadPendingPayments() {
         const list = document.getElementById('pendingPaymentsList');
-        list.innerHTML = ''; // Clear previous list
+        list.innerHTML = '';
         let hasPending = false;
 
         for (const email in pendingPayments) {
             const payment = pendingPayments[email];
             if (payment.status === 'pending_leader_validation') {
                 hasPending = true;
-                const userFullName = users[email]?.fullName || 'Unknown User'; // Get full name
+                const userFullName = users[email]?.fullName || 'Unknown User';
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
                     <strong>${userFullName}</strong> (${payment.email}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
@@ -593,20 +694,20 @@
         if (users[email]) {
             users[email].paid = true;
             localStorage.setItem('users', JSON.stringify(users));
-            delete pendingPayments[email]; // Remove from pending
+            delete pendingPayments[email];
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
             alert(`Payment for ${users[email].fullName} (${email}) validated! User now has full access.`);
-            loadPendingPayments(); // Refresh list to reflect changes
+            loadPendingPayments();
+            loadAvailableMembersForRotation(); // Refresh available members after validation
         }
     }
 
     function rejectPayment(email) {
         if (users[email]) {
-            // You might want to add a 'rejected' status to the user or payment record for auditing
-            delete pendingPayments[email]; // Remove from pending
+            delete pendingPayments[email];
             localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
             alert(`Payment for ${users[email].fullName} (${email}) rejected. User needs to resubmit.`);
-            loadPendingPayments(); // Refresh list
+            loadPendingPayments();
         }
     }
 
@@ -614,7 +715,7 @@
     document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const email = document.getElementById('ceoLoginEmail').value.trim();
-        const password = document.getElementById('ceoLoginPassword').value;
+        const password = document.getElementById('ceoLoginPassword'].value;
         const msg = document.getElementById('ceoLoginMsg');
         msg.classList.add('hidden');
 
@@ -639,7 +740,7 @@
         document.getElementById('ceoPanel').classList.remove('hidden');
         msg.textContent = '';
         document.getElementById('ceoLoginEmail').value = '';
-        document.getElementById('ceoLoginPassword').value = '';
+        document.getElementById('ceoLoginPassword'].value = '';
     });
 
     function logoutCEO() {
@@ -647,15 +748,162 @@
         showLogin();
     }
 
+    // --- Rotation Management Logic (New) ---
+
+    function loadRotationSettings() {
+        document.getElementById('dailyInvest').value = rotationSettings.invest;
+        document.getElementById('dailyGain').value = rotationSettings.gain;
+        document.getElementById('currentRotationDay').textContent = rotationSettings.currentDay;
+    }
+
+    function saveRotationSettings() {
+        const invest = parseFloat(document.getElementById('dailyInvest').value);
+        const gain = parseFloat(document.getElementById('dailyGain').value);
+        const msg = document.getElementById('rotationSettingsMsg');
+        msg.classList.add('hidden');
+
+        if (isNaN(invest) || isNaN(gain) || invest < 0 || gain < 0) {
+            msg.textContent = '❌ Please enter valid numbers for Invest and Gain.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        rotationSettings.invest = invest;
+        rotationSettings.gain = gain;
+        localStorage.setItem('rotationSettings', JSON.stringify(rotationSettings));
+        msg.textContent = '✅ Rotation settings updated!';
+        msg.classList.remove('hidden', 'error-msg');
+        msg.classList.add('success-msg');
+        setTimeout(() => msg.classList.add('hidden'), 2000);
+    }
+
+    function loadAvailableMembersForRotation() {
+        const select = document.getElementById('availableMembersSelect');
+        select.innerHTML = '<option value="">-- Select Paid Member --</option>'; // Clear existing options
+
+        // Filter users who are verified, paid, and NOT ALREADY in activeRotationMembers
+        for (const email in users) {
+            const user = users[email];
+            if (user.verified && user.paid && !activeRotationMembers.includes(email)) {
+                const option = document.createElement('option');
+                option.value = email;
+                option.textContent = `${user.fullName} (${user.email})`;
+                select.appendChild(option);
+            }
+        }
+    }
+
+    function addParticipantToRotation() {
+        const select = document.getElementById('availableMembersSelect');
+        const emailToAdd = select.value;
+        const msg = document.getElementById('addParticipantMsg');
+        msg.classList.add('hidden');
+
+        if (!emailToAdd) {
+            msg.textContent = '❌ Please select a member to add.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        if (activeRotationMembers.includes(emailToAdd)) {
+            msg.textContent = 'ℹ️ This member is already in the rotation.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        activeRotationMembers.push(emailToAdd);
+        localStorage.setItem('activeRotationMembers', JSON.stringify(activeRotationMembers));
+
+        msg.textContent = `✅ ${users[emailToAdd].fullName} added to rotation!`;
+        msg.classList.remove('hidden', 'error-msg');
+        msg.classList.add('success-msg');
+        setTimeout(() => msg.classList.add('hidden'), 2000);
+
+        // Re-render lists
+        loadAvailableMembersForRotation();
+        displayRotationParticipants();
+    }
+
+    function displayRotationParticipants() {
+        const list = document.getElementById('rotationParticipantsList');
+        list.innerHTML = '';
+        let hasParticipants = false;
+
+        if (activeRotationMembers.length > 0) {
+            hasParticipants = true;
+            activeRotationMembers.forEach((email, index) => {
+                const userFullName = users[email]?.fullName || 'Unknown User';
+                const listItem = document.createElement('li');
+                listItem.textContent = `${userFullName} (${email})`;
+                if (index === rotationSettings.lastPaidMemberIndex) {
+                    listItem.classList.add('current-recipient');
+                    listItem.title = "Last member who received payment";
+                }
+                list.appendChild(listItem);
+            });
+        }
+
+        document.getElementById('noActiveParticipants').classList.toggle('hidden', hasParticipants);
+    }
+
+    function nextParticipant() {
+        const msg = document.getElementById('rotationStatusMsg');
+        msg.classList.add('hidden');
+
+        if (activeRotationMembers.length === 0) {
+            msg.textContent = '❌ No participants in rotation. Add members first.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        // Increment current day
+        rotationSettings.currentDay++;
+
+        // Determine the next recipient
+        let nextIndex = (rotationSettings.lastPaidMemberIndex + 1) % activeRotationMembers.length;
+        const recipientEmail = activeRotationMembers[nextIndex];
+        const recipientName = users[recipientEmail]?.fullName || 'Unknown';
+
+        // Update last paid member index
+        rotationSettings.lastPaidMemberIndex = nextIndex;
+        localStorage.setItem('rotationSettings', JSON.stringify(rotationSettings));
+
+        // Record history
+        rotationHistory.push({
+            day: rotationSettings.currentDay,
+            recipientEmail: recipientEmail,
+            recipientName: recipientName,
+            invest: rotationSettings.invest,
+            gain: rotationSettings.gain,
+            timestamp: new Date().toLocaleString()
+        });
+        localStorage.setItem('rotationHistory', JSON.stringify(rotationHistory));
+
+        msg.textContent = `✅ Day ${rotationSettings.currentDay}: ${recipientName} (${recipientEmail}) is the next recipient! Gain: $${rotationSettings.gain}`;
+        msg.classList.remove('hidden', 'error-msg');
+        msg.classList.add('success-msg');
+        setTimeout(() => msg.classList.add('hidden'), 3000);
+
+        loadRotationSettings(); // Update current day display
+        displayRotationParticipants(); // Highlight the current recipient
+    }
+
+
+    // --- CEO Specific Functions (kept for structure) ---
     function calculRotation() {
         const resultDiv = document.getElementById('rotationResult');
-        resultDiv.textContent = 'Rotation calculation will be implemented here.';
+        resultDiv.textContent = 'This will show detailed rotation calculations (e.g., total funds, next payout details).';
         resultDiv.classList.remove('hidden');
     }
 
     function nextRotation() {
-        alert('Next rotation day functionality coming soon!');
+        alert('This button is now handled by "Next Participant" in Leader Panel. This CEO button can be repurposed for a global daily reset or advanced features.');
     }
+
 
     // --- Initial Load Logic ---
     window.onload = function() {
@@ -686,7 +934,10 @@
                 hideAllPanels();
                 document.getElementById('leaderPanel').classList.remove('hidden');
                 document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
-                loadPendingPayments(); // Load payments on leader login
+                loadPendingPayments();
+                loadRotationSettings(); // Initialize settings display
+                loadAvailableMembersForRotation(); // Populate dropdown
+                displayRotationParticipants(); // Show current rotation members
             } else if (currentAdmin.role === 'ceo') {
                 hideAllPanels();
                 document.getElementById('ceoPanel').classList.remove('hidden');
