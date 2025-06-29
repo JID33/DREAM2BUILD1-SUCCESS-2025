@@ -421,6 +421,10 @@
 </div>
 
 <script>
+    // --- Configuration for your Backend API ---
+    // IMPORTANT: Replace this with your actual backend server's URL when deployed!
+    const API_BASE_URL = 'http://localhost:3000/api'; // For local testing, assuming backend runs on port 3000
+
     // --- Helper Functions to Toggle Panels ---
     function hideAllPanels() {
         document.getElementById('signUpPanel').classList.add('hidden');
@@ -452,14 +456,45 @@
         document.getElementById('verificationEmailDisplay').textContent = email;
     }
 
-    function showPaymentPanel(userName, userEmail) {
-        hideAllPanels();
-        document.getElementById('paymentPanel').classList.remove('hidden');
-        document.getElementById('paymentUserName').textContent = userName;
-        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
+    // Function to get current user/admin token (simulated for frontend)
+    // In a real app, this would get token from cookie or sessionStorage
+    let currentAuthToken = localStorage.getItem('authToken');
+    let currentUserData = JSON.parse(localStorage.getItem('currentUserData') || '{}'); // Stores role, name, email etc.
+
+    function saveAuthData(token, userData) {
+        currentAuthToken = token;
+        currentUserData = userData;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUserData', JSON.stringify(userData));
     }
 
-    function showMainPlatform(userName) {
+    function clearAuthData() {
+        currentAuthToken = null;
+        currentUserData = {};
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUserData');
+    }
+
+    // --- Panel Show Functions (Adjusted for Backend Data) ---
+    async function showPaymentPanel(userEmail) {
+        hideAllPanels();
+        document.getElementById('paymentPanel').classList.remove('hidden');
+        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${userEmail}`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user data');
+            const userData = await response.json();
+            document.getElementById('paymentUserName').textContent = userData.fullName || userData.email;
+        } catch (error) {
+            console.error('Error fetching user data for payment panel:', error);
+            document.getElementById('paymentUserName').textContent = 'User';
+        }
+    }
+
+    async function showMainPlatform(userName) {
         hideAllPanels();
         document.getElementById('mainPlatformPanel').classList.remove('hidden');
         document.getElementById('loggedInUserName').textContent = userName;
@@ -481,24 +516,9 @@
         document.getElementById('contactAdminPanel').classList.remove('hidden');
     }
 
-    // --- Data Storage (Client-Side Simulation) ---
-    const users = JSON.parse(localStorage.getItem('users')) || {};
-    let admins = JSON.parse(localStorage.getItem('admins')) || {};
-    const pendingPayments = JSON.parse(localStorage.getItem('pendingPayments')) || {};
-    let adminMessages = JSON.parse(localStorage.getItem('adminMessages')) || {};
-
-    let rotationSettings = JSON.parse(localStorage.getItem('rotationSettings')) || {
-        invest: 100,
-        gain: 1000,
-        currentDay: 0,
-        lastPaidMemberIndex: -1
-    };
-    let activeRotationMembers = JSON.parse(localStorage.getItem('activeRotationMembers')) || [];
-    let rotationHistory = JSON.parse(localStorage.getItem('rotationHistory')) || [];
-
     // --- User Authentication (Sign Up & Login) ---
 
-    document.getElementById('signUpForm').addEventListener('submit', function(event) {
+    document.getElementById('signUpForm').addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const fullName = document.getElementById('fullName').value.trim();
@@ -524,34 +544,36 @@
             return;
         }
 
-        if (users[email]) {
-            msg.textContent = '❌ This email is already registered.';
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, phoneNumber, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Sign up successful! Please proceed to login.'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                // In a real system, verification email would be sent by backend
+                // For this demo, we simulate instant verification
+                setTimeout(() => showVerificationMessage(email), 1000);
+            } else {
+                msg.textContent = `❌ ${data.message || 'Signup failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
-            return;
         }
-
-        users[email] = {
-            fullName: fullName,
-            phoneNumber: phoneNumber,
-            password: password,
-            verified: false,
-            paid: false
-        };
-        localStorage.setItem('users', JSON.stringify(users));
-
-        msg.textContent = '✅ Sign up successful! Your account is automatically verified for this demo. Please proceed to login.';
-        msg.classList.remove('hidden', 'error-msg');
-        msg.classList.add('success-msg');
-
-        setTimeout(() => {
-            users[email].verified = true;
-            localStorage.setItem('users', JSON.stringify(users));
-            showVerificationMessage(email);
-        }, 1000);
     });
 
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const email = document.getElementById('loginEmail').value.trim();
@@ -560,40 +582,41 @@
 
         msg.classList.add('hidden');
 
-        const user = users[email];
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (!user) {
-            msg.textContent = '❌ No account found with this email.';
+            const data = await response.json();
+
+            if (response.ok) {
+                saveAuthData(data.token, data.user); // Store token and user data
+                msg.textContent = '✅ Login successful! Redirecting...';
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+
+                if (data.user.paid) {
+                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                } else {
+                    setTimeout(() => showPaymentPanel(data.user.email), 500);
+                }
+            } else {
+                msg.textContent = `❌ ${data.message || 'Login failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
-            return;
-        }
-
-        if (!user.verified) {
-            msg.textContent = '❌ Please verify your email first. (In a real system, you\'d check your inbox!)';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        if (user.password !== password) {
-            msg.textContent = '❌ Incorrect password.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
-
-        if (user.paid) {
-            showMainPlatform(user.fullName);
-        } else {
-            showPaymentPanel(user.fullName, user.email);
         }
     });
 
     function logoutUser() {
-        localStorage.removeItem('currentUser');
+        clearAuthData(); // Clear token and user data
         showLogin();
     }
 
@@ -610,7 +633,7 @@
         }
     }
 
-    document.getElementById('paymentForm').addEventListener('submit', function(event) {
+    document.getElementById('paymentForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const paymentMethod = document.getElementById('paymentMethod').value;
         const currentUserEmail = document.getElementById('paymentPanel').dataset.currentUserEmail;
@@ -624,43 +647,51 @@
             return;
         }
 
-        if (paymentMethod === 'cash') {
-            if (!pendingPayments[currentUserEmail]) {
-                const userName = users[currentUserEmail] ? users[currentUserEmail].fullName : 'Unknown User';
-
-                pendingPayments[currentUserEmail] = {
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({
                     email: currentUserEmail,
-                    name: userName,
-                    method: 'Cash',
-                    status: 'pending_leader_validation',
-                    timestamp: new Date().toLocaleString()
-                };
-                localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-                msg.textContent = '✅ Payment method submitted. A team leader will validate your cash payment soon.';
+                    method: paymentMethod,
+                    // Include card details if paymentMethod is mastercard, etc.
+                    // IMPORTANT: In real app, card data goes directly to PSP, not your server!
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (paymentMethod === 'cash') {
+                    msg.textContent = `✅ ${data.message || 'Payment method submitted. A team leader will validate your cash payment soon.'}`;
+                } else {
+                    // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
+                    currentUserData.paid = true; // Update local state based on backend response
+                    saveAuthData(currentAuthToken, currentUserData);
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`;
+                    setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
+                }
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
             } else {
-                msg.textContent = 'ℹ️ Your cash payment is already pending validation.';
+                msg.textContent = `❌ ${data.message || 'Payment submission failed.'}`;
                 msg.classList.remove('hidden', 'success-msg');
                 msg.classList.add('error-msg');
             }
-        } else {
-            const user = users[currentUserEmail];
-            if (user) {
-                user.paid = true;
-                localStorage.setItem('users', JSON.stringify(users));
-                localStorage.setItem('currentUser', JSON.stringify({ email: user.email, name: user.fullName, role: 'user' }));
-                msg.textContent = '✅ Payment successful! Redirecting to platform...';
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                setTimeout(() => showMainPlatform(user.fullName), 1500);
-            }
+        } catch (error) {
+            console.error('Payment submission error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
         }
     });
 
 
     // --- User Message System ---
-    document.getElementById('contactAdminForm').addEventListener('submit', function(event) {
+    document.getElementById('contactAdminForm').addEventListener('submit', async function(event) {
         event.preventDefault();
 
         const email = document.getElementById('contactEmail').value.trim();
@@ -677,36 +708,45 @@
             return;
         }
 
-        const messageId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-        adminMessages[messageId] = {
-            id: messageId,
-            fromEmail: email,
-            subject: subject,
-            message: messageText,
-            timestamp: new Date().toLocaleString(),
-            status: 'unread'
-        };
-        localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
+        try {
+            const response = await fetch(`${API_BASE_URL}/messages/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromEmail: email, subject, message: messageText })
+            });
 
-        msg.textContent = '✅ Your message has been sent to support!';
-        msg.classList.remove('hidden', 'error-msg');
-        msg.classList.add('success-msg');
+            const data = await response.json();
 
-        document.getElementById('contactEmail').value = '';
-        document.getElementById('contactSubject').value = '';
-        document.getElementById('contactMessage').value = '';
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Your message has been sent to support!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
 
+                document.getElementById('contactEmail').value = '';
+                document.getElementById('contactSubject').value = '';
+                document.getElementById('contactMessage').value = '';
+            } else {
+                msg.textContent = `❌ ${data.message || 'Failed to send message.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Send message error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
         setTimeout(() => msg.classList.add('hidden'), 3000);
     });
 
     // --- Admin (Team Leader / CEO) Logic ---
 
-    document.getElementById('leaderLoginForm').addEventListener('submit', function(event) {
+    document.getElementById('leaderLoginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        loginLeader();
+        await loginAdmin('leader');
     });
 
-    function registerLeader() {
+    async function registerLeader() {
         const name = document.getElementById('leaderName').value.trim();
         const email = document.getElementById('leaderEmailReg').value.trim();
         const pass1 = document.getElementById('leaderPass1').value;
@@ -723,212 +763,272 @@
             msg.className = 'error-msg';
             return;
         }
-        if (admins[email]) {
-            msg.textContent = '❌ This email is already registered as an admin.';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admins/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password: pass1, role: 'leader' })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Registration successful. You can now login as a Leader.'}`;
+                msg.className = 'success-msg';
+                document.getElementById('leaderName').value = '';
+                document.getElementById('leaderEmailReg').value = '';
+                document.getElementById('leaderPass1').value = '';
+                document.getElementById('leaderPass2').value = '';
+            } else {
+                msg.textContent = `❌ ${data.message || 'Registration failed.'}`;
+                msg.className = 'error-msg';
+            }
+        } catch (error) {
+            console.error('Leader registration error:', error);
+            msg.textContent = '❌ Network error or server unreachable.';
             msg.className = 'error-msg';
-            return;
         }
-
-        admins[email] = { name, email, password: pass1, role: 'leader' };
-        localStorage.setItem('admins', JSON.stringify(admins));
-
-        msg.textContent = '✅ Registration successful. You can now login as a Leader.';
-        msg.className = 'success-msg';
-
-        document.getElementById('leaderName').value = '';
-        document.getElementById('leaderEmailReg').value = '';
-        document.getElementById('leaderPass1').value = '';
-        document.getElementById('leaderPass2').value = '';
     }
 
-    function loginLeader() {
-        const email = document.getElementById('loginLeaderEmail').value.trim();
-        const pass = document.getElementById('loginLeaderPass').value;
-        const msg = document.getElementById('leaderLoginMsg');
-        const stored = admins[email];
+    async function loginAdmin(role) {
+        const emailInput = role === 'leader' ? 'loginLeaderEmail' : 'ceoLoginEmail';
+        const passInput = role === 'leader' ? 'loginLeaderPass' : 'ceoLoginPassword';
+        const msgId = role === 'leader' ? 'leaderLoginMsg' : 'ceoLoginMsg';
 
-        if(!stored || stored.role !== 'leader') {
-            msg.textContent = '❌ No leader account found with this email.';
-            msg.className = 'error-msg';
-            return;
+        const email = document.getElementById(emailInput).value.trim();
+        const password = document.getElementById(passInput).value;
+        const msg = document.getElementById(msgId);
+
+        msg.classList.add('hidden');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admins/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, role })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                saveAuthData(data.token, data.admin); // Store token and admin data
+                msg.textContent = '✅ Login successful! Redirecting...';
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+
+                if (role === 'leader') {
+                    hideAllPanels();
+                    document.getElementById('leaderPanel').classList.remove('hidden');
+                    document.getElementById('leaderNameDisplay').textContent = data.admin.name;
+                    await loadPendingPayments();
+                    await loadRotationSettings();
+                    await loadAvailableMembersForRotation();
+                    await displayRotationParticipants();
+                    await loadUserMessages();
+                } else if (role === 'ceo') {
+                    hideAllPanels();
+                    document.getElementById('ceoPanel').classList.remove('hidden');
+                    await displayRotationHistory();
+                }
+            } else {
+                msg.textContent = `❌ ${data.message || 'Login failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error(`${role} login error:`, error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
         }
-
-        if(stored.password !== pass) {
-            msg.textContent = '❌ Incorrect password.';
-            msg.className = 'error-msg';
-            return;
-        }
-
-        localStorage.setItem('currentAdmin', JSON.stringify({ email: stored.email, name: stored.name, role: stored.role }));
-        hideAllPanels();
-        document.getElementById('leaderPanel').classList.remove('hidden');
-        document.getElementById('leaderNameDisplay').textContent = stored.name;
-        loadPendingPayments();
-        loadRotationSettings();
-        loadAvailableMembersForRotation();
-        displayRotationParticipants();
-        loadUserMessages();
     }
 
     function logoutLeader() {
-        localStorage.removeItem('currentAdmin');
+        clearAuthData();
         showLogin();
     }
 
-    function loadPendingPayments() {
-        const list = document.getElementById('pendingPaymentsList');
-        list.innerHTML = '';
-        let hasPending = false;
-
-        for (const email in pendingPayments) {
-            const payment = pendingPayments[email];
-            if (payment.status === 'pending_leader_validation') {
-                hasPending = true;
-                const userDisplayName = payment.name || users[email]?.fullName || 'Unknown User';
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>${userDisplayName}</strong> (${payment.email}) - Method: ${payment.method} - Submitted: ${payment.timestamp}
-                    <div>
-                        <button style="background-color: #28a745;" onclick="validatePayment('${email}')">Validate</button>
-                        <button style="background-color: #dc3545; margin-left: 5px;" onclick="rejectPayment('${email}')">Reject</button>
-                    </div>
-                `;
-                list.appendChild(listItem);
-            }
-        }
-
-        document.getElementById('noPendingPayments').classList.toggle('hidden', hasPending);
-    }
-
-    function validatePayment(email) {
-        if (users[email]) {
-            users[email].paid = true;
-            localStorage.setItem('users', JSON.stringify(users));
-
-            delete pendingPayments[email];
-            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-
-            // --- NEW LOGIC: Automatically add validated user to active rotation if not already there ---
-            if (!activeRotationMembers.includes(email)) {
-                activeRotationMembers.push(email);
-                localStorage.setItem('activeRotationMembers', JSON.stringify(activeRotationMembers));
-                alert(`Payment for ${users[email].fullName} (${email}) validated! User has been added to rotation and now has full access.`);
-            } else {
-                alert(`Payment for ${users[email].fullName} (${email}) validated! User already in rotation. User now has full access.`);
-            }
-            // --- END NEW LOGIC ---
-
-            loadPendingPayments();
-            loadAvailableMembersForRotation(); // This will refresh the dropdown (the user just added should no longer be in it)
-            displayRotationParticipants(); // This will update the list of participants shown on the dashboard
-        } else {
-            alert(`Error: User with email ${email} not found.`);
-        }
-    }
-
-    function rejectPayment(email) {
-        if (users[email]) {
-            delete pendingPayments[email];
-            localStorage.setItem('pendingPayments', JSON.stringify(pendingPayments));
-            alert(`Payment for ${users[email].fullName} (${email}) rejected. User needs to resubmit.`);
-            loadPendingPayments();
-        }
-    }
-
-    function loadUserMessages() {
-        const list = document.getElementById('userMessagesList');
-        list.innerHTML = '';
-        let unreadCount = 0;
-        let hasMessages = false;
-
-        const messagesArray = Object.values(adminMessages).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        messagesArray.forEach(message => {
-            hasMessages = true;
-            if (message.status === 'unread') {
-                unreadCount++;
-            }
-            const listItem = document.createElement('li');
-            listItem.classList.toggle('unread', message.status === 'unread');
-            listItem.innerHTML = `
-                <strong>From:</strong> ${message.fromEmail}<br>
-                <strong>Subject:</strong> ${message.subject}<br>
-                <strong>Message:</strong> ${message.message}<br>
-                <small><em>Sent: ${message.timestamp} - Status: ${message.status.toUpperCase()}</em></small><br>
-                <button style="margin-top: 5px; background-color: #007bff; font-size: 0.9em; padding: 5px 10px;" onclick="markMessageAsRead('${message.id}')">Mark as Read</button>
-                <button style="margin-top: 5px; background-color: #dc3545; font-size: 0.9em; padding: 5px 10px; margin-left: 5px;" onclick="deleteMessage('${message.id}')">Delete</button>
-            `;
-            list.appendChild(listItem);
-        });
-
-        document.getElementById('unreadMessageCount').textContent = `(${unreadCount} unread)`;
-        document.getElementById('noUserMessages').classList.toggle('hidden', hasMessages);
-    }
-
-    function markMessageAsRead(messageId) {
-        if (adminMessages[messageId]) {
-            adminMessages[messageId].status = 'read';
-            localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
-            loadUserMessages();
-        }
-    }
-
-    function deleteMessage(messageId) {
-        if (confirm('Are you sure you want to delete this message?')) {
-            delete adminMessages[messageId];
-            localStorage.setItem('adminMessages', JSON.stringify(adminMessages));
-            loadUserMessages();
-        }
-    }
-
-
-    // CEO Login Logic
-    document.getElementById('ceoLoginForm').addEventListener('submit', function(event) {
+    document.getElementById('ceoLoginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        const email = document.getElementById('ceoLoginEmail').value.trim();
-        const password = document.getElementById('ceoLoginPassword').value;
-        const msg = document.getElementById('ceoLoginMsg');
-        msg.classList.add('hidden');
-
-        const ceoAccount = admins[email];
-
-        if (!ceoAccount || ceoAccount.role !== 'ceo') {
-            msg.textContent = '❌ No CEO account found with this email.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        if (ceoAccount.password !== password) {
-            msg.textContent = '❌ Incorrect password.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        localStorage.setItem('currentAdmin', JSON.stringify({ email: ceoAccount.email, name: ceoAccount.name, role: ceoAccount.role }));
-        hideAllPanels();
-        document.getElementById('ceoPanel').classList.remove('hidden');
-        msg.textContent = '';
-        document.getElementById('ceoLoginEmail').value = '';
-        document.getElementById('ceoLoginPassword').value = '';
-        displayRotationHistory();
+        await loginAdmin('ceo');
     });
 
     function logoutCEO() {
-        localStorage.removeItem('currentAdmin');
+        clearAuthData();
         showLogin();
     }
 
-    // --- Rotation Management Logic ---
+    async function loadPendingPayments() {
+        const list = document.getElementById('pendingPaymentsList');
+        list.innerHTML = '';
+        document.getElementById('noPendingPayments').classList.remove('hidden');
 
-    function loadRotationSettings() {
-        document.getElementById('dailyInvest').value = rotationSettings.invest;
-        document.getElementById('dailyGain').value = rotationSettings.gain;
-        document.getElementById('currentRotationDay').textContent = rotationSettings.currentDay;
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/pending`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch pending payments');
+            const pendingPayments = await response.json();
+
+            let hasPending = false;
+            pendingPayments.forEach(payment => {
+                hasPending = true;
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>${payment.userName}</strong> (${payment.userEmail}) - Method: ${payment.method} - Submitted: ${new Date(payment.timestamp).toLocaleString()}
+                    <div>
+                        <button style="background-color: #28a745;" onclick="validatePayment('${payment.userEmail}')">Validate</button>
+                        <button style="background-color: #dc3545; margin-left: 5px;" onclick="rejectPayment('${payment.userEmail}')">Reject</button>
+                    </div>
+                `;
+                list.appendChild(listItem);
+            });
+            document.getElementById('noPendingPayments').classList.toggle('hidden', hasPending);
+        } catch (error) {
+            console.error('Error loading pending payments:', error);
+            list.innerHTML = '<li>Error loading pending payments.</li>';
+            document.getElementById('noPendingPayments').classList.add('hidden');
+        }
     }
 
-    function saveRotationSettings() {
+    async function validatePayment(email) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/validate/${email}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message || `Payment for ${email} validated!`);
+                await loadPendingPayments();
+                await loadAvailableMembersForRotation();
+                await displayRotationParticipants();
+            } else {
+                alert(`Error validating payment: ${data.message || 'Unknown error.'}`);
+            }
+        } catch (error) {
+            console.error('Error validating payment:', error);
+            alert('Network error or server unreachable. Could not validate payment.');
+        }
+    }
+
+    async function rejectPayment(email) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/reject/${email}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message || `Payment for ${email} rejected.`);
+                await loadPendingPayments();
+            } else {
+                alert(`Error rejecting payment: ${data.message || 'Unknown error.'}`);
+            }
+        } catch (error) {
+            console.error('Error rejecting payment:', error);
+            alert('Network error or server unreachable. Could not reject payment.');
+        }
+    }
+
+    async function loadUserMessages() {
+        const list = document.getElementById('userMessagesList');
+        list.innerHTML = '';
+        document.getElementById('noUserMessages').classList.remove('hidden');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/messages`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user messages');
+            const messages = await response.json();
+
+            let unreadCount = 0;
+            let hasMessages = false;
+
+            messages.forEach(message => {
+                hasMessages = true;
+                if (message.status === 'unread') {
+                    unreadCount++;
+                }
+                const listItem = document.createElement('li');
+                listItem.classList.toggle('unread', message.status === 'unread');
+                listItem.innerHTML = `
+                    <strong>From:</strong> ${message.fromEmail}<br>
+                    <strong>Subject:</strong> ${message.subject}<br>
+                    <strong>Message:</strong> ${message.message}<br>
+                    <small><em>Sent: ${new Date(message.timestamp).toLocaleString()} - Status: ${message.status.toUpperCase()}</em></small><br>
+                    <button style="margin-top: 5px; background-color: #007bff; font-size: 0.9em; padding: 5px 10px;" onclick="markMessageAsRead('${message.id}')">Mark as Read</button>
+                    <button style="margin-top: 5px; background-color: #dc3545; font-size: 0.9em; padding: 5px 10px; margin-left: 5px;" onclick="deleteMessage('${message.id}')">Delete</button>
+                `;
+                list.appendChild(listItem);
+            });
+
+            document.getElementById('unreadMessageCount').textContent = `(${unreadCount} unread)`;
+            document.getElementById('noUserMessages').classList.toggle('hidden', hasMessages);
+
+        } catch (error) {
+            console.error('Error loading user messages:', error);
+            list.innerHTML = '<li>Error loading messages.</li>';
+            document.getElementById('noUserMessages').classList.add('hidden');
+        }
+    }
+
+    async function markMessageAsRead(messageId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/messages/${messageId}/read`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to mark message as read');
+            await loadUserMessages();
+        } catch (error) {
+            console.error('Error marking message as read:', error);
+            alert('Could not mark message as read.');
+        }
+    }
+
+    async function deleteMessage(messageId) {
+        if (confirm('Are you sure you want to delete this message?')) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+                });
+                if (!response.ok) throw new Error('Failed to delete message');
+                await loadUserMessages();
+            } catch (error) {
+                console.error('Error deleting message:', error);
+                alert('Could not delete message.');
+            }
+        }
+    }
+
+
+    // --- Rotation Management Logic ---
+
+    async function loadRotationSettings() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/settings`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch rotation settings');
+            const settings = await response.json();
+            document.getElementById('dailyInvest').value = settings.invest;
+            document.getElementById('dailyGain').value = settings.gain;
+            document.getElementById('currentRotationDay').textContent = settings.currentDay;
+        } catch (error) {
+            console.error('Error loading rotation settings:', error);
+            // Default values or error message
+            document.getElementById('dailyInvest').value = 100;
+            document.getElementById('dailyGain').value = 1000;
+            document.getElementById('currentRotationDay').textContent = 'Error';
+        }
+    }
+
+    async function saveRotationSettings() {
         const invest = parseFloat(document.getElementById('dailyInvest').value);
         const gain = parseFloat(document.getElementById('dailyGain').value);
         const msg = document.getElementById('rotationSettingsMsg');
@@ -941,32 +1041,83 @@
             return;
         }
 
-        rotationSettings.invest = invest;
-        rotationSettings.gain = gain;
-        localStorage.setItem('rotationSettings', JSON.stringify(rotationSettings));
-        msg.textContent = '✅ Rotation settings updated!';
-        msg.classList.remove('hidden', 'error-msg');
-        msg.classList.add('success-msg');
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/settings`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({ invest, gain })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Rotation settings updated!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+            } else {
+                msg.textContent = `❌ ${data.message || 'Failed to update settings.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Save settings error:', error);
+            msg.textContent = '❌ Network error or server unreachable.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
         setTimeout(() => msg.classList.add('hidden'), 2000);
     }
 
-    function loadAvailableMembersForRotation() {
+    async function loadAvailableMembersForRotation() {
         const select = document.getElementById('availableMembersSelect');
         select.innerHTML = '<option value="">-- Select Paid Member --</option>';
+        document.getElementById('noActiveParticipants').classList.remove('hidden'); // Assume no members until loaded
 
-        for (const email in users) {
-            const user = users[email];
-            if (user.verified && user.paid && !activeRotationMembers.includes(email)) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/paid-not-in-rotation`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch available members');
+            const availableMembers = await response.json();
+
+            let hasAvailable = false;
+            availableMembers.forEach(user => {
+                hasAvailable = true;
                 const option = document.createElement('option');
-                option.value = email;
+                option.value = user.email;
                 option.textContent = `${user.fullName} (${user.email})`;
                 select.appendChild(option);
+            });
+            // Update noActiveParticipants message only after all lists are potentially loaded
+            if (!hasAvailable && await getActiveRotationMembersCount() === 0) {
+                document.getElementById('noActiveParticipants').classList.remove('hidden');
+            } else {
+                document.getElementById('noActiveParticipants').classList.add('hidden');
             }
+
+        } catch (error) {
+            console.error('Error loading available members:', error);
+            select.innerHTML = '<option value="">-- Error loading members --</option>';
         }
-        document.getElementById('noActiveParticipants').classList.toggle('hidden', select.options.length > 1 || activeRotationMembers.length > 0);
     }
 
-    function addParticipantToRotation() {
+    async function getActiveRotationMembersCount() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/participants`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) return 0; // Return 0 on error
+            const participants = await response.json();
+            return participants.length;
+        } catch (error) {
+            console.error('Error fetching active rotation members count:', error);
+            return 0;
+        }
+    }
+
+    async function addParticipantToRotation() {
         const select = document.getElementById('availableMembersSelect');
         const emailToAdd = select.value;
         const msg = document.getElementById('addParticipantMsg');
@@ -979,113 +1130,136 @@
             return;
         }
 
-        if (activeRotationMembers.includes(emailToAdd)) {
-            msg.textContent = 'ℹ️ This member is already in the rotation.';
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/add-participant`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({ email: emailToAdd })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Participant added to rotation!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                await loadAvailableMembersForRotation(); // Refresh dropdown
+                await displayRotationParticipants(); // Refresh participant list
+            } else {
+                msg.textContent = `❌ ${data.message || 'Failed to add participant.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Add participant error:', error);
+            msg.textContent = '❌ Network error or server unreachable.';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
-            return;
         }
-
-        activeRotationMembers.push(emailToAdd);
-        localStorage.setItem('activeRotationMembers', JSON.stringify(activeRotationMembers));
-
-        msg.textContent = `✅ ${users[emailToAdd].fullName} added to rotation!`;
-        msg.classList.remove('hidden', 'error-msg');
-        msg.classList.add('success-msg');
         setTimeout(() => msg.classList.add('hidden'), 2000);
-
-        loadAvailableMembersForRotation();
-        displayRotationParticipants();
     }
 
-    function displayRotationParticipants() {
+    async function displayRotationParticipants() {
         const list = document.getElementById('rotationParticipantsList');
         list.innerHTML = '';
-        let hasParticipants = false;
+        document.getElementById('noActiveParticipants').classList.remove('hidden');
 
-        if (activeRotationMembers.length > 0) {
-            hasParticipants = true;
-            activeRotationMembers.forEach((email, index) => {
-                const userFullName = users[email]?.fullName || 'Unknown User';
-                const listItem = document.createElement('li');
-                listItem.textContent = `${userFullName} (${email})`;
-                if (index === rotationSettings.lastPaidMemberIndex) {
-                    listItem.classList.add('current-recipient');
-                    listItem.title = "Last member who received payment";
-                }
-                list.appendChild(listItem);
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/participants`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
-        }
+            if (!response.ok) throw new Error('Failed to fetch participants');
+            const participants = await response.json();
 
-        document.getElementById('noActiveParticipants').classList.toggle('hidden', hasParticipants);
+            let hasParticipants = false;
+            let currentRecipientIndex = (await fetch(`${API_BASE_URL}/rotation/settings`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            }).then(res => res.ok ? res.json() : { lastPaidMemberIndex: -1 })).lastPaidMemberIndex;
+
+            if (participants.length > 0) {
+                hasParticipants = true;
+                participants.forEach((user, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${user.fullName} (${user.email})`;
+                    if (index === currentRecipientIndex) {
+                        listItem.classList.add('current-recipient');
+                        listItem.title = "Last member who received payment";
+                    }
+                    list.appendChild(listItem);
+                });
+            }
+            document.getElementById('noActiveParticipants').classList.toggle('hidden', hasParticipants);
+        } catch (error) {
+            console.error('Error displaying rotation participants:', error);
+            list.innerHTML = '<li>Error loading participants.</li>';
+            document.getElementById('noActiveParticipants').classList.add('hidden');
+        }
     }
 
-    function nextParticipant() {
+    async function nextParticipant() {
         const msg = document.getElementById('rotationStatusMsg');
         msg.classList.add('hidden');
 
-        if (activeRotationMembers.length === 0) {
-            msg.textContent = '❌ No participants in rotation. Add members first.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/next`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message || 'Rotation moved to next participant!');
+                await loadRotationSettings();
+                await displayRotationParticipants();
+                await displayRotationHistory(); // Update CEO panel
+            } else {
+                alert(`Error during rotation: ${data.message || 'Unknown error.'}`);
+            }
+        } catch (error) {
+            console.error('Next participant error:', error);
+            alert('Network error or server unreachable. Could not perform rotation.');
         }
-
-        let nextIndex = (rotationSettings.lastPaidMemberIndex + 1) % activeRotationMembers.length;
-
-        const recipientEmail = activeRotationMembers[nextIndex];
-        const recipientName = users[recipientEmail]?.fullName || 'Unknown';
-
-        rotationSettings.currentDay++;
-        rotationSettings.lastPaidMemberIndex = nextIndex;
-        localStorage.setItem('rotationSettings', JSON.stringify(rotationSettings));
-
-        rotationHistory.push({
-            day: rotationSettings.currentDay,
-            recipientEmail: recipientEmail,
-            recipientName: recipientName,
-            invest: rotationSettings.invest,
-            gain: rotationSettings.gain,
-            timestamp: new Date().toLocaleString()
-        });
-        if (rotationHistory.length > 25) {
-            rotationHistory.shift();
-        }
-        localStorage.setItem('rotationHistory', JSON.stringify(rotationHistory));
-
-        msg.textContent = `✅ Day ${rotationSettings.currentDay}: ${recipientName} (${recipientEmail}) is the next recipient! Gain: $${rotationSettings.gain.toFixed(2)}`;
-        msg.classList.remove('hidden', 'error-msg');
-        msg.classList.add('success-msg');
-        setTimeout(() => msg.classList.add('hidden'), 3000);
-
-        loadRotationSettings();
-        displayRotationParticipants();
-        displayRotationHistory();
     }
 
 
     // --- CEO Specific Functions ---
 
-    function displayRotationHistory() {
+    async function displayRotationHistory() {
         const tableBody = document.querySelector('#ceoRotationHistoryTable tbody');
         tableBody.innerHTML = '';
         const noHistoryMsg = document.getElementById('noRotationHistory');
+        noHistoryMsg.classList.remove('hidden');
 
-        if (rotationHistory.length === 0) {
-            noHistoryMsg.classList.remove('hidden');
-            return;
-        } else {
+        try {
+            const response = await fetch(`${API_BASE_URL}/rotation/history`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch rotation history');
+            const history = await response.json();
+
+            if (history.length === 0) {
+                return; // No history to display, message remains visible
+            } else {
+                noHistoryMsg.classList.add('hidden');
+            }
+
+            // Display newest first
+            [...history].reverse().forEach(entry => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = entry.day;
+                row.insertCell().textContent = `${entry.recipientName} (${entry.recipientEmail})`;
+                row.insertCell().textContent = entry.invest.toFixed(2);
+                row.insertCell().textContent = entry.gain.toFixed(2);
+                row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
+            });
+
+        } catch (error) {
+            console.error('Error loading rotation history:', error);
+            tableBody.innerHTML = '<tr><td colspan="5">Error loading history.</td></tr>';
             noHistoryMsg.classList.add('hidden');
         }
-
-        [...rotationHistory].reverse().forEach(entry => {
-            const row = tableBody.insertRow();
-            row.insertCell().textContent = entry.day;
-            row.insertCell().textContent = `${entry.recipientName} (${entry.recipientEmail})`;
-            row.insertCell().textContent = entry.invest.toFixed(2);
-            row.insertCell().textContent = entry.gain.toFixed(2);
-            row.insertCell().textContent = entry.timestamp;
-        });
     }
 
     function calculRotation() {
@@ -1098,46 +1272,52 @@
     }
 
     // --- Initial Load Logic ---
-    window.onload = function() {
-        // Ensure a default CEO account exists for demo purposes
-        if (!admins['ceo@dream2build.com'] || admins['ceo@dream2build.com'].role !== 'ceo') {
-            admins['ceo@dream2build.com'] = { name: 'CEO Admin', email: 'ceo@dream2build.com', password: 'admin123', role: 'ceo' };
-            localStorage.setItem('admins', JSON.stringify(admins));
-            console.log("Default CEO account created: ceo@dream2build.com / admin123");
-        }
+    window.onload = async function() {
+        // Here, we check if a token exists, and if so, attempt to validate it with the backend
+        // This is how a "session" would persist.
+        if (currentAuthToken && currentUserData.email && currentUserData.role) {
+            try {
+                // Verify the token with the backend
+                const response = await fetch(`${API_BASE_URL}/auth/verify-token`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+                });
 
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        const currentAdmin = JSON.parse(localStorage.getItem('currentAdmin'));
-
-        if (currentUser && currentUser.role === 'user') {
-            const user = users[currentUser.email];
-            if (user && user.verified) {
-                if (user.paid) {
-                    showMainPlatform(user.fullName);
+                if (response.ok) {
+                    // Token is valid, proceed based on role
+                    if (currentUserData.role === 'user') {
+                        if (currentUserData.paid) {
+                            showMainPlatform(currentUserData.fullName || currentUserData.email);
+                        } else {
+                            showPaymentPanel(currentUserData.email);
+                        }
+                    } else if (currentUserData.role === 'leader') {
+                        hideAllPanels();
+                        document.getElementById('leaderPanel').classList.remove('hidden');
+                        document.getElementById('leaderNameDisplay').textContent = currentUserData.name;
+                        await loadPendingPayments();
+                        await loadRotationSettings();
+                        await loadAvailableMembersForRotation();
+                        await displayRotationParticipants();
+                        await loadUserMessages();
+                    } else if (currentUserData.role === 'ceo') {
+                        hideAllPanels();
+                        document.getElementById('ceoPanel').classList.remove('hidden');
+                        await displayRotationHistory();
+                    }
                 } else {
-                    showPaymentPanel(user.fullName, user.email);
+                    // Token invalid or expired, force re-login
+                    console.warn('Auth token invalid/expired, forcing re-login.');
+                    clearAuthData();
+                    showLogin();
                 }
-            } else {
-                localStorage.removeItem('currentUser');
+            } catch (error) {
+                console.error('Error during initial token verification:', error);
+                clearAuthData();
                 showLogin();
             }
-        } else if (currentAdmin) {
-            if (currentAdmin.role === 'leader') {
-                hideAllPanels();
-                document.getElementById('leaderPanel').classList.remove('hidden');
-                document.getElementById('leaderNameDisplay').textContent = currentAdmin.name;
-                loadPendingPayments();
-                loadRotationSettings();
-                loadAvailableMembersForRotation();
-                displayRotationParticipants();
-                loadUserMessages();
-            } else if (currentAdmin.role === 'ceo') {
-                hideAllPanels();
-                document.getElementById('ceoPanel').classList.remove('hidden');
-                displayRotationHistory();
-            }
         } else {
-            showSignUp();
+            showSignUp(); // No token or user data, show signup/login
         }
     };
 </script>
