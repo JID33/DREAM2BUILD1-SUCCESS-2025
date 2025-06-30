@@ -380,6 +380,7 @@
     <div class="rotation-section">
         <h3>🔄 Rotation Management</h3>
         <p>Current Rotation Day: <strong id="currentRotationDay">0</strong></p>
+        <p>Current Recipient: <strong id="currentRecipientDisplay">N/A</strong></p>
         <label for="dailyInvest">Daily Investment ($):</label>
         <input type="number" id="dailyInvest" value="100" min="0" step="0.01">
 
@@ -406,7 +407,9 @@
         <button style="background-color: #ffc107;" onclick="nextParticipant()">Next Participant (Rotate)</button>
         <p id="rotationStatusMsg" class="hidden"></p>
     </div>
-
+    <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
+        <em>Note: All user, payment, and rotation data is simulated and will reset when the server (`server.js`) is restarted.</em>
+    </p>
 </div>
 
 <!-- Section : CEO Dashboard -->
@@ -437,6 +440,9 @@
 
     <button style="margin-top: 20px;" onclick="calculRotation()">Generate Comprehensive Report (Future Feature)</button>
     <p id="ceoReportMsg" class="hidden" style="margin-top: 10px;"></p>
+    <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
+        <em>Note: All user, payment, and rotation data is simulated and will reset when the server (`server.js`) is restarted.</em>
+    </p>
 </div>
 
 <script>
@@ -750,7 +756,7 @@
                     // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
                     currentUserData.paid = true; // Update local state based on backend response
                     saveAuthData(currentAuthToken, currentUserData);
-                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`; // Fixed missing backtick
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`;
                     setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
                 }
                 msg.classList.remove('hidden', 'error-msg');
@@ -951,6 +957,7 @@
                     await loadAvailableMembersForRotation();
                     await displayRotationParticipants();
                     await loadUserMessages();
+                    await updateCurrentRecipientDisplay(); // New call
                 } else if (data.user.role === 'ceo') {
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
@@ -1030,6 +1037,7 @@
                 await loadPendingPayments();
                 await loadAvailableMembersForRotation();
                 await displayRotationParticipants();
+                await updateCurrentRecipientDisplay(); // Update after payment validation
             } else {
                 alert(`Error validating payment: ${data.message || 'Unknown error.'}`);
             }
@@ -1283,6 +1291,7 @@
                 msg.classList.add('success-msg');
                 await loadAvailableMembersForRotation(); // Refresh dropdown
                 await displayRotationParticipants(); // Refresh participant list
+                await updateCurrentRecipientDisplay(); // Update current recipient display
             } else {
                 msg.textContent = `❌ ${data.message || 'Failed to add participant.'}`;
                 msg.classList.remove('hidden', 'success-msg');
@@ -1347,6 +1356,33 @@
         }
     }
 
+    async function updateCurrentRecipientDisplay() {
+        const currentRecipientDisplay = document.getElementById('currentRecipientDisplay');
+        currentRecipientDisplay.textContent = 'N/A'; // Default
+
+        try {
+            const settingsResponse = await fetch(`${API_BASE_URL}/rotation/settings`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const settings = await settingsResponse.json();
+
+            const participantsResponse = await fetch(`${API_BASE_URL}/rotation/participants`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const participants = await participantsResponse.json();
+
+            if (settings.lastPaidMemberIndex !== -1 && participants[settings.lastPaidMemberIndex]) {
+                const recipient = participants[settings.lastPaidMemberIndex];
+                currentRecipientDisplay.textContent = `${recipient.fullName} (${recipient.email})`;
+            } else {
+                currentRecipientDisplay.textContent = 'No recipient yet or no participants.';
+            }
+        } catch (error) {
+            console.error('Error updating current recipient display:', error);
+            currentRecipientDisplay.textContent = 'Error loading recipient.';
+        }
+    }
+
     async function nextParticipant() {
         const msg = document.getElementById('rotationStatusMsg');
         msg.classList.add('hidden');
@@ -1369,6 +1405,7 @@
                 alert(data.message || 'Rotation moved to next participant!');
                 await loadRotationSettings();
                 await displayRotationParticipants();
+                await updateCurrentRecipientDisplay(); // Update current recipient display
                 await displayRotationHistory(); // Update CEO panel
             } else {
                 alert(`Error during rotation: ${data.message || 'Unknown error.'}`);
@@ -1478,6 +1515,7 @@
                         await loadAvailableMembersForRotation();
                         await displayRotationParticipants();
                         await loadUserMessages();
+                        await updateCurrentRecipientDisplay(); // New call for initial load
                     } else if (currentUserData.role === 'ceo') {
                         hideAllPanels();
                         document.getElementById('ceoPanel').classList.remove('hidden');
