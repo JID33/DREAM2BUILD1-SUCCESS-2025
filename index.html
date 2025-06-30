@@ -764,11 +764,798 @@
             return;
         }
 
+        <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream2Build1 - Authentication & Payment</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
+        h1, h2 { text-align: center; color: #007BFF; }
+        .container, .panel, .form-section {
+            max-width: 900px; margin: auto; background: white; padding: 20px;
+            border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
+            border: 1px solid #ccc; border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745; color: white; border: none; padding: 10px 20px;
+            font-size: 16px; border-radius: 5px; cursor: pointer;
+        }
+        button:hover { background-color: #218838; }
+        .hidden { display: none; }
+        .logout-btn button { background-color: #dc3545; }
+        .error-msg { color: red; font-weight: bold; }
+        .success-msg { color: green; font-weight: bold; }
+
+        /* Specific styles for the main platform content */
+        #mainPlatform {
+            border: 1px dashed #007BFF;
+            padding: 30px;
+            text-align: center;
+            font-size: 1.2em;
+            color: #007BFF;
+        }
+        .paiement-etapes {
+            display: none; /* Hidden by default, shown by JS */
+            background: #fff3cd;
+            padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
+        }
+        .paiement-etapes .hidden {
+            display: none;
+        }
+        .paiement-etapes div {
+            margin-top: 10px;
+        }
+        .paiement-submit-btn {
+            background-color: #007BFF; /* Blue for payment */
+        }
+        .paiement-submit-btn:hover {
+            background-color: #0056b3;
+        }
+        #pendingPaymentsList li {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #pendingPaymentsList li button {
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        /* New styles for Rotation Management */
+        .rotation-section {
+            background: #e9f7ef;
+            border: 1px solid #d4edda;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .rotation-section label {
+            width: auto;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        .rotation-section input {
+            width: calc(50% - 70px); /* Adjust width to fit with label */
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .rotation-section button {
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        #rotationParticipantsList {
+            list-style-type: decimal;
+            padding-left: 20px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px dashed #28a745;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 5px;
+        }
+        #rotationParticipantsList li {
+            padding: 5px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        #rotationParticipantsList li:last-child {
+            border-bottom: none;
+        }
+        .current-recipient {
+            background-color: #d4edda;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        /* CEO Rotation History Table */
+        #ceoRotationHistoryTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #ceoRotationHistoryTable th,
+        #ceoRotationHistoryTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #ceoRotationHistoryTable th {
+            background-color: #007BFF;
+            color: white;
+        }
+        #ceoRotationHistoryTable tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #noRotationHistory {
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* Styles for User Messages list */
+        #userMessagesList li {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        #userMessagesList li.unread {
+            background-color: #fffde7; /* Light yellow for unread */
+            border-color: #ffe082;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Main Title -->
+<h1>Dream2Build1 - Authentication & Payment System</h1>
+
+<!-- Section: User Registration (Sign Up) -->
+<div class="form-section" id="signUpPanel">
+    <h2>📝 Sign Up for Access</h2>
+    <form id="signUpForm">
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="e.g., +150912345678" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Create your password" required>
+
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+
+        <button type="submit">Sign Up</button>
+        <p id="signUpMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;">Already have an account? <a href="#" onclick="showLogin()">Login here</a></p>
+</div>
+
+<!-- Section: User Login -->
+<div class="form-section hidden" id="loginPanel">
+    <h2>🔐 Log In to Your Account</h2>
+    <form id="loginForm">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" name="loginEmail" placeholder="Enter your email" required>
+
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password" required>
+
+        <button type="submit">Log In</button>
+        <p id="loginMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showSignUp()">Sign Up here</a></p>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showContactAdmin()">Contact Support</a></p>
+    <p style="text-align: center; margin-top: 20px;">
+        <button style="background-color: #6c757d;" onclick="showAdminLoginRegister()">Admin / Leader Access</button>
+    </p>
+</div>
+
+<!-- Section: Email Verification Message -->
+<div class="panel hidden" id="verificationMessagePanel">
+    <h2>📧 Verify Your Email</h2>
+    <p>A verification message has been simulated for <strong id="verificationEmailDisplay"></strong>. In a real system, you'd receive an email to verify your account.</p>
+    <p>For this demo, your account is automatically considered verified.</p>
+    <button onclick="showLogin()">Go to Login (After Verification)</button>
+</div>
+
+<!-- Section: Payment Panel (Appears after login if not paid) -->
+<div class="panel hidden" id="paymentPanel">
+    <h2>💳 Complete Your Payment</h2>
+    <p>Welcome, <span id="paymentUserName"></span>! To access the full platform, please complete your payment.</p>
+    <form id="paymentForm">
+        <label for="paymentMethod">Choose Payment Method:</label>
+        <select id="paymentMethod" name="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
+            <option value="">-- Select Payment Method --</option>
+            <option value="cash">Cash</option>
+            <option value="mastercard">Mastercard / Debit Card</option>
+            <option value="paypal">PayPal</option>
+            <option value="moncash">MonCash</option>
+            <option value="natcash">NatCash</option>
+        </select>
+
+        <div class="paiement-etapes" id="paymentInstructions">
+            <div id="cashInfo" class="hidden">
+                <p><strong>Cash:</strong> A team leader will contact you to validate your payment.</p>
+                <p>Once validated, your account will be fully activated. Click "Submit Payment Info" below to confirm your intent to pay by cash.</p>
+            </div>
+            <div id="mastercardInfo" class="hidden">
+                <p><strong>Mastercard / Debit Card:</strong> (Simulated payment)</p>
+                <label>Card Number (16 digits):</label>
+                <input type="text" id="cardNumber" maxlength="16" pattern="\d{16}" placeholder="1234 5678 9012 3456">
+                <label>Expiration Date (MM/YY):</label>
+                <input type="text" id="cardExpiry" maxlength="5" pattern="\d{2}/\d{2}" placeholder="MM/YY">
+                <label>CVC:</label>
+                <input type="text" id="cardCVC" maxlength="4" pattern="\d{3,4}" placeholder="123">
+                <label>Name on Card:</label>
+                <input type="text" id="cardName" placeholder="Name as on card">
+            </div>
+            <div id="paypalInfo" class="hidden">
+                <p><strong>PayPal:</strong> (Simulated payment)</p>
+                <p>In a real system, you would be redirected to PayPal. For this demo, simply submit.</p>
+                <p>Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
+            </div>
+            <div id="moncashInfo" class="hidden">
+                <p><strong>MonCash:</strong> (Simulated payment)</p>
+                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+            </div>
+            <div id="natcashInfo" class="hidden">
+                <p><strong>NatCash:</strong> (Simulated payment)</p>
+                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+            </div>
+        </div>
+        <button type="submit" class="paiement-submit-btn">Submit Payment Info</button>
+        <p id="paymentMsg" class="hidden"></p>
+    </form>
+    <div class="logout-btn">
+        <button onclick="logoutUser()">Log Out</button>
+    </div>
+</div>
+
+
+<!-- Section: Main User Platform (Accessible after login AND payment) -->
+<div class="panel hidden" id="mainPlatformPanel">
+    <h2>Bienvenue sur Dream2Build1, <span id="loggedInUserName"></span>!</h2>
+    <div id="mainPlatform">
+        <p>This is your main platform content, accessible only after successful login and payment.</p>
+        <p>Here you can explore all features, except the administration area.</p>
+        <!-- Your platform content goes here -->
+        <p>🚀 Ready to build your dreams!</p>
+    </div>
+    <div class="logout-btn">
+        <button onclick="logoutUser()">Log Out</button>
+    </div>
+</div>
+
+<!-- Section: Contact Admin Panel -->
+<div class="form-section hidden" id="contactAdminPanel">
+    <h2>📧 Contact Support</h2>
+    <p>Have a question or an issue? Send us a message!</p>
+    <form id="contactAdminForm">
+        <label for="contactEmail">Your Email:</label>
+        <input type="email" id="contactEmail" name="contactEmail" placeholder="Enter your email" required>
+
+        <label for="contactSubject">Subject:</label>
+        <input type="text" id="contactSubject" name="contactSubject" placeholder="e.g., Payment issue, Account problem" required>
+
+        <label for="contactMessage">Message:</label>
+        <textarea id="contactMessage" name="contactMessage" rows="5" placeholder="Type your message here..." required></textarea>
+
+        <button type="submit">Send Message</button>
+        <p id="contactAdminMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showLogin()">Back to Login</a></p>
+</div>
+
+<!-- --- Admin/Leader/CEO sections --- -->
+<!-- Section : Team Leader Registration -->
+<div class="form-section hidden" id="leaderRegisterPanel">
+    <h2>👥 Team Leader Registration (Admin Only)</h2>
+    <label for="leaderName">Full Name:</label>
+    <input type="text" id="leaderName" placeholder="Enter full name">
+
+    <label for="leaderEmailReg">Email:</label>
+    <input type="email" id="leaderEmailReg" placeholder="Enter email">
+
+    <label for="leaderPass1">Create Password:</label>
+    <input type="password" id="leaderPass1" placeholder="Create password">
+
+    <label for="leaderPass2">Confirm Password:</label>
+    <input type="password" id="leaderPass2" placeholder="Confirm password">
+
+    <button onclick="registerLeader()">Register as Team Leader</button>
+    <p id="leaderRegisterMsg"></p>
+</div>
+
+<!-- Section : Team Leader Login -->
+<div class="form-section hidden" id="leaderLoginPanel">
+    <h2>🔐 Team Leader Login (Admin Only)</h2>
+    <form id="leaderLoginForm">
+        <label for="loginLeaderEmail">Email:</label>
+        <input type="email" id="loginLeaderEmail" name="loginLeaderEmail" placeholder="Enter email" required>
+
+        <label for="loginLeaderPass">Password:</label>
+        <input type="password" id="loginLeaderPass" name="loginLeaderPass" placeholder="Enter password" required>
+
+        <button type="submit">Login</button>
+        <p id="leaderLoginMsg"></p>
+    </form>
+    <p style="text-align: center; margin-top: 20px;">
+        <button style="background-color: #6c757d;" onclick="showCEOLogin()">Login as CEO</button>
+    </p>
+</div>
+
+<!-- Section: CEO Login -->
+<div class="form-section hidden" id="ceoLoginPanel">
+    <h2>👑 CEO Login</h2>
+    <form id="ceoLoginForm">
+        <label for="ceoLoginEmail">Email:</label>
+        <input type="email" id="ceoLoginEmail" name="ceoLoginEmail" placeholder="Enter CEO email" required>
+
+        <label for="ceoLoginPassword">Password:</label>
+        <input type="password" id="ceoLoginPassword" name="ceoLoginPassword" placeholder="Enter CEO password" required>
+
+        <button type="submit">Log In as CEO</button>
+        <p id="ceoLoginMsg" class="hidden"></p>
+    </form>
+    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="showAdminLoginRegister()">Back to Admin/Leader Login</a></p>
+</div>
+
+
+<!-- Section : Team Leader Dashboard -->
+<div id="leaderPanel" class="panel hidden">
+    <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
+    <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
+    <div class="logout-btn">
+        <button onclick="logoutLeader()">Logout</button>
+    </div>
+
+    <hr>
+    <h3>💸 Pending Payments:</h3>
+    <ul id="pendingPaymentsList">
+        <!-- Pending payments will be dynamically added here -->
+    </ul>
+    <p id="noPendingPayments" style="font-style: italic;">No pending payments.</p>
+
+    <hr>
+    <h3>✉️ User Messages: <span id="unreadMessageCount">(0 unread)</span></h3>
+    <ul id="userMessagesList">
+        <!-- Messages will be dynamically added here -->
+    </ul>
+    <p id="noUserMessages" style="font-style: italic;">No new messages.</p>
+
+    <hr>
+    <div class="rotation-section">
+        <h3>🔄 Rotation Management</h3>
+        <p>Current Rotation Day: <strong id="currentRotationDay">0</strong></p>
+        <label for="dailyInvest">Daily Investment ($):</label>
+        <input type="number" id="dailyInvest" value="100" min="0" step="0.01">
+
+        <label for="dailyGain">Daily Gain ($):</label>
+        <input type="number" id="dailyGain" value="1000" min="0" step="0.01">
+
+        <button onclick="saveRotationSettings()">Update Settings</button>
+        <p id="rotationSettingsMsg" class="hidden"></p>
+
+        <hr>
+        <h4>Participants in Rotation:</h4>
+        <select id="availableMembersSelect" style="width: 70%; display: inline-block; margin-right: 10px;">
+            <option value="">-- Select Paid Member --</option>
+            <!-- Options will be dynamically loaded here -->
+        </select>
+        <button style="background-color: #007BFF; width: auto; padding: 10px 15px; margin-right: 0;" onclick="addParticipantToRotation()">Add Participant</button>
+        <p id="addParticipantMsg" class="hidden"></p>
+
+        <ul id="rotationParticipantsList">
+            <!-- Active participants will be listed here -->
+        </ul>
+        <p id="noActiveParticipants" style="font-style: italic;">No participants in rotation.</p>
+
+        <button style="background-color: #ffc107;" onclick="nextParticipant()">Next Participant (Rotate)</button>
+        <p id="rotationStatusMsg" class="hidden"></p>
+    </div>
+
+</div>
+
+<!-- Section : CEO Dashboard -->
+<div id="ceoPanel" class="panel hidden">
+    <h2>👑 CEO Dashboard</h2>
+    <p>Welcome, CEO!</p>
+    <div class="logout-btn">
+        <button onclick="logoutCEO()">Logout CEO</button>
+    </div>
+
+    <hr>
+    <h3>📈 Rotation History (Last 25 Days):</h3>
+    <table id="ceoRotationHistoryTable">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Recipient</th>
+                <th>Invest ($)</th>
+                <th>Gain ($)</th>
+                <th>Date/Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- History will be dynamically added here -->
+        </tbody>
+    </table>
+    <p id="noRotationHistory" class="hidden">No rotation history available yet.</p>
+
+    <button style="margin-top: 20px;" onclick="calculRotation()">Generate Comprehensive Report (Future Feature)</button>
+    <p id="ceoReportMsg" class="hidden" style="margin-top: 10px;"></p>
+</div>
+
+<script>
+    // --- Configuration for your Backend API ---
+    // IMPORTANT: Replace this with your actual backend server's URL when deployed!
+    const API_BASE_URL = 'http://localhost:3000/api'; // For local testing, assuming backend runs on port 3000
+
+    // --- Helper Functions to Toggle Panels ---
+    function hideAllPanels() {
+        document.getElementById('signUpPanel').classList.add('hidden');
+        document.getElementById('loginPanel').classList.add('hidden');
+        document.getElementById('verificationMessagePanel').classList.add('hidden');
+        document.getElementById('paymentPanel').classList.add('hidden');
+        document.getElementById('mainPlatformPanel').classList.add('hidden');
+        document.getElementById('leaderRegisterPanel').classList.add('hidden');
+        document.getElementById('leaderLoginPanel').classList.add('hidden');
+        document.getElementById('ceoLoginPanel').classList.add('hidden');
+        document.getElementById('leaderPanel').classList.add('hidden');
+        document.getElementById('ceoPanel').classList.add('hidden');
+        document.getElementById('contactAdminPanel').classList.add('hidden');
+    }
+
+    function showSignUp() {
+        hideAllPanels();
+        document.getElementById('signUpPanel').classList.remove('hidden');
+    }
+
+    function showLogin() {
+        hideAllPanels();
+        document.getElementById('loginPanel').classList.remove('hidden');
+    }
+
+    function showVerificationMessage(email) {
+        hideAllPanels();
+        document.getElementById('verificationMessagePanel').classList.remove('hidden');
+        document.getElementById('verificationEmailDisplay').textContent = email;
+    }
+
+    // Function to get current user/admin token (simulated for frontend)
+    // In a real app, this would get token from cookie or sessionStorage
+    let currentAuthToken = localStorage.getItem('authToken');
+    let currentUserData = JSON.parse(localStorage.getItem('currentUserData') || '{}'); // Stores role, name, email etc.
+
+    function saveAuthData(token, userData) {
+        currentAuthToken = token;
+        currentUserData = userData;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUserData', JSON.stringify(userData));
+    }
+
+    function clearAuthData() {
+        currentAuthToken = null;
+        currentUserData = {};
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUserData');
+    }
+
+    // --- Panel Show Functions (Adjusted for Backend Data) ---
+    async function showPaymentPanel(userEmail) {
+        hideAllPanels();
+        document.getElementById('paymentPanel').classList.remove('hidden');
+        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
+
         try {
-            const response = await fetch(`${API_BASE_URL}/admins/register`, {
+            const response = await fetch(`${API_BASE_URL}/users/${userEmail}`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user data');
+            const userData = await response.json();
+            document.getElementById('paymentUserName').textContent = userData.fullName || userData.email;
+        } catch (error) {
+            console.error('Error fetching user data for payment panel:', error);
+            document.getElementById('paymentUserName').textContent = 'User';
+        }
+    }
+
+    async function showMainPlatform(userName) {
+        hideAllPanels();
+        document.getElementById('mainPlatformPanel').classList.remove('hidden');
+        document.getElementById('loggedInUserName').textContent = userName;
+    }
+
+    function showAdminLoginRegister() {
+        hideAllPanels();
+        document.getElementById('leaderLoginPanel').classList.remove('hidden');
+        document.getElementById('leaderRegisterPanel').classList.remove('hidden');
+    }
+
+    function showCEOLogin() {
+        hideAllPanels();
+        document.getElementById('ceoLoginPanel').classList.remove('hidden');
+    }
+
+    function showContactAdmin() {
+        hideAllPanels();
+        document.getElementById('contactAdminPanel').classList.remove('hidden');
+    }
+
+    // --- User Authentication (Sign Up & Login) ---
+
+    document.getElementById('signUpForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const fullName = document.getElementById('fullName').value.trim();
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const msg = document.getElementById('signUpMsg');
+
+        msg.classList.add('hidden');
+
+        if (!fullName || !phoneNumber || !email || !password || !confirmPassword) {
+            msg.textContent = '❌ Please fill in all fields.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            msg.textContent = '❌ Passwords do not match.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password: pass1, role: 'leader' })
+                body: JSON.stringify({ fullName, phoneNumber, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Sign up successful! Please proceed to login.'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                // In a real system, verification email would be sent by backend
+                // For this demo, we simulate instant verification
+                setTimeout(() => showVerificationMessage(email), 1000);
+            } else {
+                msg.textContent = `❌ ${data.message || 'Signup failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const msg = document.getElementById('loginMsg');
+
+        msg.classList.add('hidden');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                saveAuthData(data.token, data.user); // Store token and user data
+                msg.textContent = '✅ Login successful! Redirecting...';
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+
+                if (data.user.paid) {
+                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                } else {
+                    setTimeout(() => showPaymentPanel(data.user.email), 500);
+                }
+            } else {
+                msg.textContent = `❌ ${data.message || 'Login failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
+    });
+
+    function logoutUser() {
+        clearAuthData(); // Clear token and user data
+        showLogin();
+    }
+
+    // --- Payment Logic ---
+    function showPaymentInstructions(value) {
+        const allDivs = ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'];
+        allDivs.forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('paymentInstructions').style.display = 'block';
+
+        if(value && allDivs.includes(value + 'Info')) {
+            document.getElementById(value + 'Info').classList.remove('hidden');
+        } else {
+            document.getElementById('paymentInstructions').style.display = 'none';
+        }
+    }
+
+    document.getElementById('paymentForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const currentUserEmail = document.getElementById('paymentPanel').dataset.currentUserEmail;
+        const msg = document.getElementById('paymentMsg');
+        msg.classList.add('hidden');
+
+        if (!paymentMethod) {
+            msg.textContent = '❌ Please select a payment method.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/payments/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({
+                    email: currentUserEmail,
+                    method: paymentMethod,
+                    // Include card details if paymentMethod is mastercard, etc.
+                    // IMPORTANT: In real app, card data goes directly to PSP, not your server!
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (paymentMethod === 'cash') {
+                    msg.textContent = `✅ ${data.message || 'Payment method submitted. A team leader will validate your cash payment soon.'}`;
+                } else {
+                    // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
+                    currentUserData.paid = true; // Update local state based on backend response
+                    saveAuthData(currentAuthToken, currentUserData);
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`;
+                    setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
+                }
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+            } else {
+                msg.textContent = `❌ ${data.message || 'Payment submission failed.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Payment submission error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
+    });
+
+
+    // --- User Message System ---
+    document.getElementById('contactAdminForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('contactEmail').value.trim();
+        const subject = document.getElementById('contactSubject').value.trim();
+        const messageText = document.getElementById('contactMessage').value.trim();
+        const msg = document.getElementById('contactAdminMsg');
+
+        msg.classList.add('hidden');
+
+        if (!email || !subject || !messageText) {
+            msg.textContent = '❌ Please fill in all fields.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/messages/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromEmail: email, subject, message: messageText })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                msg.textContent = `✅ ${data.message || 'Your message has been sent to support!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+
+                document.getElementById('contactEmail').value = '';
+                document.getElementById('contactSubject').value = '';
+                document.getElementById('contactMessage').value = '';
+            } else {
+                msg.textContent = `❌ ${data.message || 'Failed to send message.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Send message error:', error);
+            msg.textContent = '❌ Network error or server unreachable. Please try again.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
+        setTimeout(() => msg.classList.add('hidden'), 3000);
+    });
+
+    // --- Admin (Team Leader / CEO) Logic ---
+
+    document.getElementById('leaderLoginForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        await loginAdmin('leader');
+    });
+
+    async function registerLeader() {
+        const name = document.getElementById('leaderName').value.trim();
+        const email = document.getElementById('leaderEmailReg').value.trim();
+        const pass1 = document.getElementById('leaderPass1').value;
+        const pass2 = document.getElementById('leaderPass2').value;
+        const msg = document.getElementById('leaderRegisterMsg');
+
+        if(!name || !email || !pass1 || !pass2) {
+            msg.textContent = '❌ Please fill all fields';
+            msg.className = 'error-msg';
+            return;
+        }
+        if(pass1 !== pass2) {
+            msg.textContent = '❌ Passwords do not match';
+            msg.className = 'error-msg';
+            return;
+        }
+
+        try {
+            // Corrected API endpoint: Using /api/signup for all registrations in the simulated backend
+            // In a full production app, you might have a dedicated /api/admins/register
+            const response = await fetch(`${API_BASE_URL}/signup`, { // Changed from /admins/register
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName: name, phoneNumber: 'N/A', email, password: pass1, role: 'leader' }) // Added fullName, phoneNumber, role
             });
             const data = await response.json();
 
@@ -802,30 +1589,39 @@
         msg.classList.add('hidden');
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admins/login`, {
+            // Corrected API endpoint: Using /api/login for all login types as per server.js
+            const response = await fetch(`${API_BASE_URL}/login`, { // Changed from /admins/login
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role })
+                body: JSON.stringify({ email, password, role }) // Ensure role is passed
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                saveAuthData(data.token, data.admin); // Store token and admin data
+                saveAuthData(data.token, data.user); // Store token and user data (server returns 'user', not 'admin')
                 msg.textContent = '✅ Login successful! Redirecting...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
 
-                if (role === 'leader') {
+                // Note: The server.js logic assigns role as 'user', 'leader', or 'ceo' directly in the returned 'user' object.
+                // We'll use data.user.role to determine the panel.
+                if (data.user.role === 'user') {
+                    if (data.user.paid) {
+                        setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                    } else {
+                        setTimeout(() => showPaymentPanel(data.user.email), 500);
+                    }
+                } else if (data.user.role === 'leader') {
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
-                    document.getElementById('leaderNameDisplay').textContent = data.admin.name;
+                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
                     await loadPendingPayments();
                     await loadRotationSettings();
                     await loadAvailableMembersForRotation();
                     await displayRotationParticipants();
                     await loadUserMessages();
-                } else if (role === 'ceo') {
+                } else if (data.user.role === 'ceo') {
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
