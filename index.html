@@ -501,6 +501,7 @@
         document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
 
         try {
+            // This endpoint is not defined in server.js, so it will still 404 unless you add a route for /api/users/:email
             const response = await fetch(`${API_BASE_URL}/users/${userEmail}`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
@@ -564,7 +565,8 @@
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/signup`, {
+            // Corrected: Removed /users/ from the endpoint
+            const response = await fetch(`${API_BASE_URL}/signup`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fullName, phoneNumber, email, password })
@@ -612,7 +614,8 @@
         msg.classList.add('hidden');
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/login`, {
+            // Corrected: Removed /users/ from the endpoint
+            const response = await fetch(`${API_BASE_URL}/login`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -741,7 +744,7 @@
                     // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
                     currentUserData.paid = true; // Update local state based on backend response
                     saveAuthData(currentAuthToken, currentUserData);
-                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`;
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'`;
                     setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
                 }
                 msg.classList.remove('hidden', 'error-msg');
@@ -1193,6 +1196,7 @@
         document.getElementById('noActiveParticipants').classList.remove('hidden'); // Assume no members until loaded
 
         try {
+            // This endpoint is not defined in server.js, so it will still 404 unless you add a route for /api/users/paid-not-in-rotation
             const response = await fetch(`${API_BASE_URL}/users/paid-not-in-rotation`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
@@ -1468,7 +1472,7 @@
                         await loadAvailableMembersForRotation();
                         await displayRotationParticipants();
                         await loadUserMessages();
-                    } else if (data.user.role === 'ceo') {
+                    } else if (currentUserData.role === 'ceo') {
                         hideAllPanels();
                         document.getElementById('ceoPanel').classList.remove('hidden');
                         await displayRotationHistory();
