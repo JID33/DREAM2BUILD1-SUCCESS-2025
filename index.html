@@ -270,7 +270,7 @@
     <h2>Bienvenue sur Dream2Build1, <span id="loggedInUserName"></span>!</h2>
     <div id="mainPlatform">
         <p>This is your main platform content, accessible only after successful login and payment.</p>
-        <p>Here you can explore all features, except the administration area.</p>
+        <p id="adminAreaNote"></p>
         <!-- Your platform content goes here -->
         <p>🚀 Ready to build your dreams!</p>
     </div>
@@ -317,6 +317,7 @@
 
     <button onclick="registerLeader()">Register as Team Leader</button>
     <p id="leaderRegisterMsg"></p>
+    <p style="text-align: center; margin-top: 15px;">Already registered? <a href="#" onclick="showLeaderLoginOnly()">Login here</a></p>
 </div>
 
 <!-- Section : Team Leader Login -->
@@ -332,6 +333,7 @@
         <button type="submit">Login</button>
         <p id="leaderLoginMsg"></p>
     </form>
+    <p style="text-align: center; margin-top: 15px;">New Leader? <a href="#" onclick="showLeaderRegisterOnly()">Register here</a></p>
     <p style="text-align: center; margin-top: 20px;">
         <button style="background-color: #6c757d;" onclick="showCEOLogin()">Login as CEO</button>
     </p>
@@ -487,6 +489,21 @@
         document.getElementById('verificationEmailDisplay').textContent = email;
     }
 
+    // New functions to show only one admin/leader panel at a time
+    function showLeaderLoginOnly() {
+        console.log('Attempting to show Leader Login panel only...');
+        hideAllPanels();
+        document.getElementById('leaderLoginPanel').classList.remove('hidden');
+        console.log('Leader Login panel should be visible.');
+    }
+
+    function showLeaderRegisterOnly() {
+        console.log('Attempting to show Leader Register panel only...');
+        hideAllPanels();
+        document.getElementById('leaderRegisterPanel').classList.remove('hidden');
+        console.log('Leader Register panel should be visible.');
+    }
+
     // Function to get current user/admin token (simulated for frontend)
     // In a real app, this would get token from cookie or sessionStorage
     let currentAuthToken = localStorage.getItem('authToken');
@@ -527,20 +544,36 @@
     }
 
     async function showMainPlatform(userName) {
+        console.log('Attempting to show Main Platform panel...');
         hideAllPanels();
         document.getElementById('mainPlatformPanel').classList.remove('hidden');
         document.getElementById('loggedInUserName').textContent = userName;
+
+        const adminAreaNote = document.getElementById('adminAreaNote');
+        if (currentUserData.role === 'user') {
+            adminAreaNote.textContent = 'Here you can explore all features, except the administration area.';
+        } else {
+            adminAreaNote.textContent = 'You are logged in as an administrator. Please use the appropriate dashboard for administrative tasks.';
+        }
+        console.log('Main Platform panel should be visible.');
     }
 
     function showAdminLoginRegister() {
+        // Default to showing the leader login panel when clicking "Admin / Leader Access"
+        console.log('Attempting to show Admin/Leader Login/Register panels...');
         hideAllPanels();
         document.getElementById('leaderLoginPanel').classList.remove('hidden');
-        document.getElementById('leaderRegisterPanel').classList.remove('hidden');
+        // The register panel is also visible by default, but we can make it toggle
+        // For now, let's keep it simple and just show login
+        // document.getElementById('leaderRegisterPanel').classList.remove('hidden');
+        console.log('Admin/Leader Login panel should be visible.');
     }
 
     function showCEOLogin() {
+        console.log('Attempting to show CEO Login panel...');
         hideAllPanels();
         document.getElementById('ceoLoginPanel').classList.remove('hidden');
+        console.log('CEO Login panel should be visible.');
     }
 
     function showContactAdmin() {
@@ -650,6 +683,7 @@
                 msg.textContent = '✅ Login successful! Redirecting...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
+                console.log('Login successful! Received user data:', data.user); // Added detailed log
 
                 // IMPORTANT: Your backend server.js simulates roles:
                 // email 'leader@example.com' -> role 'leader'
@@ -658,12 +692,14 @@
                 // These are NOT persisted. You must use these specific emails for simulated admin logins.
 
                 if (data.user.role === 'user') {
+                    console.log('Login routing: User role detected. Checking payment status.');
                     if (data.user.paid) {
                         setTimeout(() => showMainPlatform(data.user.fullName), 500);
                     } else {
                         setTimeout(() => showPaymentPanel(data.user.email), 500);
                     }
                 } else if (data.user.role === 'leader') {
+                    console.log('Login routing: Leader role detected. Showing Leader Dashboard.');
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
                     document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
@@ -672,10 +708,15 @@
                     await loadAvailableMembersForRotation();
                     await displayRotationParticipants();
                     await loadUserMessages();
+                    await updateCurrentRecipientDisplay(); // New call
                 } else if (data.user.role === 'ceo') {
+                    console.log('Login routing: CEO role detected. Showing CEO Dashboard.');
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
+                } else {
+                    console.warn('Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
+                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
                 }
             } else {
                 msg.textContent = `❌ ${data.message || 'Login failed.'}`;
@@ -935,6 +976,7 @@
                 msg.textContent = '✅ Login successful! Redirecting...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
+                console.log(`Admin/Leader Login successful! Received user data:`, data.user); // Added detailed log
 
                 // IMPORTANT: Your backend server.js simulates roles:
                 // email 'leader@example.com' -> role 'leader'
@@ -943,12 +985,14 @@
                 // These are NOT persisted. You must use these specific emails for simulated admin logins.
 
                 if (data.user.role === 'user') {
+                    console.log('Admin/Leader Login routing: User role detected. Checking payment status.');
                     if (data.user.paid) {
                         setTimeout(() => showMainPlatform(data.user.fullName), 500);
                     } else {
                         setTimeout(() => showPaymentPanel(data.user.email), 500);
                     }
                 } else if (data.user.role === 'leader') {
+                    console.log('Admin/Leader Login routing: Leader role detected. Showing Leader Dashboard.');
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
                     document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
@@ -958,10 +1002,14 @@
                     await displayRotationParticipants();
                     await loadUserMessages();
                     await updateCurrentRecipientDisplay(); // New call
-                } else if (data.user.role === 'ceo') {
+                } else if (data.user.role === 'ceo') { // Corrected this to use data.user.role
+                    console.log('Admin/Leader Login routing: CEO role detected. Showing CEO Dashboard.');
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
+                } else {
+                    console.warn('Admin/Leader Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
+                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
                 }
             } else {
                 msg.textContent = `❌ ${data.message || 'Login failed.'}`;
@@ -1500,13 +1548,16 @@
 
                 if (response.ok) {
                     // Token is valid, proceed based on role
+                    console.log('Token verified. User data from token:', data.user); // Added detailed log
                     if (data.user.role === 'user') { // Use role from fresh data, not old localStorage if mismatch
+                        console.log('Initial load routing: User role detected. Checking payment status.');
                         if (data.user.paid) {
                             showMainPlatform(data.user.fullName || data.user.email);
                         } else {
                             showPaymentPanel(data.user.email);
                         }
                     } else if (data.user.role === 'leader') {
+                        console.log('Initial load routing: Leader role detected. Showing Leader Dashboard.');
                         hideAllPanels();
                         document.getElementById('leaderPanel').classList.remove('hidden');
                         document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
@@ -1516,10 +1567,15 @@
                         await displayRotationParticipants();
                         await loadUserMessages();
                         await updateCurrentRecipientDisplay(); // New call for initial load
-                    } else if (currentUserData.role === 'ceo') {
+                    } else if (data.user.role === 'ceo') {
+                        console.log('Initial load routing: CEO role detected. Showing CEO Dashboard.');
                         hideAllPanels();
                         document.getElementById('ceoPanel').classList.remove('hidden');
                         await displayRotationHistory();
+                    } else {
+                        console.warn('Initial load routing: Unknown role from token verification:', data.user.role, 'Defaulting to login.');
+                        clearAuthData();
+                        showLogin();
                     }
                 } else {
                     // Token invalid or expired, force re-login
@@ -1533,6 +1589,7 @@
                 showLogin();
             }
         } else {
+            console.log('No auth token found or incomplete user data. Showing signup/login.');
             showSignUp(); // No token or user data, show signup/login
         }
     };
