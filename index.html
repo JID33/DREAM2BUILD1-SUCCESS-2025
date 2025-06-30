@@ -446,6 +446,7 @@
 
     // --- Helper Functions to Toggle Panels ---
     function hideAllPanels() {
+        console.log('Hiding all panels...');
         document.getElementById('signUpPanel').classList.add('hidden');
         document.getElementById('loginPanel').classList.add('hidden');
         document.getElementById('verificationMessagePanel').classList.add('hidden');
@@ -457,16 +458,21 @@
         document.getElementById('leaderPanel').classList.add('hidden');
         document.getElementById('ceoPanel').classList.add('hidden');
         document.getElementById('contactAdminPanel').classList.add('hidden');
+        console.log('All panels hidden.');
     }
 
     function showSignUp() {
+        console.log('Attempting to show Sign Up panel...');
         hideAllPanels();
         document.getElementById('signUpPanel').classList.remove('hidden');
+        console.log('Sign Up panel should be visible.');
     }
 
     function showLogin() {
+        console.log('Attempting to show Login panel...');
         hideAllPanels();
         document.getElementById('loginPanel').classList.remove('hidden');
+        console.log('Login panel should be visible.');
     }
 
     function showVerificationMessage(email) {
@@ -744,7 +750,7 @@
                     // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
                     currentUserData.paid = true; // Update local state based on backend response
                     saveAuthData(currentAuthToken, currentUserData);
-                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'`;
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`; // Fixed missing backtick
                     setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
                 }
                 msg.classList.remove('hidden', 'error-msg');
