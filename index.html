@@ -151,6 +151,83 @@
             border-color: #ffe082;
             font-weight: bold;
         }
+
+        /* Admin User Management Table */
+        #adminUsersTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #adminUsersTable th,
+        #adminUsersTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #adminUsersTable th {
+            background-color: #5cb85c; /* Green for user management */
+            color: white;
+        }
+        #adminUsersTable tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #adminUsersTable button {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .status-active { color: green; font-weight: bold; }
+        .status-inactive { color: orange; font-weight: bold; }
+        .status-paid { color: #007BFF; font-weight: bold; }
+        .status-unpaid { color: #dc3545; font-weight: bold; }
+
+        /* Admin History Table */
+        #adminHistoryTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        #adminHistoryTable th,
+        #adminHistoryTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        #adminHistoryTable th {
+            background-color: #f0ad4e; /* Orange for history */
+            color: white;
+        }
+        #adminHistoryTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        #noAdminHistory {
+            font-style: italic;
+            color: #777;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* Referral Code Section */
+        .referral-section {
+            background: #d9edf7;
+            border: 1px solid #bce8f1;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        #generatedReferralCode {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #31708f;
+            background-color: #cce5ff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+            border: 1px dashed #a6d9ff;
+        }
     </style>
 </head>
 <body>
@@ -162,8 +239,11 @@
 <div class="form-section" id="signUpPanel">
     <h2>📝 Sign Up for Access</h2>
     <form id="signUpForm">
-        <label for="fullName">Full Name:</label>
-        <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" placeholder="Enter your first name" required>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" placeholder="Enter your last name" required>
 
         <label for="phoneNumber">Phone Number:</label>
         <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="e.g., +150912345678" required>
@@ -176,6 +256,9 @@
 
         <label for="confirmPassword">Confirm Password:</label>
         <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+
+        <label for="referralCode">Referral Code (Optional):</label>
+        <input type="text" id="referralCode" name="referralCode" placeholder="Enter a referral code if you have one">
 
         <button type="submit">Sign Up</button>
         <p id="signUpMsg" class="hidden"></p>
@@ -207,7 +290,7 @@
 <div class="panel hidden" id="verificationMessagePanel">
     <h2>📧 Verify Your Email</h2>
     <p>A verification message has been simulated for <strong id="verificationEmailDisplay"></strong>. In a real system, you'd receive an email to verify your account.</p>
-    <p>For this demo, your account is automatically considered verified.</p>
+    <p>For this demo, your account is automatically considered verified and pending payment.</p>
     <button onclick="showLogin()">Go to Login (After Verification)</button>
 </div>
 
@@ -271,8 +354,14 @@
     <div id="mainPlatform">
         <p>This is your main platform content, accessible only after successful login and payment.</p>
         <p id="adminAreaNote"></p>
-        <!-- Your platform content goes here -->
-        <p>🚀 Ready to build your dreams!</p>
+        <!-- Participant's Invest/Gain Display -->
+        <div id="participantFinancials" style="margin-top: 20px; border: 1px solid #007BFF; padding: 15px; border-radius: 8px; background-color: #e6f2ff;">
+            <h3>Your Financials:</h3>
+            <p>Your Investment per cycle: <strong>$<span id="participantInvest">0.00</span></strong></p>
+            <p>Your Last Received Gain: <strong>$<span id="participantGain">0.00</span></strong></p>
+            <p>Your Referral Code: <strong><span id="participantReferralCode">N/A</span></strong></p>
+        </div>
+        <p style="margin-top: 20px;">🚀 Ready to build your dreams!</p>
     </div>
     <div class="logout-btn">
         <button onclick="logoutUser()">Log Out</button>
@@ -302,21 +391,25 @@
 <!-- --- Admin/Leader/CEO sections --- -->
 <!-- Section : Team Leader Registration -->
 <div class="form-section hidden" id="leaderRegisterPanel">
-    <h2>👥 Team Leader Registration (Admin Only)</h2>
-    <label for="leaderName">Full Name:</label>
-    <input type="text" id="leaderName" placeholder="Enter full name">
+    <h2>👥 Add New Admin (CEO Only)</h2>
+    <p>This section is for the CEO to add new Team Leader accounts.</p>
+    <label for="newAdminFirstName">First Name:</label>
+    <input type="text" id="newAdminFirstName" placeholder="Enter first name">
 
-    <label for="leaderEmailReg">Email:</label>
-    <input type="email" id="leaderEmailReg" placeholder="Enter email">
+    <label for="newAdminLastName">Last Name:</label>
+    <input type="text" id="newAdminLastName" placeholder="Enter last name">
 
-    <label for="leaderPass1">Create Password:</label>
-    <input type="password" id="leaderPass1" placeholder="Create password">
+    <label for="newAdminPhoneNumber">Phone Number:</label>
+    <input type="tel" id="newAdminPhoneNumber" placeholder="Enter phone number">
 
-    <label for="leaderPass2">Confirm Password:</label>
-    <input type="password" id="leaderPass2" placeholder="Confirm password">
+    <label for="newAdminEmail">Email:</label>
+    <input type="email" id="newAdminEmail" placeholder="Enter email">
 
-    <button onclick="registerLeader()">Register as Team Leader</button>
-    <p id="leaderRegisterMsg"></p>
+    <label for="newAdminPass">Create Password:</label>
+    <input type="password" id="newAdminPass" placeholder="Create password">
+
+    <button onclick="addAdmin()">Add New Admin</button>
+    <p id="newAdminMsg"></p>
     <p style="text-align: center; margin-top: 15px;">Already registered? <a href="#" onclick="showLeaderLoginOnly()">Login here</a></p>
 </div>
 
@@ -383,19 +476,15 @@
         <h3>🔄 Rotation Management</h3>
         <p>Current Rotation Day: <strong id="currentRotationDay">0</strong></p>
         <p>Current Recipient: <strong id="currentRecipientDisplay">N/A</strong></p>
-        <label for="dailyInvest">Daily Investment ($):</label>
-        <input type="number" id="dailyInvest" value="100" min="0" step="0.01">
-
-        <label for="dailyGain">Daily Gain ($):</label>
-        <input type="number" id="dailyGain" value="1000" min="0" step="0.01">
-
+        <label for="dailyInvest">Individual Participant Investment ($):</label>
+        <input type="number" id="dailyInvest" value="10" min="0" step="0.01">
         <button onclick="saveRotationSettings()">Update Settings</button>
         <p id="rotationSettingsMsg" class="hidden"></p>
 
         <hr>
         <h4>Participants in Rotation:</h4>
         <select id="availableMembersSelect" style="width: 70%; display: inline-block; margin-right: 10px;">
-            <option value="">-- Select Paid Member --</option>
+            <option value="">-- Select Paid & Active Member --</option>
             <!-- Options will be dynamically loaded here -->
         </select>
         <button style="background-color: #007BFF; width: auto; padding: 10px 15px; margin-right: 0;" onclick="addParticipantToRotation()">Add Participant</button>
@@ -409,6 +498,34 @@
         <button style="background-color: #ffc107;" onclick="nextParticipant()">Next Participant (Rotate)</button>
         <p id="rotationStatusMsg" class="hidden"></p>
     </div>
+
+    <hr>
+    <h3>👥 User Accounts Management:</h3>
+    <table id="adminUsersTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Paid</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- User accounts will be dynamically added here -->
+        </tbody>
+    </table>
+    <p id="noUsersFound" style="font-style: italic;">No users registered yet.</p>
+
+    <hr>
+    <div class="referral-section">
+        <h3>🔗 Referral Code Generator</h3>
+        <button onclick="generateReferralCode()">Generate New Referral Code</button>
+        <p id="generatedReferralCodeMsg" class="hidden"></p>
+        <p id="generatedReferralCode"></p>
+    </div>
+
     <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
         <em>Note: All user, payment, and rotation data is simulated and will reset when the server (`server.js`) is restarted.</em>
     </p>
@@ -430,6 +547,7 @@
                 <th>Day</th>
                 <th>Recipient</th>
                 <th>Invest ($)</th>
+                <th>Total Pool ($)</th>
                 <th>Gain ($)</th>
                 <th>Date/Time</th>
             </tr>
@@ -440,6 +558,23 @@
     </table>
     <p id="noRotationHistory" class="hidden">No rotation history available yet.</p>
 
+    <hr>
+    <h3>📊 System Activity History:</h3>
+    <table id="adminHistoryTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- System history will be dynamically added here -->
+        </tbody>
+    </table>
+    <p id="noAdminHistory" class="hidden">No system history available yet.</p>
+
     <button style="margin-top: 20px;" onclick="calculRotation()">Generate Comprehensive Report (Future Feature)</button>
     <p id="ceoReportMsg" class="hidden" style="margin-top: 10px;"></p>
     <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
@@ -448,6 +583,41 @@
 </div>
 
 <script>
+    console.log("Script loaded successfully!"); // Added for debugging
+
+    // Function to display temporary messages (replaces alerts)
+    function displayTempMessage(message, isSuccess = true) {
+        const msgDiv = document.createElement('div');
+        msgDiv.textContent = message;
+        msgDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            background-color: ${isSuccess ? '#d4edda' : '#f8d7da'};
+            color: ${isSuccess ? '#155724' : '#721c24'};
+            border: 1px solid ${isSuccess ? '#c3e6cb' : '#f5c6cb'};
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        `;
+        document.body.appendChild(msgDiv);
+
+        setTimeout(() => {
+            msgDiv.style.opacity = '1';
+        }, 10); // Small delay to allow transition
+
+        setTimeout(() => {
+            msgDiv.style.opacity = '0';
+            msgDiv.addEventListener('transitionend', () => msgDiv.remove());
+        }, 3000); // Message disappears after 3 seconds
+    }
+
+
     // --- Configuration for your Backend API ---
     // IMPORTANT: Replace this with your actual backend server's URL when deployed!
     const API_BASE_URL = 'http://localhost:3000/api'; // For local testing, assuming backend runs on port 3000
@@ -460,7 +630,7 @@
         document.getElementById('verificationMessagePanel').classList.add('hidden');
         document.getElementById('paymentPanel').classList.add('hidden');
         document.getElementById('mainPlatformPanel').classList.add('hidden');
-        document.getElementById('leaderRegisterPanel').classList.add('hidden');
+        document.getElementById('leaderRegisterPanel').classList.add('hidden'); // Add Admin panel
         document.getElementById('leaderLoginPanel').classList.add('hidden');
         document.getElementById('ceoLoginPanel').classList.add('hidden');
         document.getElementById('leaderPanel').classList.add('hidden');
@@ -530,30 +700,34 @@
         document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
 
         try {
-            // This endpoint is not defined in server.js, so it will still 404 unless you add a route for /api/users/:email
-            const response = await fetch(`${API_BASE_URL}/users/${userEmail}`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch user data');
-            const userData = await response.json();
-            document.getElementById('paymentUserName').textContent = userData.fullName || userData.email;
+            // This endpoint is not defined in server.js, but we'll use currentUserData for display
+            // In a real app, you might fetch user details again if needed.
+            document.getElementById('paymentUserName').textContent = currentUserData.fullName || currentUserData.email;
         } catch (error) {
             console.error('Error fetching user data for payment panel:', error);
             document.getElementById('paymentUserName').textContent = 'User';
         }
     }
 
-    async function showMainPlatform(userName) {
+    async function showMainPlatform(userName, userInvest, userGain, userReferralCode) {
         console.log('Attempting to show Main Platform panel...');
         hideAllPanels();
         document.getElementById('mainPlatformPanel').classList.remove('hidden');
         document.getElementById('loggedInUserName').textContent = userName;
 
         const adminAreaNote = document.getElementById('adminAreaNote');
+        const participantFinancials = document.getElementById('participantFinancials');
+
+        // Only show financial details for regular users
         if (currentUserData.role === 'user') {
             adminAreaNote.textContent = 'Here you can explore all features, except the administration area.';
+            participantFinancials.classList.remove('hidden');
+            document.getElementById('participantInvest').textContent = userInvest.toFixed(2);
+            document.getElementById('participantGain').textContent = userGain.toFixed(2);
+            document.getElementById('participantReferralCode').textContent = userReferralCode || 'N/A';
         } else {
             adminAreaNote.textContent = 'You are logged in as an administrator. Please use the appropriate dashboard for administrative tasks.';
+            participantFinancials.classList.add('hidden'); // Hide for admins
         }
         console.log('Main Platform panel should be visible.');
     }
@@ -563,9 +737,6 @@
         console.log('Attempting to show Admin/Leader Login/Register panels...');
         hideAllPanels();
         document.getElementById('leaderLoginPanel').classList.remove('hidden');
-        // The register panel is also visible by default, but we can make it toggle
-        // For now, let's keep it simple and just show login
-        // document.getElementById('leaderRegisterPanel').classList.remove('hidden');
         console.log('Admin/Leader Login panel should be visible.');
     }
 
@@ -586,17 +757,19 @@
     document.getElementById('signUpForm').addEventListener('submit', async function(event) {
         event.preventDefault();
 
-        const fullName = document.getElementById('fullName').value.trim();
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
         const phoneNumber = document.getElementById('phoneNumber').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+        const referralCode = document.getElementById('referralCode').value.trim();
         const msg = document.getElementById('signUpMsg');
 
         msg.classList.add('hidden');
 
-        if (!fullName || !phoneNumber || !email || !password || !confirmPassword) {
-            msg.textContent = '❌ Please fill in all fields.';
+        if (!firstName || !lastName || !phoneNumber || !email || !password || !confirmPassword) {
+            msg.textContent = '❌ Please fill in all required fields (Name, Phone, Email, Password).';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
             return;
@@ -610,14 +783,12 @@
         }
 
         try {
-            // Corrected: Removed /users/ from the endpoint
-            const response = await fetch(`${API_BASE_URL}/signup`, { 
+            const response = await fetch(`${API_BASE_URL}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fullName, phoneNumber, email, password })
+                body: JSON.stringify({ firstName, lastName, phoneNumber, email, password, referralCode })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
@@ -626,15 +797,13 @@
                 msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
                 msg.classList.remove('hidden', 'success-msg');
                 msg.classList.add('error-msg');
-                return; // Stop further processing if JSON parsing fails
+                return;
             }
 
             if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Sign up successful! Please proceed to login.'}`;
+                msg.textContent = `✅ ${data.message || 'Sign up successful! Please proceed to payment.'}`;
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
-                // In a real system, verification email would be sent by backend
-                // For this demo, we simulate instant verification
                 setTimeout(() => showVerificationMessage(email), 1000);
             } else {
                 msg.textContent = `❌ ${data.message || 'Signup failed.'}`;
@@ -659,14 +828,12 @@
         msg.classList.add('hidden');
 
         try {
-            // Corrected: Removed /users/ from the endpoint
-            const response = await fetch(`${API_BASE_URL}/login`, { 
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
@@ -675,26 +842,20 @@
                 msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
                 msg.classList.remove('hidden', 'success-msg');
                 msg.classList.add('error-msg');
-                return; // Stop further processing if JSON parsing fails
+                return;
             }
 
             if (response.ok) {
-                saveAuthData(data.token, data.user); // Store token and user data
+                saveAuthData(data.token, data.user);
                 msg.textContent = '✅ Login successful! Redirecting...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
-                console.log('Login successful! Received user data:', data.user); // Added detailed log
-
-                // IMPORTANT: Your backend server.js simulates roles:
-                // email 'leader@example.com' -> role 'leader'
-                // email 'ceo@example.com' -> role 'ceo'
-                // Any other email -> role 'user'
-                // These are NOT persisted. You must use these specific emails for simulated admin logins.
+                console.log('Login successful! Received user data:', data.user);
 
                 if (data.user.role === 'user') {
                     console.log('Login routing: User role detected. Checking payment status.');
-                    if (data.user.paid) {
-                        setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                    if (data.user.paid && data.user.status === 'active') {
+                        setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
                     } else {
                         setTimeout(() => showPaymentPanel(data.user.email), 500);
                     }
@@ -702,21 +863,24 @@
                     console.log('Login routing: Leader role detected. Showing Leader Dashboard.');
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
-                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
+                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
                     await loadPendingPayments();
                     await loadRotationSettings();
                     await loadAvailableMembersForRotation();
                     await displayRotationParticipants();
                     await loadUserMessages();
-                    await updateCurrentRecipientDisplay(); // New call
+                    await updateCurrentRecipientDisplay();
+                    await loadAdminUsers(); // Load users for management
                 } else if (data.user.role === 'ceo') {
                     console.log('Login routing: CEO role detected. Showing CEO Dashboard.');
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
+                    await displayAdminHistory(); // Load system history
+                    await loadAdminUsers(); // Load users for management (CEO also needs this)
                 } else {
                     console.warn('Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
-                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                    setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
                 }
             } else {
                 msg.textContent = `❌ ${data.message || 'Login failed.'}`;
@@ -725,14 +889,14 @@
             }
         } catch (error) {
             console.error('Login error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
+            msg.textContent = `❌ Network error: Could not reach the backend server. Please ensure 'nodemon server.js' is running in your Command Prompt.`;
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
         }
     });
 
     function logoutUser() {
-        clearAuthData(); // Clear token and user data
+        clearAuthData();
         showLogin();
     }
 
@@ -752,7 +916,7 @@
     document.getElementById('paymentForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const paymentMethod = document.getElementById('paymentMethod').value;
-        const currentUserEmail = document.getElementById('paymentPanel').dataset.currentUserEmail;
+        const currentUserEmail = currentUserData.email; // Get email from stored user data
         const msg = document.getElementById('paymentMsg');
         msg.classList.add('hidden');
 
@@ -773,12 +937,9 @@
                 body: JSON.stringify({
                     email: currentUserEmail,
                     method: paymentMethod,
-                    // Include card details if paymentMethod is mastercard, etc.
-                    // IMPORTANT: In real app, card data goes directly to PSP, not your server!
                 })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
@@ -795,10 +956,11 @@
                     msg.textContent = `✅ ${data.message || 'Payment method submitted. A team leader will validate your cash payment soon.'}`;
                 } else {
                     // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
-                    currentUserData.paid = true; // Update local state based on backend response
+                    currentUserData.paid = true;
+                    currentUserData.status = 'active'; // Frontend updates status immediately for non-cash
                     saveAuthData(currentAuthToken, currentUserData);
                     msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`;
-                    setTimeout(() => showMainPlatform(currentUserData.fullName), 1500);
+                    setTimeout(() => showMainPlatform(currentUserData.fullName, currentUserData.invest, currentUserData.gain, currentUserData.referralCode), 1500);
                 }
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
@@ -841,7 +1003,6 @@
                 body: JSON.stringify({ fromEmail: email, subject, message: messageText })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
@@ -882,39 +1043,38 @@
         await loginAdmin('leader');
     });
 
-    async function registerLeader() {
-        const name = document.getElementById('leaderName').value.trim();
-        const email = document.getElementById('leaderEmailReg').value.trim();
-        const pass1 = document.getElementById('leaderPass1').value;
-        const pass2 = document.getElementById('leaderPass2').value;
-        const msg = document.getElementById('leaderRegisterMsg');
+    async function addAdmin() {
+        const firstName = document.getElementById('newAdminFirstName').value.trim();
+        const lastName = document.getElementById('newAdminLastName').value.trim();
+        const phoneNumber = document.getElementById('newAdminPhoneNumber').value.trim();
+        const email = document.getElementById('newAdminEmail').value.trim();
+        const password = document.getElementById('newAdminPass').value;
+        const msg = document.getElementById('newAdminMsg');
 
-        if(!name || !email || !pass1 || !pass2) {
-            msg.textContent = '❌ Please fill all fields';
-            msg.className = 'error-msg';
-            return;
-        }
-        if(pass1 !== pass2) {
-            msg.textContent = '❌ Passwords do not match';
-            msg.className = 'error-msg';
+        msg.classList.add('hidden');
+
+        if (!firstName || !lastName || !phoneNumber || !email || !password) {
+            msg.textContent = '❌ Please fill all fields for the new admin.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
             return;
         }
 
         try {
-            // Corrected API endpoint: Using /api/signup for all registrations in the simulated backend
-            // In a full production app, you might have a dedicated /api/admins/register
-            const response = await fetch(`${API_BASE_URL}/signup`, { // Changed from /admins/register
+            const response = await fetch(`${API_BASE_URL}/admin/add-admin`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fullName: name, phoneNumber: 'N/A', email, password: pass1, role: 'leader' }) // Added fullName, phoneNumber, role
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({ firstName, lastName, email, password, phoneNumber })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
             } catch (jsonError) {
-                console.error('Failed to parse JSON response from leader register:', jsonError);
+                console.error('Failed to parse JSON response from add admin:', jsonError);
                 msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
                 msg.classList.remove('hidden', 'success-msg');
                 msg.classList.add('error-msg');
@@ -922,22 +1082,30 @@
             }
 
             if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Registration successful. You can now login as a Leader.'}`;
-                msg.className = 'success-msg';
-                document.getElementById('leaderName').value = '';
-                document.getElementById('leaderEmailReg').value = '';
-                document.getElementById('leaderPass1').value = '';
-                document.getElementById('leaderPass2').value = '';
+                msg.textContent = `✅ ${data.message || 'New admin added successfully!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                // Clear form
+                document.getElementById('newAdminFirstName').value = '';
+                document.getElementById('newAdminLastName').value = '';
+                document.getElementById('newAdminPhoneNumber').value = '';
+                document.getElementById('newAdminEmail').value = '';
+                document.getElementById('newAdminPass').value = '';
+                await loadAdminUsers(); // Refresh user list
             } else {
-                msg.textContent = `❌ ${data.message || 'Registration failed.'}`;
-                msg.className = 'error-msg';
+                msg.textContent = `❌ ${data.message || 'Failed to add admin.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
             }
         } catch (error) {
-            console.error('Leader registration error:', error);
+            console.error('Add admin error:', error);
             msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.className = 'error-msg';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
         }
+        setTimeout(() => msg.classList.add('hidden'), 3000);
     }
+
 
     async function loginAdmin(role) {
         const emailInput = role === 'leader' ? 'loginLeaderEmail' : 'ceoLoginEmail';
@@ -951,14 +1119,12 @@
         msg.classList.add('hidden');
 
         try {
-            // Corrected API endpoint: Using /api/login for all login types as per server.js
-            const response = await fetch(`${API_BASE_URL}/login`, { // Changed from /admins/login
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role }) // Ensure role is passed
+                body: JSON.stringify({ email, password })
             });
 
-            // Check if response is JSON and process it
             let data;
             try {
                 data = await response.json();
@@ -970,46 +1136,42 @@
                 return;
             }
 
-
             if (response.ok) {
-                saveAuthData(data.token, data.user); // Store token and user data (server returns 'user', not 'admin')
+                saveAuthData(data.token, data.user);
                 msg.textContent = '✅ Login successful! Redirecting...';
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
-                console.log(`Admin/Leader Login successful! Received user data:`, data.user); // Added detailed log
-
-                // IMPORTANT: Your backend server.js simulates roles:
-                // email 'leader@example.com' -> role 'leader'
-                // email 'ceo@example.com' -> role 'ceo'
-                // Any other email -> role 'user'
-                // These are NOT persisted. You must use these specific emails for simulated admin logins.
+                console.log(`Admin/Leader Login successful! Received user data:`, data.user);
 
                 if (data.user.role === 'user') {
-                    console.log('Admin/Leader Login routing: User role detected. Checking payment status.');
-                    if (data.user.paid) {
-                        setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                    console.log('Login routing: User role detected. Checking payment status.');
+                    if (data.user.paid && data.user.status === 'active') {
+                        setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
                     } else {
                         setTimeout(() => showPaymentPanel(data.user.email), 500);
                     }
                 } else if (data.user.role === 'leader') {
-                    console.log('Admin/Leader Login routing: Leader role detected. Showing Leader Dashboard.');
+                    console.log('Login routing: Leader role detected. Showing Leader Dashboard.');
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
-                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
+                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
                     await loadPendingPayments();
                     await loadRotationSettings();
                     await loadAvailableMembersForRotation();
                     await displayRotationParticipants();
                     await loadUserMessages();
-                    await updateCurrentRecipientDisplay(); // New call
-                } else if (data.user.role === 'ceo') { // Corrected this to use data.user.role
-                    console.log('Admin/Leader Login routing: CEO role detected. Showing CEO Dashboard.');
+                    await updateCurrentRecipientDisplay();
+                    await loadAdminUsers(); // Load users for management
+                } else if (data.user.role === 'ceo') {
+                    console.log('Login routing: CEO role detected. Showing CEO Dashboard.');
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
+                    await displayAdminHistory(); // Load system history
+                    await loadAdminUsers(); // Load users for management
                 } else {
-                    console.warn('Admin/Leader Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
-                    setTimeout(() => showMainPlatform(data.user.fullName), 500);
+                    console.warn('Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
+                    setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
                 }
             } else {
                 msg.textContent = `❌ ${data.message || 'Login failed.'}`;
@@ -1018,11 +1180,11 @@
             }
         } catch (error) {
             console.error(`${role} login error:`, error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
+            msg.textContent = `❌ Network error: Could not reach the backend server. Please ensure 'nodemon server.js' is running in your Command Prompt.`;
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
         }
-    }
+    });
 
     function logoutLeader() {
         clearAuthData();
@@ -1073,6 +1235,9 @@
     }
 
     async function validatePayment(email) {
+        if (!confirm(`Are you sure you want to VALIDATE payment for ${email}? This will activate their account.`)) {
+            return;
+        }
         try {
             const response = await fetch(`${API_BASE_URL}/payments/validate/${email}`, {
                 method: 'PUT',
@@ -1081,21 +1246,26 @@
             const data = await response.json();
 
             if (response.ok) {
-                alert(data.message || `Payment for ${email} validated!`);
+                displayTempMessage(data.message || `Payment for ${email} validated! Account activated.`, true);
                 await loadPendingPayments();
                 await loadAvailableMembersForRotation();
                 await displayRotationParticipants();
-                await updateCurrentRecipientDisplay(); // Update after payment validation
+                await updateCurrentRecipientDisplay();
+                await loadAdminUsers(); // Refresh user list after status change
+                await displayAdminHistory(); // Update history
             } else {
-                alert(`Error validating payment: ${data.message || 'Unknown error.'}`);
+                displayTempMessage(`Error validating payment: ${data.message || 'Unknown error.'}`, false);
             }
         } catch (error) {
             console.error('Error validating payment:', error);
-            alert('Network error or server unreachable. Could not validate payment.');
+            displayTempMessage('Network error or server unreachable. Could not validate payment.', false);
         }
     }
 
     async function rejectPayment(email) {
+        if (!confirm(`Are you sure you want to REJECT payment for ${email}?`)) {
+            return;
+        }
         try {
             const response = await fetch(`${API_BASE_URL}/payments/reject/${email}`, {
                 method: 'PUT',
@@ -1104,14 +1274,15 @@
             const data = await response.json();
 
             if (response.ok) {
-                alert(data.message || `Payment for ${email} rejected.`);
+                displayTempMessage(data.message || `Payment for ${email} rejected.`, true);
                 await loadPendingPayments();
+                await displayAdminHistory(); // Update history
             } else {
-                alert(`Error rejecting payment: ${data.message || 'Unknown error.'}`);
+                displayTempMessage(`Error rejecting payment: ${data.message || 'Unknown error.'}`, false);
             }
         } catch (error) {
             console.error('Error rejecting payment:', error);
-            alert('Network error or server unreachable. Could not reject payment.');
+            displayTempMessage('Network error or server unreachable. Could not reject payment.', false);
         }
     }
 
@@ -1165,26 +1336,31 @@
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
             if (!response.ok) throw new Error('Failed to mark message as read');
+            displayTempMessage('Message marked as read.', true);
             await loadUserMessages();
+            await displayAdminHistory(); // Update history
         } catch (error) {
             console.error('Error marking message as read:', error);
-            alert('Could not mark message as read.');
+            displayTempMessage('Could not mark message as read.', false);
         }
     }
 
     async function deleteMessage(messageId) {
-        if (confirm('Are you sure you want to delete this message?')) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-                });
-                if (!response.ok) throw new Error('Failed to delete message');
-                await loadUserMessages();
-            } catch (error) {
-                console.error('Error deleting message:', error);
-                alert('Could not delete message.');
-            }
+        if (!confirm('Are you sure you want to delete this message?')) {
+            return;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to delete message');
+            displayTempMessage('Message deleted.', true);
+            await loadUserMessages();
+            await displayAdminHistory(); // Update history
+        } catch (error) {
+            console.error('Error deleting message:', error);
+            displayTempMessage('Could not delete message.', false);
         }
     }
 
@@ -1199,25 +1375,21 @@
             if (!response.ok) throw new Error('Failed to fetch rotation settings');
             const settings = await response.json();
             document.getElementById('dailyInvest').value = settings.invest;
-            document.getElementById('dailyGain').value = settings.gain;
             document.getElementById('currentRotationDay').textContent = settings.currentDay;
         } catch (error) {
             console.error('Error loading rotation settings:', error);
-            // Default values or error message
-            document.getElementById('dailyInvest').value = 100;
-            document.getElementById('dailyGain').value = 1000;
+            document.getElementById('dailyInvest').value = 10; // Default
             document.getElementById('currentRotationDay').textContent = 'Error';
         }
     }
 
     async function saveRotationSettings() {
         const invest = parseFloat(document.getElementById('dailyInvest').value);
-        const gain = parseFloat(document.getElementById('dailyGain').value);
         const msg = document.getElementById('rotationSettingsMsg');
         msg.classList.add('hidden');
 
-        if (isNaN(invest) || isNaN(gain) || invest < 0 || gain < 0) {
-            msg.textContent = '❌ Please enter valid numbers for Invest and Gain.';
+        if (isNaN(invest) || invest < 0) {
+            msg.textContent = '❌ Please enter a valid number for Individual Participant Investment.';
             msg.classList.remove('hidden', 'success-msg');
             msg.classList.add('error-msg');
             return;
@@ -1230,7 +1402,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentAuthToken}`
                 },
-                body: JSON.stringify({ invest, gain })
+                body: JSON.stringify({ invest })
             });
             const data = await response.json();
 
@@ -1238,6 +1410,7 @@
                 msg.textContent = `✅ ${data.message || 'Rotation settings updated!'}`;
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
+                await displayAdminHistory(); // Update history
             } else {
                 msg.textContent = `❌ ${data.message || 'Failed to update settings.'}`;
                 msg.classList.remove('hidden', 'success-msg');
@@ -1254,11 +1427,10 @@
 
     async function loadAvailableMembersForRotation() {
         const select = document.getElementById('availableMembersSelect');
-        select.innerHTML = '<option value="">-- Select Paid Member --</option>';
-        document.getElementById('noActiveParticipants').classList.remove('hidden'); // Assume no members until loaded
+        select.innerHTML = '<option value="">-- Select Paid & Active Member --</option>';
+        document.getElementById('noActiveParticipants').classList.remove('hidden');
 
         try {
-            // This endpoint is not defined in server.js, so it will still 404 unless you add a route for /api/users/paid-not-in-rotation
             const response = await fetch(`${API_BASE_URL}/users/paid-not-in-rotation`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
@@ -1273,7 +1445,6 @@
                 option.textContent = `${user.fullName} (${user.email})`;
                 select.appendChild(option);
             });
-            // Update noActiveParticipants message only after all lists are potentially loaded
             if (!hasAvailable && await getActiveRotationMembersCount() === 0) {
                 document.getElementById('noActiveParticipants').classList.remove('hidden');
             } else {
@@ -1291,7 +1462,7 @@
             const response = await fetch(`${API_BASE_URL}/rotation/participants`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
-            if (!response.ok) return 0; // Return 0 on error
+            if (!response.ok) return 0;
             const participants = await response.json();
             return participants.length;
         } catch (error) {
@@ -1337,9 +1508,10 @@
                 msg.textContent = `✅ ${data.message || 'Participant added to rotation!'}`;
                 msg.classList.remove('hidden', 'error-msg');
                 msg.classList.add('success-msg');
-                await loadAvailableMembersForRotation(); // Refresh dropdown
-                await displayRotationParticipants(); // Refresh participant list
-                await updateCurrentRecipientDisplay(); // Update current recipient display
+                await loadAvailableMembersForRotation();
+                await displayRotationParticipants();
+                await updateCurrentRecipientDisplay();
+                await displayAdminHistory(); // Update history
             } else {
                 msg.textContent = `❌ ${data.message || 'Failed to add participant.'}`;
                 msg.classList.remove('hidden', 'success-msg');
@@ -1367,7 +1539,6 @@
             const participants = await response.json();
 
             let hasParticipants = false;
-            // Fetch current recipient index if needed (ensure this API call also works)
             let currentRecipientIndex = -1;
             try {
                 const settingsResponse = await fetch(`${API_BASE_URL}/rotation/settings`, {
@@ -1397,7 +1568,8 @@
                 });
             }
             document.getElementById('noActiveParticipants').classList.toggle('hidden', hasParticipants);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Error displaying rotation participants:', error);
             list.innerHTML = '<li>Error loading participants.</li>';
             document.getElementById('noActiveParticipants').classList.add('hidden');
@@ -1406,7 +1578,7 @@
 
     async function updateCurrentRecipientDisplay() {
         const currentRecipientDisplay = document.getElementById('currentRecipientDisplay');
-        currentRecipientDisplay.textContent = 'N/A'; // Default
+        currentRecipientDisplay.textContent = 'N/A';
 
         try {
             const settingsResponse = await fetch(`${API_BASE_URL}/rotation/settings`, {
@@ -1417,7 +1589,7 @@
             const participantsResponse = await fetch(`${API_BASE_URL}/rotation/participants`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
-            const participants = await participantsResponse.json();
+            const participants = await participants.json();
 
             if (settings.lastPaidMemberIndex !== -1 && participants[settings.lastPaidMemberIndex]) {
                 const recipient = participants[settings.lastPaidMemberIndex];
@@ -1445,23 +1617,146 @@
                 data = await response.json();
             } catch (jsonError) {
                 console.error('Failed to parse JSON response from next participant:', jsonError);
-                alert(`Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`);
+                displayTempMessage(`Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`, false);
                 return;
             }
 
             if (response.ok) {
-                alert(data.message || 'Rotation moved to next participant!');
+                displayTempMessage(data.message || 'Rotation moved to next participant!', true);
                 await loadRotationSettings();
                 await displayRotationParticipants();
-                await updateCurrentRecipientDisplay(); // Update current recipient display
-                await displayRotationHistory(); // Update CEO panel
+                await updateCurrentRecipientDisplay();
+                await displayRotationHistory();
+                await displayAdminHistory(); // Update history
+                // If the current user is the recipient, update their dashboard
+                if (currentUserData.role === 'user' && currentUserData.id === data.currentRecipient.id) {
+                    currentUserData.gain = data.winnerGain; // Update local gain
+                    saveAuthData(currentAuthToken, currentUserData); // Save updated user data
+                    document.getElementById('participantGain').textContent = data.winnerGain.toFixed(2);
+                }
             } else {
-                alert(`Error during rotation: ${data.message || 'Unknown error.'}`);
+                displayTempMessage(`Error during rotation: ${data.message || 'Unknown error.'}`, false);
             }
         } catch (error) {
             console.error('Next participant error:', error);
-            alert('Network error: Could not reach server. Please ensure the backend is running.');
+            displayTempMessage('Network error: Could not reach server. Please ensure the backend is running.', false);
         }
+    }
+
+
+    // --- Admin User Management Functions ---
+    async function loadAdminUsers() {
+        const tableBody = document.querySelector('#adminUsersTable tbody');
+        tableBody.innerHTML = '';
+        document.getElementById('noUsersFound').classList.remove('hidden');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user list');
+            const users = await response.json();
+
+            let hasUsers = false;
+            users.forEach(user => {
+                hasUsers = true;
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = user.fullName;
+                row.insertCell().textContent = user.email;
+                row.insertCell().textContent = user.role + (user.adminLevel ? ` (${user.adminLevel})` : '');
+                row.insertCell().innerHTML = `<span class="${user.isPaid ? 'status-paid' : 'status-unpaid'}">${user.isPaid ? 'Paid' : 'Unpaid'}</span>`;
+                row.insertCell().innerHTML = `<span class="${user.status === 'active' ? 'status-active' : 'status-inactive'}">${user.status.toUpperCase()}</span>`;
+
+                const actionsCell = row.insertCell();
+                if (user.id !== currentUserData.id && !(user.adminLevel === 'superAdmin' && currentUserData.adminLevel !== 'superAdmin')) { // Cannot deactivate self or superAdmin by subAdmin
+                    if (user.status === 'active') {
+                        const deactivateBtn = document.createElement('button');
+                        deactivateBtn.textContent = 'Deactivate';
+                        deactivateBtn.style.backgroundColor = '#f0ad4e'; // Warning yellow
+                        deactivateBtn.onclick = () => updateUserStatus(user.id, 'inactive');
+                        actionsCell.appendChild(deactivateBtn);
+                    } else {
+                        const activateBtn = document.createElement('button');
+                        activateBtn.textContent = 'Activate';
+                        activateBtn.style.backgroundColor = '#5cb85c'; // Success green
+                        activateBtn.onclick = () => updateUserStatus(user.id, 'active');
+                        actionsCell.appendChild(activateBtn);
+                    }
+                } else {
+                    actionsCell.textContent = 'N/A'; // Cannot change status
+                }
+            });
+            document.getElementById('noUsersFound').classList.toggle('hidden', hasUsers);
+        } catch (error) {
+            console.error('Error loading admin users:', error);
+            tableBody.innerHTML = '<tr><td colspan="6">Error loading user list.</td>';
+            document.getElementById('noUsersFound').classList.add('hidden');
+        }
+    }
+
+    async function updateUserStatus(userId, status) {
+        if (!confirm(`Are you sure you want to change this user's status to ${status.toUpperCase()}?`)) {
+            return;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/user/${userId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentAuthToken}`
+                },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                displayTempMessage(data.message || `User status updated to ${status}.`, true);
+                await loadAdminUsers(); // Refresh the user list
+                await loadAvailableMembersForRotation(); // Refresh available participants
+                await displayRotationParticipants(); // Refresh rotation list
+                await displayAdminHistory(); // Update history
+            } else {
+                displayTempMessage(`Error updating user status: ${data.message || 'Unknown error.'}`, false);
+            }
+        } catch (error) {
+            console.error('Error updating user status:', error);
+            displayTempMessage('Network error or server unreachable. Could not update user status.', false);
+        }
+    }
+
+    async function generateReferralCode() {
+        const msg = document.getElementById('generatedReferralCodeMsg');
+        const codeDisplay = document.getElementById('generatedReferralCode');
+        msg.classList.add('hidden');
+        codeDisplay.textContent = 'Generating...';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/referral-code/generate`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                codeDisplay.textContent = data.referralCode;
+                msg.textContent = `✅ ${data.message || 'New referral code generated!'}`;
+                msg.classList.remove('hidden', 'error-msg');
+                msg.classList.add('success-msg');
+                await displayAdminHistory(); // Update history
+            } else {
+                codeDisplay.textContent = 'Error';
+                msg.textContent = `❌ ${data.message || 'Failed to generate referral code.'}`;
+                msg.classList.remove('hidden', 'success-msg');
+                msg.classList.add('error-msg');
+            }
+        } catch (error) {
+            console.error('Generate referral code error:', error);
+            codeDisplay.textContent = 'Error';
+            msg.textContent = '❌ Network error: Could not reach server.';
+            msg.classList.remove('hidden', 'success-msg');
+            msg.classList.add('error-msg');
+        }
+        setTimeout(() => msg.classList.add('hidden'), 3000);
     }
 
 
@@ -1477,14 +1772,13 @@
             const response = await fetch(`${API_BASE_URL}/rotation/history`, {
                 headers: { 'Authorization': `Bearer ${currentAuthToken}` }
             });
-            // Check if response is JSON and process it
             let history;
             try {
                 history = await response.json();
             } catch (jsonError) {
                 console.error('Failed to parse JSON response from rotation history:', jsonError);
-                tableBody.innerHTML = '<tr><td colspan="5">Server communication problem: Expected JSON, but received unexpected data.</td></tr>';
-                noHistoryMsg.classList.add('hidden'); // Hide "No history" if there was a communication error
+                tableBody.innerHTML = '<tr><td colspan="6">Server communication problem: Expected JSON, but received unexpected data.</td></tr>';
+                noHistoryMsg.classList.add('hidden');
                 return;
             }
 
@@ -1492,7 +1786,7 @@
 
 
             if (history.length === 0) {
-                return; // No history to display, message remains visible
+                return;
             } else {
                 noHistoryMsg.classList.add('hidden');
             }
@@ -1503,20 +1797,66 @@
                 row.insertCell().textContent = entry.day;
                 row.insertCell().textContent = `${entry.recipientName} (${entry.recipientEmail})`;
                 row.insertCell().textContent = entry.invest.toFixed(2);
+                row.insertCell().textContent = entry.totalPool.toFixed(2); // New: Display total pool
                 row.insertCell().textContent = entry.gain.toFixed(2);
                 row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
             });
 
         } catch (error) {
             console.error('Error loading rotation history:', error);
-            tableBody.innerHTML = '<tr><td colspan="5">Error loading history.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6">Error loading history.</td></tr>';
             noHistoryMsg.classList.add('hidden');
         }
     }
 
+    async function displayAdminHistory() {
+        const tableBody = document.querySelector('#adminHistoryTable tbody');
+        tableBody.innerHTML = '';
+        const noHistoryMsg = document.getElementById('noAdminHistory');
+        noHistoryMsg.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/history`, {
+                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+            let history;
+            try {
+                history = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse JSON response from admin history:', jsonError);
+                tableBody.innerHTML = '<tr><td colspan="4">Server communication problem: Expected JSON, but received unexpected data.</td></tr>';
+                noHistoryMsg.classList.add('hidden');
+                return;
+            }
+
+            if (!response.ok) throw new Error(`Failed to fetch admin history: ${history.message || response.statusText}`);
+
+            if (history.length === 0) {
+                return;
+            } else {
+                noHistoryMsg.classList.add('hidden');
+            }
+
+            // Display newest first
+            [...history].reverse().forEach(entry => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
+                row.insertCell().textContent = entry.type;
+                row.insertCell().textContent = entry.description;
+                row.insertCell().textContent = JSON.stringify(entry.details); // Display details as JSON string
+            });
+
+        } catch (error) {
+            console.error('Error loading admin history:', error);
+            tableBody.innerHTML = '<tr><td colspan="4">Error loading system history.</td></tr>';
+            noHistoryMsg.classList.add('hidden');
+        }
+    }
+
+
     function calculRotation() {
         const msg = document.getElementById('ceoReportMsg');
-        msg.textContent = 'This button can be expanded to generate more complex reports (e.g., total funds, financial projections). For now, view the history above.';
+        msg.textContent = 'This button can be expanded to generate more complex reports (e.g., total funds, financial projections, export data). For now, please view the history tables above.';
         msg.classList.remove('hidden');
         msg.classList.remove('success-msg');
         msg.classList.add('error-msg');
@@ -1535,24 +1875,25 @@
                     headers: { 'Authorization': `Bearer ${currentAuthToken}` }
                 });
 
-                // Check if response is JSON and process it
                 let data;
                 try {
                     data = await response.json();
                 } catch (jsonError) {
                     console.error('Failed to parse JSON response from token verification:', jsonError);
-                    clearAuthData(); // Treat as invalid token if response is not JSON
+                    clearAuthData();
                     showLogin();
                     return;
                 }
 
                 if (response.ok) {
                     // Token is valid, proceed based on role
-                    console.log('Token verified. User data from token:', data.user); // Added detailed log
-                    if (data.user.role === 'user') { // Use role from fresh data, not old localStorage if mismatch
+                    console.log('Token verified. User data from token:', data.user);
+                    saveAuthData(data.token, data.user); // Update currentUserData with fresh data from backend
+
+                    if (data.user.role === 'user') {
                         console.log('Initial load routing: User role detected. Checking payment status.');
-                        if (data.user.paid) {
-                            showMainPlatform(data.user.fullName || data.user.email);
+                        if (data.user.paid && data.user.status === 'active') {
+                            showMainPlatform(data.user.fullName || data.user.email, data.user.invest, data.user.gain, data.user.referralCode);
                         } else {
                             showPaymentPanel(data.user.email);
                         }
@@ -1560,25 +1901,27 @@
                         console.log('Initial load routing: Leader role detected. Showing Leader Dashboard.');
                         hideAllPanels();
                         document.getElementById('leaderPanel').classList.remove('hidden');
-                        document.getElementById('leaderNameDisplay').textContent = data.user.fullName; // Use fullName from data.user
+                        document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
                         await loadPendingPayments();
                         await loadRotationSettings();
                         await loadAvailableMembersForRotation();
                         await displayRotationParticipants();
                         await loadUserMessages();
-                        await updateCurrentRecipientDisplay(); // New call for initial load
+                        await updateCurrentRecipientDisplay();
+                        await loadAdminUsers(); // Load users for management
                     } else if (data.user.role === 'ceo') {
                         console.log('Initial load routing: CEO role detected. Showing CEO Dashboard.');
                         hideAllPanels();
                         document.getElementById('ceoPanel').classList.remove('hidden');
                         await displayRotationHistory();
+                        await displayAdminHistory(); // Load system history
+                        await loadAdminUsers(); // Load users for management
                     } else {
                         console.warn('Initial load routing: Unknown role from token verification:', data.user.role, 'Defaulting to login.');
                         clearAuthData();
                         showLogin();
                     }
                 } else {
-                    // Token invalid or expired, force re-login
                     console.warn('Auth token invalid/expired or server reported error, forcing re-login.', data.message);
                     clearAuthData();
                     showLogin();
@@ -1590,7 +1933,7 @@
             }
         } else {
             console.log('No auth token found or incomplete user data. Showing signup/login.');
-            showSignUp(); // No token or user data, show signup/login
+            showSignUp();
         }
     };
 </script>
