@@ -4,303 +4,162 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dream2Build1 - Authentication & Payment</title>
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
-        h1, h2 { text-align: center; color: #007BFF; }
-        .container, .panel, .form-section {
-            max-width: 900px; margin: auto; background: white; padding: 20px;
-            border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e3f0ff 0%, #fafcff 100%);
+            margin: 0;
+            min-height: 100vh;
         }
-        label { display: block; margin-top: 10px; font-weight: bold; }
+        h1 {
+            text-align: center;
+            color: #2563eb;
+            margin-top: 40px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        h2 {
+            color: #2563eb;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 420px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px rgba(37,99,235,0.08);
+            padding: 36px 28px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
         input, select, textarea {
-            width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px;
-            border: 1px solid #ccc; border-radius: 4px;
-            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #f9fafb;
+            transition: border 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #2563eb;
+            outline: none;
+            background: #fff;
         }
         button {
-            background-color: #28a745; color: white; border: none; padding: 10px 20px;
-            font-size: 16px; border-radius: 5px; cursor: pointer;
+            width: 100%;
+            background: linear-gradient(90deg,#2563eb 0%,#38bdf8 100%);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+            transition: background 0.2s;
         }
-        button:hover { background-color: #218838; }
+        button:hover {
+            background: linear-gradient(90deg,#1d4ed8 0%,#0ea5e9 100%);
+        }
+        .alt-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 0.98em;
+        }
+        .alt-link:hover {
+            text-decoration: underline;
+        }
         .hidden { display: none; }
-        .logout-btn button { background-color: #dc3545; }
-        .error-msg { color: red; font-weight: bold; }
-        .success-msg { color: green; font-weight: bold; }
-
-        /* Specific styles for the main platform content */
-        #mainPlatform {
-            border: 1px dashed #007BFF;
-            padding: 30px;
-            text-align: center;
-            font-size: 1.2em;
-            color: #007BFF;
-        }
+        .success-msg { color: #22c55e; font-weight: 500; text-align: center; }
+        .error-msg { color: #ef4444; font-weight: 500; text-align: center; }
+        /* Payment instructions styling */
         .paiement-etapes {
-            display: none; /* Hidden by default, shown by JS */
-            background: #fff3cd;
-            padding: 10px; border-left: 5px solid #ffc107; margin-bottom: 20px;
-        }
-        .paiement-etapes .hidden {
-            display: none;
-        }
-        .paiement-etapes div {
-            margin-top: 10px;
-        }
-        .paiement-submit-btn {
-            background-color: #007BFF; /* Blue for payment */
-        }
-        .paiement-submit-btn:hover {
-            background-color: #0056b3;
-        }
-        #pendingPaymentsList li {
-            background: #f9f9f9;
-            border: 1px solid #eee;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        #pendingPaymentsList li button {
-            padding: 5px 10px;
-            font-size: 0.9em;
-        }
-        /* New styles for Rotation Management */
-        .rotation-section {
-            background: #e9f7ef;
-            border: 1px solid #d4edda;
-            padding: 15px;
-            margin-top: 20px;
+            background: #f1f5f9;
+            border-left: 4px solid #2563eb;
+            padding: 16px 18px;
             border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 0.98em;
         }
-        .rotation-section label {
-            width: auto;
-            margin-right: 10px;
-            display: inline-block;
-        }
-        .rotation-section input {
-            width: calc(50% - 70px); /* Adjust width to fit with label */
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .rotation-section button {
-            margin-right: 10px;
-            margin-top: 10px;
-        }
-        #rotationParticipantsList {
-            list-style-type: decimal;
-            padding-left: 20px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px dashed #28a745;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            border-radius: 5px;
-        }
-        #rotationParticipantsList li {
-            padding: 5px 0;
-            border-bottom: 1px dotted #ccc;
-        }
-        #rotationParticipantsList li:last-child {
-            border-bottom: none;
-        }
-        .current-recipient {
-            background-color: #d4edda;
-            font-weight: bold;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        /* CEO Rotation History Table */
-        #ceoRotationHistoryTable {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        #ceoRotationHistoryTable th,
-        #ceoRotationHistoryTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        #ceoRotationHistoryTable th {
-            background-color: #007BFF;
-            color: white;
-        }
-        #ceoRotationHistoryTable tbody tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        #noRotationHistory {
-            font-style: italic;
-            color: #777;
+        /* User dashboard */
+        #mainPlatform {
+            background: #f0f9ff;
+            border-radius: 10px;
+            padding: 24px;
+            margin-top: 18px;
             text-align: center;
-            margin-top: 15px;
         }
-
-        /* Styles for User Messages list */
-        #userMessagesList li {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-        #userMessagesList li.unread {
-            background-color: #fffde7; /* Light yellow for unread */
-            border-color: #ffe082;
-            font-weight: bold;
-        }
-
-        /* Admin User Management Table */
-        #adminUsersTable {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        #adminUsersTable th,
-        #adminUsersTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        #adminUsersTable th {
-            background-color: #5cb85c; /* Green for user management */
-            color: white;
-        }
-        #adminUsersTable tbody tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        #adminUsersTable button {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin-right: 5px;
-        }
-        .status-active { color: green; font-weight: bold; }
-        .status-inactive { color: orange; font-weight: bold; }
-        .status-paid { color: #007BFF; font-weight: bold; }
-        .status-unpaid { color: #dc3545; font-weight: bold; }
-
-        /* Admin History Table */
-        #adminHistoryTable {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-        #adminHistoryTable th,
-        #adminHistoryTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            vertical-align: top;
-        }
-        #adminHistoryTable th {
-            background-color: #f0ad4e; /* Orange for history */
-            color: white;
-        }
-        #adminHistoryTable tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        #noAdminHistory {
-            font-style: italic;
-            color: #777;
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        /* Referral Code Section */
-        .referral-section {
-            background: #d9edf7;
-            border: 1px solid #bce8f1;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-        #generatedReferralCode {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #31708f;
-            background-color: #cce5ff;
-            padding: 8px 12px;
-            border-radius: 5px;
-            display: inline-block;
-            margin-top: 10px;
-            border: 1px dashed #a6d9ff;
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px 6vw;
+            }
         }
     </style>
 </head>
 <body>
 
-<!-- Main Title -->
-<h1>Dream2Build1 - Authentication & Payment System</h1>
+<h1>Dream2Build1</h1>
 
-<!-- Section: User Registration (Sign Up) -->
-<div class="form-section" id="signUpPanel">
-    <h2>📝 Sign Up for Access</h2>
+<!-- Registration Panel -->
+<div class="container" id="signUpPanel">
+    <h2>📝 Sign Up</h2>
     <form id="signUpForm">
-        <label for="firstName">First Name:</label>
-        <input type="text" id="firstName" name="firstName" placeholder="Enter your first name" required>
-
-        <label for="lastName">Last Name:</label>
-        <input type="text" id="lastName" name="lastName" placeholder="Enter your last name" required>
-
-        <label for="phoneNumber">Phone Number:</label>
-        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="e.g., +150912345678" required>
-
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
-
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" placeholder="Create your password" required>
-
-        <label for="confirmPassword">Confirm Password:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
-
-        <label for="referralCode">Referral Code (Optional):</label>
-        <input type="text" id="referralCode" name="referralCode" placeholder="Enter a referral code if you have one">
-
+        <label for="firstName">First Name</label>
+        <input type="text" id="firstName" required>
+        <label for="lastName">Last Name</label>
+        <input type="text" id="lastName" required>
+        <label for="phoneNumber">Phone Number</label>
+        <input type="tel" id="phoneNumber" required>
+        <label for="email">Email</label>
+        <input type="email" id="email" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" required>
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" required>
+        <label for="referralCode">Referral Code (Optional)</label>
+        <input type="text" id="referralCode">
         <button type="submit">Sign Up</button>
-        <p id="signUpMsg" class="hidden"></p>
+        <p id="signUpMsg" class="success-msg hidden"></p>
     </form>
-    <p style="text-align: center; margin-top: 15px;">Already have an account? <a href="#" onclick="event.preventDefault(); showLogin();">Login here</a></p>
+    <a href="#" class="alt-link" onclick="showLogin();return false;">Already have an account? Login here</a>
 </div>
 
-<!-- Section: User Login -->
-<div class="form-section hidden" id="loginPanel">
-    <h2>🔐 Log In to Your Account</h2>
+<!-- Login Panel -->
+<div class="container hidden" id="loginPanel">
+    <h2>🔐 Log In</h2>
     <form id="loginForm">
-        <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" name="loginEmail" placeholder="Enter your email" required>
-
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" name="loginPassword" placeholder="Enter your password" required>
-
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required>
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required>
         <button type="submit">Log In</button>
-        <p id="loginMsg" class="hidden"></p>
+        <p id="loginMsg" class="error-msg hidden"></p>
     </form>
-    <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="event.preventDefault(); showSignUp();">Sign Up here</a></p>
-    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="event.preventDefault(); showContactAdmin();">Contact Support</a></p>
-    <p style="text-align: center; margin-top: 20px;">
-        <button style="background-color: #6c757d;" onclick="event.preventDefault(); showAdminLoginRegister();">Admin / Leader Access</button>
-    </p>
+    <a href="#" class="alt-link" onclick="showSignUp();return false;">Don't have an account? Sign Up</a>
+    <a href="#" class="alt-link" onclick="showContactAdmin();return false;">Contact Support</a>
 </div>
 
-<!-- Section: Email Verification Message -->
-<div class="panel hidden" id="verificationMessagePanel">
-    <h2>📧 Verify Your Email</h2>
-    <p>A verification message has been simulated for <strong id="verificationEmailDisplay"></strong>. In a real system, you'd receive an email to verify your account.</p>
-    <p>For this demo, your account is automatically considered verified and pending payment.</p>
-    <button onclick="event.preventDefault(); showLogin();">Go to Login (After Verification)</button>
-</div>
-
-<!-- Section: Payment Panel (Appears after login if not paid) -->
-<div class="panel hidden" id="paymentPanel">
-    <h2>💳 Complete Your Payment</h2>
-    <p>Welcome, <span id="paymentUserName"></span>! To access the full platform, please complete your payment.</p>
+<!-- Payment Panel -->
+<div class="container hidden" id="paymentPanel">
+    <h2>💳 Complete Payment</h2>
+    <p>Welcome, <span id="paymentUserName"></span>!</p>
     <form id="paymentForm">
-        <label for="paymentMethod">Choose Payment Method:</label>
-        <select id="paymentMethod" name="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
+        <label for="paymentMethod">Choose Payment Method</label>
+        <select id="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
             <option value="">-- Select Payment Method --</option>
             <option value="cash">Cash</option>
             <option value="mastercard">Mastercard / Debit Card</option>
@@ -308,1637 +167,92 @@
             <option value="moncash">MonCash</option>
             <option value="natcash">NatCash</option>
         </select>
-
-        <div class="paiement-etapes" id="paymentInstructions">
+        <div class="paiement-etapes hidden" id="paymentInstructions">
             <div id="cashInfo" class="hidden">
                 <p><strong>Cash:</strong> A team leader will contact you to validate your payment.</p>
-                <p>Once validated, your account will be fully activated. Click "Submit Payment Info" below to confirm your intent to pay by cash.</p>
             </div>
             <div id="mastercardInfo" class="hidden">
                 <p><strong>Mastercard / Debit Card:</strong> (Simulated payment)</p>
-                <label>Card Number (16 digits):</label>
-                <input type="text" id="cardNumber" maxlength="16" pattern="\d{16}" placeholder="1234 5678 9012 3456">
-                <label>Expiration Date (MM/YY):</label>
-                <input type="text" id="cardExpiry" maxlength="5" pattern="\d{2}/\d{2}" placeholder="MM/YY">
-                <label>CVC:</label>
-                <input type="text" id="cardCVC" maxlength="4" pattern="\d{3,4}" placeholder="123">
-                <label>Name on Card:</label>
-                <input type="text" id="cardName" placeholder="Name as on card">
+                <label>Card Number</label>
+                <input type="text" id="cardNumber">
+                <label>Expiration Date</label>
+                <input type="text" id="cardExpiry">
+                <label>CVC</label>
+                <input type="text" id="cardCVC">
+                <label>Name on Card</label>
+                <input type="text" id="cardName">
             </div>
             <div id="paypalInfo" class="hidden">
-                <p><strong>PayPal:</strong> (Simulated payment)</p>
-                <p>In a real system, you would be redirected to PayPal. For this demo, simply submit.</p>
-                <p>Use this PayPal email to pay: <strong>dream2build@gmail.com</strong></p>
+                <p><strong>PayPal:</strong> Use <b>dream2build@gmail.com</b></p>
             </div>
             <div id="moncashInfo" class="hidden">
-                <p><strong>MonCash:</strong> (Simulated payment)</p>
-                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+                <p><strong>MonCash:</strong> Send to <b>+509 43260012</b></p>
             </div>
             <div id="natcashInfo" class="hidden">
-                <p><strong>NatCash:</strong> (Simulated payment)</p>
-                <p>Send payment to <strong>+509 43260012</strong> (Name: Emmanuel Jean Frantz JEAMBAS)</p>
+                <p><strong>NatCash:</strong> Send to <b>+509 43260012</b></p>
             </div>
         </div>
         <button type="submit" class="paiement-submit-btn">Submit Payment Info</button>
-        <p id="paymentMsg" class="hidden"></p>
+        <p id="paymentMsg" class="success-msg hidden"></p>
     </form>
-    <div class="logout-btn">
-        <button onclick="logoutUser()">Log Out</button>
-    </div>
 </div>
 
-
-<!-- Section: Main User Platform (Accessible after login AND payment) -->
-<div class="panel hidden" id="mainPlatformPanel">
-    <h2>Bienvenue sur Dream2Build1, <span id="loggedInUserName"></span>!</h2>
+<!-- Main Platform -->
+<div class="container hidden" id="mainPlatformPanel">
+    <h2>Welcome, <span id="loggedInUserName"></span>!</h2>
     <div id="mainPlatform">
-        <p>This is your main platform content, accessible only after successful login and payment.</p>
-        <p id="adminAreaNote"></p>
-        <!-- Participant's Invest/Gain Display -->
-        <div id="participantFinancials" style="margin-top: 20px; border: 1px solid #007BFF; padding: 15px; border-radius: 8px; background-color: #e6f2ff;">
+        <p>This is your main platform content, accessible after login and payment.</p>
+        <div style="margin-top: 20px;">
             <h3>Your Financials:</h3>
-            <p>Your Investment per cycle: <strong>$<span id="participantInvest">0.00</span></strong></p>
-            <p>Your Last Received Gain: <strong>$<span id="participantGain">0.00</span></strong></p>
-            <p>Your Referral Code: <strong><span id="participantReferralCode">N/A</span></strong></p>
+            <p>Investment: <strong>$<span id="participantInvest">0.00</span></strong></p>
+            <p>Last Gain: <strong>$<span id="participantGain">0.00</span></strong></p>
+            <p>Referral Code: <strong><span id="participantReferralCode">N/A</span></strong></p>
         </div>
-        <p style="margin-top: 20px;">🚀 Ready to build your dreams!</p>
-    </div>
-    <div class="logout-btn">
-        <button onclick="logoutUser()">Log Out</button>
     </div>
 </div>
 
-<!-- Section: Contact Admin Panel -->
-<div class="form-section hidden" id="contactAdminPanel">
+<!-- Contact Admin -->
+<div class="container hidden" id="contactAdminPanel">
     <h2>📧 Contact Support</h2>
-    <p>Have a question or an issue? Send us a message!</p>
     <form id="contactAdminForm">
-        <label for="contactEmail">Your Email:</label>
-        <input type="email" id="contactEmail" name="contactEmail" placeholder="Enter your email" required>
-
-        <label for="contactSubject">Subject:</label>
-        <input type="text" id="contactSubject" name="contactSubject" placeholder="e.g., Payment issue, Account problem" required>
-
-        <label for="contactMessage">Message:</label>
-        <textarea id="contactMessage" name="contactMessage" rows="5" placeholder="Type your message here..." required></textarea>
-
+        <label for="contactEmail">Your Email</label>
+        <input type="email" id="contactEmail" required>
+        <label for="contactSubject">Subject</label>
+        <input type="text" id="contactSubject" required>
+        <label for="contactMessage">Message</label>
+        <textarea id="contactMessage" rows="4" required></textarea>
         <button type="submit">Send Message</button>
-        <p id="contactAdminMsg" class="hidden"></p>
+        <p id="contactAdminMsg" class="success-msg hidden"></p>
     </form>
-    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="event.preventDefault(); showLogin();">Back to Login</a></p>
-</div>
-
-<!-- --- Admin/Leader/CEO sections --- -->
-<!-- Section : Team Leader Registration -->
-<div class="form-section hidden" id="leaderRegisterPanel">
-    <h2>👥 Add New Admin (CEO Only)</h2>
-    <p>This section is for the CEO to add new Team Leader accounts.</p>
-    <label for="newAdminFirstName">First Name:</label>
-    <input type="text" id="newAdminFirstName" placeholder="Enter first name">
-
-    <label for="newAdminLastName">Last Name:</label>
-    <input type="text" id="newAdminLastName" placeholder="Enter last name">
-
-    <label for="newAdminPhoneNumber">Phone Number:</label>
-    <input type="tel" id="newAdminPhoneNumber" placeholder="Enter phone number">
-
-    <label for="newAdminEmail">Email:</label>
-    <input type="email" id="newAdminEmail" placeholder="Enter email">
-
-    <label for="newAdminPass">Create Password:</label>
-    <input type="password" id="newAdminPass" placeholder="Create password">
-
-    <button onclick="addAdmin()">Add New Admin</button>
-    <p id="newAdminMsg"></p>
-    <p style="text-align: center; margin-top: 15px;">Already registered? <a href="#" onclick="event.preventDefault(); showLeaderLoginOnly();">Login here</a></p>
-</div>
-
-<!-- Section : Team Leader Login -->
-<div class="form-section hidden" id="leaderLoginPanel">
-    <h2>🔐 Team Leader Login (Admin Only)</h2>
-    <form id="leaderLoginForm">
-        <label for="loginLeaderEmail">Email:</label>
-        <input type="email" id="loginLeaderEmail" name="loginLeaderEmail" placeholder="Enter email" required>
-
-        <label for="loginLeaderPass">Password:</label>
-        <input type="password" id="loginLeaderPass" name="loginLeaderPass" placeholder="Enter password" required>
-
-        <button type="submit">Login</button>
-        <p id="leaderLoginMsg"></p>
-    </form>
-    <p style="text-align: center; margin-top: 15px;">New Leader? <a href="#" onclick="event.preventDefault(); showLeaderRegisterOnly();">Register here</a></p>
-    <p style="text-align: center; margin-top: 20px;">
-        <button style="background-color: #6c757d;" onclick="event.preventDefault(); showCEOLogin();">Admin / Leader Access</button>
-    </p>
-</div>
-
-<!-- Section: CEO Login -->
-<div class="form-section hidden" id="ceoLoginPanel">
-    <h2>👑 CEO Login</h2>
-    <form id="ceoLoginForm">
-        <label for="ceoLoginEmail">Email:</label>
-        <input type="email" id="ceoLoginEmail" name="ceoLoginEmail" placeholder="Enter CEO email" required>
-
-        <label for="ceoLoginPassword">Password:</label>
-        <input type="password" id="ceoLoginPassword" name="ceoLoginPassword" placeholder="Enter CEO password" required>
-
-        <button type="submit">Log In as CEO</button>
-        <p id="ceoLoginMsg" class="hidden"></p>
-    </form>
-    <p style="text-align: center; margin-top: 15px;"><a href="#" onclick="event.preventDefault(); showAdminLoginRegister();">Back to Admin/Leader Login</a></p>
-</div>
-
-
-<!-- Section : Team Leader Dashboard -->
-<div id="leaderPanel" class="panel hidden">
-    <h2>🧑‍🤝‍🧑 Team Leader Dashboard</h2>
-    <p>Welcome, <span id="leaderNameDisplay"></span>!</p>
-    <div class="logout-btn">
-        <button onclick="logoutLeader()">Logout</button>
-    </div>
-
-    <hr>
-    <h3>💸 Pending Payments:</h3>
-    <ul id="pendingPaymentsList">
-        <!-- Pending payments will be dynamically added here -->
-    </ul>
-    <p id="noPendingPayments" style="font-style: italic;">No pending payments.</p>
-
-    <hr>
-    <h3>✉️ User Messages: <span id="unreadMessageCount">(0 unread)</span></h3>
-    <ul id="userMessagesList">
-        <!-- Messages will be dynamically added here -->
-    </ul>
-    <p id="noUserMessages" style="font-style: italic;">No new messages.</p>
-
-    <hr>
-    <div class="rotation-section">
-        <h3>🔄 Rotation Management</h3>
-        <p>Current Rotation Day: <strong id="currentRotationDay">0</strong></p>
-        <p>Current Recipient: <strong id="currentRecipientDisplay">N/A</strong></p>
-        <label for="dailyInvest">Individual Participant Investment ($):</label>
-        <input type="number" id="dailyInvest" value="10" min="0" step="0.01">
-        <button onclick="saveRotationSettings()">Update Settings</button>
-        <p id="rotationSettingsMsg" class="hidden"></p>
-
-        <hr>
-        <h4>Participants in Rotation:</h4>
-        <select id="availableMembersSelect" style="width: 70%; display: inline-block; margin-right: 10px;">
-            <option value="">-- Select Paid & Active Member --</option>
-            <!-- Options will be dynamically loaded here -->
-        </select>
-        <button style="background-color: #007BFF; width: auto; padding: 10px 15px; margin-right: 0;" onclick="addParticipantToRotation()">Add Participant</button>
-        <p id="addParticipantMsg" class="hidden"></p>
-
-        <ul id="rotationParticipantsList">
-            <!-- Active participants will be listed here -->
-        </ul>
-        <p id="noActiveParticipants" style="font-style: italic;">No participants in rotation.</p>
-
-        <button style="background-color: #ffc107;" onclick="nextParticipant()">Next Participant (Rotate)</button>
-        <p id="rotationStatusMsg" class="hidden"></p>
-    </div>
-
-    <hr>
-    <h3>👥 User Accounts Management:</h3>
-    <table id="adminUsersTable">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Paid</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- User accounts will be dynamically added here -->
-        </tbody>
-    </table>
-    <p id="noUsersFound" style="font-style: italic;">No users registered yet.</p>
-
-    <hr>
-    <div class="referral-section">
-        <h3>🔗 Referral Code Generator</h3>
-        <button onclick="generateReferralCode()">Generate New Referral Code</button>
-        <p id="generatedReferralCodeMsg" class="hidden"></p>
-        <p id="generatedReferralCode"></p>
-    </div>
-
-    <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
-        <em>Note: All user, payment, and rotation data is simulated and will reset when the server (`server.js`) is restarted.</em>
-    </p>
-</div>
-
-<!-- Section : CEO Dashboard -->
-<div id="ceoPanel" class="panel hidden">
-    <h2>👑 CEO Dashboard</h2>
-    <p>Welcome, CEO!</p>
-    <div class="logout-btn">
-        <button onclick="logoutCEO()">Logout CEO</button>
-    </div>
-
-    <hr>
-    <h3>📈 Rotation History (Last 25 Days):</h3>
-    <table id="ceoRotationHistoryTable">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>Recipient</th>
-                <th>Invest ($)</th>
-                <th>Total Pool ($)</th>
-                <th>Gain ($)</th>
-                <th>Date/Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- History will be dynamically added here -->
-        </tbody>
-    </table>
-    <p id="noRotationHistory" class="hidden">No rotation history available yet.</p>
-
-    <hr>
-    <h3>📊 System Activity History:</h3>
-    <table id="adminHistoryTable">
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- System history will be dynamically added here -->
-        </tbody>
-    </table>
-    <p id="noAdminHistory" class="hidden">No system history available yet.</p>
-
-    <button style="margin-top: 20px;" onclick="calculRotation()">Generate Comprehensive Report (Future Feature)</button>
-    <p id="ceoReportMsg" class="hidden" style="margin-top: 10px;"></p>
-    <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
-        <em>Note: All user, payment, and rotation data is simulated and will reset when the server (`server.js`) is restarted.</em>
-    </p>
+    <a href="#" class="alt-link" onclick="showLogin();return false;">Back to Login</a>
 </div>
 
 <script>
-    console.log("Script loaded successfully!"); // Added for debugging
-
-    // Function to display temporary messages (replaces alerts)
-    function displayTempMessage(message, isSuccess = true) {
-        const msgDiv = document.createElement('div');
-        msgDiv.textContent = message;
-        msgDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            background-color: ${isSuccess ? '#d4edda' : '#f8d7da'};
-            color: ${isSuccess ? '#155724' : '#721c24'};
-            border: 1px solid ${isSuccess ? '#c3e6cb' : '#f5c6cb'};
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        `;
-        document.body.appendChild(msgDiv);
-
-        setTimeout(() => {
-            msgDiv.style.opacity = '1';
-        }, 10); // Small delay to allow transition
-
-        setTimeout(() => {
-            msgDiv.style.opacity = '0';
-            msgDiv.addEventListener('transitionend', () => msgDiv.remove());
-        }, 3000); // Message disappears after 3 seconds
-    }
-
-
-    // --- Configuration for your Backend API ---
-    // IMPORTANT: Replace this with your actual backend server's URL when deployed!
-    const API_BASE_URL = 'http://localhost:3000/api'; // For local testing, assuming backend runs on port 3000
-
-    // --- Helper Functions to Toggle Panels ---
+    // Panel switching logic
     function hideAllPanels() {
-        console.log('Hiding all panels...');
         document.getElementById('signUpPanel').classList.add('hidden');
         document.getElementById('loginPanel').classList.add('hidden');
-        document.getElementById('verificationMessagePanel').classList.add('hidden');
         document.getElementById('paymentPanel').classList.add('hidden');
         document.getElementById('mainPlatformPanel').classList.add('hidden');
-        document.getElementById('leaderRegisterPanel').classList.add('hidden'); // Add Admin panel
-        document.getElementById('leaderLoginPanel').classList.add('hidden');
-        document.getElementById('ceoLoginPanel').classList.add('hidden');
-        document.getElementById('leaderPanel').classList.add('hidden');
-        document.getElementById('ceoPanel').classList.add('hidden');
         document.getElementById('contactAdminPanel').classList.add('hidden');
-        console.log('All panels hidden.');
+    }
+    function showSignUp() { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
+    function showLogin() { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
+    function showPayment() { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
+    function showMainPlatform() { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
+    function showContactAdmin() { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
+
+    // Payment instructions logic
+    function showPaymentInstructions(method) {
+        document.getElementById('paymentInstructions').classList.remove('hidden');
+        ['cashInfo','mastercardInfo','paypalInfo','moncashInfo','natcashInfo'].forEach(id=>{
+            document.getElementById(id).classList.add('hidden');
+        });
+        if(method) document.getElementById(method+'Info').classList.remove('hidden');
     }
 
-    function showSignUp() {
-        console.log('Attempting to show Sign Up panel...');
-        hideAllPanels();
-        document.getElementById('signUpPanel').classList.remove('hidden');
-        console.log('Sign Up panel should be visible.');
-    }
-
-    function showLogin() {
-        console.log('Attempting to show Login panel...');
-        hideAllPanels();
-        document.getElementById('loginPanel').classList.remove('hidden');
-        console.log('Login panel should be visible.');
-    }
-
-    function showVerificationMessage(email) {
-        hideAllPanels();
-        document.getElementById('verificationMessagePanel').classList.remove('hidden');
-        document.getElementById('verificationEmailDisplay').textContent = email;
-    }
-
-    // New functions to show only one admin/leader panel at a time
-    function showLeaderLoginOnly() {
-        console.log('Attempting to show Leader Login panel only...');
-        hideAllPanels();
-        document.getElementById('leaderLoginPanel').classList.remove('hidden');
-        console.log('Leader Login panel should be visible.');
-    }
-
-    function showLeaderRegisterOnly() {
-        console.log('Attempting to show Leader Register panel only...');
-        hideAllPanels();
-        document.getElementById('leaderRegisterPanel').classList.remove('hidden');
-        console.log('Leader Register panel should be visible.');
-    }
-
-    // Function to get current user/admin token (simulated for frontend)
-    // In a real app, this would get token from cookie or sessionStorage
-    let currentAuthToken = localStorage.getItem('authToken');
-    let currentUserData = JSON.parse(localStorage.getItem('currentUserData') || '{}'); // Stores role, name, email etc.
-
-    function saveAuthData(token, userData) {
-        currentAuthToken = token;
-        currentUserData = userData;
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUserData', JSON.stringify(userData));
-    }
-
-    function clearAuthData() {
-        currentAuthToken = null;
-        currentUserData = {};
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUserData');
-    }
-
-    // --- Panel Show Functions (Adjusted for Backend Data) ---
-    async function showPaymentPanel(userEmail) {
-        hideAllPanels();
-        document.getElementById('paymentPanel').classList.remove('hidden');
-        document.getElementById('paymentPanel').dataset.currentUserEmail = userEmail;
-
-        try {
-            // This endpoint is not defined in server.js, but we'll use currentUserData for display
-            // In a real app, you might fetch user details again if needed.
-            document.getElementById('paymentUserName').textContent = currentUserData.fullName || currentUserData.email;
-        } catch (error) {
-            console.error('Error fetching user data for payment panel:', error);
-            document.getElementById('paymentUserName').textContent = 'User';
-        }
-    }
-
-    async function showMainPlatform(userName, userInvest, userGain, userReferralCode) {
-        console.log('Attempting to show Main Platform panel...');
-        hideAllPanels();
-        document.getElementById('mainPlatformPanel').classList.remove('hidden');
-        document.getElementById('loggedInUserName').textContent = userName;
-
-        const adminAreaNote = document.getElementById('adminAreaNote');
-        const participantFinancials = document.getElementById('participantFinancials');
-
-        // Only show financial details for regular users
-        if (currentUserData.role === 'user') {
-            adminAreaNote.textContent = 'Here you can explore all features, except the administration area.';
-            participantFinancials.classList.remove('hidden');
-            document.getElementById('participantInvest').textContent = userInvest.toFixed(2);
-            document.getElementById('participantGain').textContent = userGain.toFixed(2);
-            document.getElementById('participantReferralCode').textContent = userReferralCode || 'N/A';
-        } else {
-            adminAreaNote.textContent = 'You are logged in as an administrator. Please use the appropriate dashboard for administrative tasks.';
-            participantFinancials.classList.add('hidden'); // Hide for admins
-        }
-        console.log('Main Platform panel should be visible.');
-    }
-
-    function showAdminLoginRegister() {
-        // Default to showing the leader login panel when clicking "Admin / Leader Access"
-        console.log('Attempting to show Admin/Leader Login/Register panels...');
-        hideAllPanels();
-        document.getElementById('leaderLoginPanel').classList.remove('hidden');
-        console.log('Admin/Leader Login panel should be visible.');
-    }
-
-    function showCEOLogin() {
-        console.log('Attempting to show CEO Login panel...');
-        hideAllPanels();
-        document.getElementById('ceoLoginPanel').classList.remove('hidden');
-        console.log('CEO Login panel should be visible.');
-    }
-
-    function showContactAdmin() {
-        hideAllPanels();
-        document.getElementById('contactAdminPanel').classList.remove('hidden');
-    }
-
-    // --- User Authentication (Sign Up & Login) ---
-
-    document.getElementById('signUpForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const phoneNumber = document.getElementById('phoneNumber').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const referralCode = document.getElementById('referralCode').value.trim();
-        const msg = document.getElementById('signUpMsg');
-
-        msg.classList.add('hidden');
-
-        if (!firstName || !lastName || !phoneNumber || !email || !password || !confirmPassword) {
-            msg.textContent = '❌ Please fill in all required fields (Name, Phone, Email, Password).';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            msg.textContent = '❌ Passwords do not match.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, phoneNumber, email, password, referralCode })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from signup:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Sign up successful! Please proceed to payment.'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                setTimeout(() => showVerificationMessage(email), 1000);
-            } else {
-                msg.textContent = `❌ ${data.message || 'Signup failed.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Signup error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-    });
-
-    document.getElementById('loginForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        const msg = document.getElementById('loginMsg');
-
-        msg.classList.add('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from login:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                saveAuthData(data.token, data.user);
-                msg.textContent = '✅ Login successful! Redirecting...';
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                console.log('Login successful! Received user data:', data.user);
-
-                if (data.user.role === 'user') {
-                    console.log('Login routing: User role detected. Checking payment status.');
-                    if (data.user.paid && data.user.status === 'active') {
-                        setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
-                    } else {
-                        setTimeout(() => showPaymentPanel(data.user.email), 500);
-                    }
-                } else if (data.user.role === 'leader') {
-                    console.log('Login routing: Leader role detected. Showing Leader Dashboard.');
-                    hideAllPanels();
-                    document.getElementById('leaderPanel').classList.remove('hidden');
-                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
-                    await loadPendingPayments();
-                    await loadRotationSettings();
-                    await loadAvailableMembersForRotation();
-                    await displayRotationParticipants();
-                    await loadUserMessages();
-                    await updateCurrentRecipientDisplay();
-                    await loadAdminUsers(); // Load users for management
-                } else if (data.user.role === 'ceo') {
-                    console.log('Login routing: CEO role detected. Showing CEO Dashboard.');
-                    hideAllPanels();
-                    document.getElementById('ceoPanel').classList.remove('hidden');
-                    await displayRotationHistory();
-                    await displayAdminHistory(); // Load system history
-                    await loadAdminUsers(); // Load users for management (CEO also needs this)
-                } else {
-                    console.warn('Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
-                    setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
-                }
-            } else {
-                msg.textContent = `❌ ${data.message || 'Login failed.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            msg.textContent = `❌ Network error: Could not reach the backend server. Please ensure 'nodemon server.js' is running in your Command Prompt.`;
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-    });
-
-    function logoutUser() {
-        clearAuthData();
-        showLogin();
-    }
-
-    // --- Payment Logic ---
-    function showPaymentInstructions(value) {
-        const allDivs = ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'];
-        allDivs.forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById('paymentInstructions').style.display = 'block';
-
-        if(value && allDivs.includes(value + 'Info')) {
-            document.getElementById(value + 'Info').classList.remove('hidden');
-        } else {
-            document.getElementById('paymentInstructions').style.display = 'none';
-        }
-    }
-
-    document.getElementById('paymentForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const paymentMethod = document.getElementById('paymentMethod').value;
-        const currentUserEmail = currentUserData.email; // Get email from stored user data
-        const msg = document.getElementById('paymentMsg');
-        msg.classList.add('hidden');
-
-        if (!paymentMethod) {
-            msg.textContent = '❌ Please select a payment method.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/payments/submit`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                },
-                body: JSON.stringify({
-                    email: currentUserEmail,
-                    method: paymentMethod,
-                })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from payment submit:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                if (paymentMethod === 'cash') {
-                    msg.textContent = `✅ ${data.message || 'Payment method submitted. A team leader will validate your cash payment soon.'}`;
-                } else {
-                    // For mastercard/paypal/moncash/natcash, backend would confirm direct payment
-                    currentUserData.paid = true;
-                    currentUserData.status = 'active'; // Frontend updates status immediately for non-cash
-                    saveAuthData(currentAuthToken, currentUserData);
-                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`; // Fixed: Added closing backtick
-                    setTimeout(() => showMainPlatform(currentUserData.fullName, currentUserData.invest, currentUserData.gain, currentUserData.referralCode), 1500);
-                }
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-            } else {
-                msg.textContent = `❌ ${data.message || 'Payment submission failed.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Payment submission error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-    });
-
-
-    // --- User Message System ---
-    document.getElementById('contactAdminForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const email = document.getElementById('contactEmail').value.trim();
-        const subject = document.getElementById('contactSubject').value.trim();
-        const messageText = document.getElementById('contactMessage').value.trim();
-        const msg = document.getElementById('contactAdminMsg');
-
-        msg.classList.add('hidden');
-
-        if (!email || !subject || !messageText) {
-            msg.textContent = '❌ Please fill in all fields.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/messages/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fromEmail: email, subject, message: messageText })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from send message:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Your message has been sent to support!'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-
-                document.getElementById('contactEmail').value = '';
-                document.getElementById('contactSubject').value = '';
-                document.getElementById('contactMessage').value = '';
-            } else {
-                msg.textContent = `❌ ${data.message || 'Failed to send message.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Send message error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-        setTimeout(() => msg.classList.add('hidden'), 3000);
-    });
-
-    // --- Admin (Team Leader / CEO) Logic ---
-
-    document.getElementById('leaderLoginForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        await loginAdmin('leader');
-    });
-
-    async function addAdmin() {
-        const firstName = document.getElementById('newAdminFirstName').value.trim();
-        const lastName = document.getElementById('newAdminLastName').value.trim();
-        const phoneNumber = document.getElementById('newAdminPhoneNumber').value.trim();
-        const email = document.getElementById('newAdminEmail').value.trim();
-        const password = document.getElementById('newAdminPass').value;
-        const msg = document.getElementById('newAdminMsg');
-
-        msg.classList.add('hidden');
-
-        if (!firstName || !lastName || !phoneNumber || !email || !password) {
-            msg.textContent = '❌ Please fill all fields for the new admin.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/add-admin`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                },
-                body: JSON.stringify({ firstName, lastName, email, password, phoneNumber })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from add admin:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'New admin added successfully!'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                // Clear form
-                document.getElementById('newAdminFirstName').value = '';
-                document.getElementById('newAdminLastName').value = '';
-                document.getElementById('newAdminPhoneNumber').value = '';
-                document.getElementById('newAdminEmail').value = '';
-                document.getElementById('newAdminPass').value = '';
-                await loadAdminUsers(); // Refresh user list
-            } else {
-                msg.textContent = `❌ ${data.message || 'Failed to add admin.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Add admin error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-        setTimeout(() => msg.classList.add('hidden'), 3000);
-    }
-
-
-    async function loginAdmin(role) {
-        const emailInput = role === 'leader' ? 'loginLeaderEmail' : 'ceoLoginEmail';
-        const passInput = role === 'leader' ? 'loginLeaderPass' : 'ceoLoginPassword';
-        const msgId = role === 'leader' ? 'leaderLoginMsg' : 'ceoLoginMsg';
-
-        const email = document.getElementById(emailInput).value.trim();
-        const password = document.getElementById(passInput).value;
-        const msg = document.getElementById(msgId);
-
-        msg.classList.add('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from admin login:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                saveAuthData(data.token, data.user);
-                msg.textContent = '✅ Login successful! Redirecting...';
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                console.log(`Admin/Leader Login successful! Received user data:`, data.user);
-
-                if (data.user.role === 'user') {
-                    console.log('Login routing: User role detected. Checking payment status.');
-                    if (data.user.paid && data.user.status === 'active') {
-                        setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
-                    } else {
-                        setTimeout(() => showPaymentPanel(data.user.email), 500);
-                    }
-                } else if (data.user.role === 'leader') {
-                    console.log('Initial load routing: Leader role detected. Showing Leader Dashboard.');
-                    hideAllPanels();
-                    document.getElementById('leaderPanel').classList.remove('hidden');
-                    document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
-                    await loadPendingPayments();
-                    await loadRotationSettings();
-                    await loadAvailableMembersForRotation();
-                    await displayRotationParticipants();
-                    await loadUserMessages();
-                    await updateCurrentRecipientDisplay();
-                    await loadAdminUsers(); // Load users for management
-                } else if (data.user.role === 'ceo') {
-                    console.log('Initial load routing: CEO role detected. Showing CEO Dashboard.');
-                    hideAllPanels();
-                    document.getElementById('ceoPanel').classList.remove('hidden');
-                    await displayRotationHistory();
-                    await displayAdminHistory(); // Load system history
-                    await loadAdminUsers(); // Load users for management
-                } else {
-                    console.warn('Login routing: Unknown user role received:', data.user.role, 'Defaulting to main platform.');
-                    setTimeout(() => showMainPlatform(data.user.fullName, data.user.invest, data.user.gain, data.user.referralCode), 500);
-                }
-            } else {
-                msg.textContent = `❌ ${data.message || 'Login failed.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error(`${role} login error:`, error);
-            msg.textContent = `❌ Network error: Could not reach the backend server. Please ensure 'nodemon server.js' is running in your Command Prompt.`;
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-    });
-
-    function logoutLeader() {
-        clearAuthData();
-        showLogin();
-    }
-
-    document.getElementById('ceoLoginForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        await loginAdmin('ceo');
-    });
-
-    function logoutCEO() {
-        clearAuthData();
-        showLogin();
-    }
-
-    async function loadPendingPayments() {
-        const list = document.getElementById('pendingPaymentsList');
-        list.innerHTML = '';
-        document.getElementById('noPendingPayments').classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/payments/pending`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch pending payments');
-            const pendingPayments = await response.json();
-
-            let hasPending = false;
-            pendingPayments.forEach(payment => {
-                hasPending = true;
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>${payment.userName}</strong> (${payment.userEmail}) - Method: ${payment.method} - Submitted: ${new Date(payment.timestamp).toLocaleString()}
-                    <div>
-                        <button style="background-color: #28a745;" onclick="validatePayment('${payment.userEmail}')">Validate</button>
-                        <button style="background-color: #dc3545; margin-left: 5px;" onclick="rejectPayment('${payment.userEmail}')">Reject</button>
-                    </div>
-                `;
-                list.appendChild(listItem);
-            });
-            document.getElementById('noPendingPayments').classList.toggle('hidden', hasPending);
-        } catch (error) {
-            console.error('Error loading pending payments:', error);
-            list.innerHTML = '<li>Error loading pending payments.</li>';
-            document.getElementById('noPendingPayments').classList.add('hidden');
-        }
-    }
-
-    async function validatePayment(email) {
-        // Replacing confirm with direct action for now, as confirm() is disallowed.
-        // In a real application, implement a custom modal for user confirmation.
-        displayTempMessage(`Validating payment for ${email}...`, false);
-        try {
-            const response = await fetch(`${API_BASE_URL}/payments/validate/${email}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                displayTempMessage(data.message || `Payment for ${email} validated! Account activated.`, true);
-                await loadPendingPayments();
-                await loadAvailableMembersForRotation();
-                await displayRotationParticipants();
-                await updateCurrentRecipientDisplay();
-                await loadAdminUsers(); // Refresh user list after status change
-                await displayAdminHistory(); // Update history
-            } else {
-                displayTempMessage(`Error validating payment: ${data.message || 'Unknown error.'}`, false);
-            }
-        } catch (error) {
-            console.error('Error validating payment:', error);
-            displayTempMessage('Network error or server unreachable. Could not validate payment.', false);
-        }
-    }
-
-    async function rejectPayment(email) {
-        // Replacing confirm with direct action for now, as confirm() is disallowed.
-        // In a real application, implement a custom modal for user confirmation.
-        displayTempMessage(`Rejecting payment for ${email}...`, false);
-        try {
-            const response = await fetch(`${API_BASE_URL}/payments/reject/${email}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                displayTempMessage(data.message || `Payment for ${email} rejected.`, true);
-                await loadPendingPayments();
-                await displayAdminHistory(); // Update history
-            } else {
-                displayTempMessage(`Error rejecting payment: ${data.message || 'Unknown error.'}`, false);
-            }
-        } catch (error) {
-            console.error('Error rejecting payment:', error);
-            displayTempMessage('Network error or server unreachable. Could not reject payment.', false);
-        }
-    }
-
-    async function loadUserMessages() {
-        const list = document.getElementById('userMessagesList');
-        list.innerHTML = '';
-        document.getElementById('noUserMessages').classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/messages`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch user messages');
-            const messages = await response.json();
-
-            let unreadCount = 0;
-            let hasMessages = false;
-
-            messages.forEach(message => {
-                hasMessages = true;
-                if (message.status === 'unread') {
-                    unreadCount++;
-                }
-                const listItem = document.createElement('li');
-                listItem.classList.toggle('unread', message.status === 'unread');
-                listItem.innerHTML = `
-                    <strong>From:</strong> ${message.fromEmail}<br>
-                    <strong>Subject:</strong> ${message.subject}<br>
-                    <strong>Message:</strong> ${message.message}<br>
-                    <small><em>Sent: ${new Date(message.timestamp).toLocaleString()} - Status: ${message.status.toUpperCase()}</em></small><br>
-                    <button style="margin-top: 5px; background-color: #007bff; font-size: 0.9em; padding: 5px 10px;" onclick="markMessageAsRead('${message.id}')">Mark as Read</button>
-                    <button style="margin-top: 5px; background-color: #dc3545; font-size: 0.9em; padding: 5px 10px; margin-left: 5px;" onclick="deleteMessage('${message.id}')">Delete</button>
-                `;
-                list.appendChild(listItem);
-            });
-
-            document.getElementById('unreadMessageCount').textContent = `(${unreadCount} unread)`;
-            document.getElementById('noUserMessages').classList.toggle('hidden', hasMessages);
-
-        } catch (error) {
-            console.error('Error loading user messages:', error);
-            list.innerHTML = '<li>Error loading messages.</li>';
-            document.getElementById('noUserMessages').classList.add('hidden');
-        }
-    }
-
-    async function markMessageAsRead(messageId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/messages/${messageId}/read`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to mark message as read');
-            displayTempMessage('Message marked as read.', true);
-            await loadUserMessages();
-            await displayAdminHistory(); // Update history
-        } catch (error) {
-            console.error('Error marking message as read:', error);
-            displayTempMessage('Could not mark message as read.', false);
-        }
-    }
-
-    async function deleteMessage(messageId) {
-        // Replacing confirm with direct action for now, as confirm() is disallowed.
-        // In a real application, implement a custom modal for user confirmation.
-        displayTempMessage(`Deleting message ${messageId}...`, false);
-        try {
-            const response = await fetch(`${API_BASE_URL}/messages/${messageId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to delete message');
-            displayTempMessage('Message deleted.', true);
-            await loadUserMessages();
-            await displayAdminHistory(); // Update history
-        } catch (error) {
-            console.error('Error deleting message:', error);
-            displayTempMessage('Could not delete message.', false);
-        }
-    }
-
-
-    // --- Rotation Management Logic ---
-
-    async function loadRotationSettings() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/settings`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch rotation settings');
-            const settings = await response.json();
-            document.getElementById('dailyInvest').value = settings.invest;
-            document.getElementById('currentRotationDay').textContent = settings.currentDay;
-        } catch (error) {
-            console.error('Error loading rotation settings:', error);
-            document.getElementById('dailyInvest').value = 10; // Default
-            document.getElementById('currentRotationDay').textContent = 'Error';
-        }
-    }
-
-    async function saveRotationSettings() {
-        const invest = parseFloat(document.getElementById('dailyInvest').value);
-        const msg = document.getElementById('rotationSettingsMsg');
-        msg.classList.add('hidden');
-
-        if (isNaN(invest) || invest < 0) {
-            msg.textContent = '❌ Please enter a valid number for Individual Participant Investment.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/settings`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                },
-                body: JSON.stringify({ invest })
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Rotation settings updated!'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                await displayAdminHistory(); // Update history
-            } else {
-                msg.textContent = `❌ ${data.message || 'Failed to update settings.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Save settings error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-        setTimeout(() => msg.classList.add('hidden'), 2000);
-    }
-
-    async function loadAvailableMembersForRotation() {
-        const select = document.getElementById('availableMembersSelect');
-        select.innerHTML = '<option value="">-- Select Paid & Active Member --</option>';
-        document.getElementById('noActiveParticipants').classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/paid-not-in-rotation`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch available members');
-            const availableMembers = await response.json();
-
-            let hasAvailable = false;
-            availableMembers.forEach(user => {
-                hasAvailable = true;
-                const option = document.createElement('option');
-                option.value = user.email;
-                option.textContent = `${user.fullName} (${user.email})`;
-                select.appendChild(option);
-            });
-            if (!hasAvailable && await getActiveRotationMembersCount() === 0) {
-                document.getElementById('noActiveParticipants').classList.remove('hidden');
-            } else {
-                document.getElementById('noActiveParticipants').classList.add('hidden');
-            }
-
-        } catch (error) {
-            console.error('Error loading available members:', error);
-            select.innerHTML = '<option value="">-- Error loading members --</option>';
-        }
-    }
-
-    async function getActiveRotationMembersCount() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/participants`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) return 0;
-            const participants = await response.json();
-            return participants.length;
-        } catch (error) {
-            console.error('Error fetching active rotation members count:', error);
-            return 0;
-        }
-    }
-
-    async function addParticipantToRotation() {
-        const select = document.getElementById('availableMembersSelect');
-        const emailToAdd = select.value;
-        const msg = document.getElementById('addParticipantMsg');
-        msg.classList.add('hidden');
-
-        if (!emailToAdd) {
-            msg.textContent = '❌ Please select a member to add.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/add-participant`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                },
-                body: JSON.stringify({ email: emailToAdd })
-            });
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from add participant:', jsonError);
-                msg.textContent = `❌ Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-                return;
-            }
-
-            if (response.ok) {
-                msg.textContent = `✅ ${data.message || 'Participant added to rotation!'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                await loadAvailableMembersForRotation();
-                await displayRotationParticipants();
-                await updateCurrentRecipientDisplay();
-                await displayAdminHistory(); // Update history
-            } else {
-                msg.textContent = `❌ ${data.message || 'Failed to add participant.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Add participant error:', error);
-            msg.textContent = '❌ Network error: Could not reach server. Please ensure the backend is running.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-        setTimeout(() => msg.classList.add('hidden'), 2000);
-    }
-
-    async function displayRotationParticipants() {
-        const list = document.getElementById('rotationParticipantsList');
-        list.innerHTML = '';
-        document.getElementById('noActiveParticipants').classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/participants`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch participants');
-            const participants = await response.json();
-
-            let hasParticipants = false;
-            let currentRecipientIndex = -1;
-            try {
-                const settingsResponse = await fetch(`${API_BASE_URL}/rotation/settings`, {
-                    headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-                });
-                if (settingsResponse.ok) {
-                    const settings = await settingsResponse.json();
-                    currentRecipientIndex = settings.lastPaidMemberIndex;
-                } else {
-                    console.warn('Could not fetch rotation settings for current recipient, using default -1.');
-                }
-            } catch (error) {
-                console.error('Error fetching rotation settings for recipient:', error);
-            }
-
-
-            if (participants.length > 0) {
-                hasParticipants = true;
-                participants.forEach((user, index) => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${user.fullName} (${user.email})`;
-                    if (index === currentRecipientIndex) {
-                        listItem.classList.add('current-recipient');
-                        listItem.title = "Last member who received payment";
-                    }
-                    list.appendChild(listItem);
-                });
-            }
-            document.getElementById('noActiveParticipants').classList.toggle('hidden', hasParticipants);
-        }
-        catch (error) {
-            console.error('Error displaying rotation participants:', error);
-            list.innerHTML = '<li>Error loading participants.</li>';
-            document.getElementById('noActiveParticipants').classList.add('hidden');
-        }
-    }
-
-    async function updateCurrentRecipientDisplay() {
-        const currentRecipientDisplay = document.getElementById('currentRecipientDisplay');
-        currentRecipientDisplay.textContent = 'N/A';
-
-        try {
-            const settingsResponse = await fetch(`${API_BASE_URL}/rotation/settings`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            const settings = await settingsResponse.json();
-
-            const participantsResponse = await fetch(`${API_BASE_URL}/rotation/participants`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            const participants = await participants.json();
-
-            if (settings.lastPaidMemberIndex !== -1 && participants[settings.lastPaidMemberIndex]) {
-                const recipient = participants[settings.lastPaidMemberIndex];
-                currentRecipientDisplay.textContent = `${recipient.fullName} (${recipient.email})`;
-            } else {
-                currentRecipientDisplay.textContent = 'No recipient yet or no participants.';
-            }
-        } catch (error) {
-            console.error('Error updating current recipient display:', error);
-            currentRecipientDisplay.textContent = 'Error loading recipient.';
-        }
-    }
-
-    async function nextParticipant() {
-        const msg = document.getElementById('rotationStatusMsg');
-        msg.classList.add('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/next`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from next participant:', jsonError);
-                displayTempMessage(`Server communication problem: Expected JSON, but received unexpected data. Status: ${response.status}`, false);
-                return;
-            }
-
-            if (response.ok) {
-                displayTempMessage(data.message || 'Rotation moved to next participant!', true);
-                await loadRotationSettings();
-                await displayRotationParticipants();
-                await updateCurrentRecipientDisplay();
-                await displayRotationHistory();
-                await displayAdminHistory(); // Update history
-                // If the current user is the recipient, update their dashboard
-                if (currentUserData.role === 'user' && currentUserData.id === data.currentRecipient.id) {
-                    currentUserData.gain = data.winnerGain; // Update local gain
-                    saveAuthData(currentAuthToken, currentUserData); // Save updated user data
-                    document.getElementById('participantGain').textContent = data.winnerGain.toFixed(2);
-                }
-            } else {
-                displayTempMessage(`Error during rotation: ${data.message || 'Unknown error.'}`, false);
-            }
-        } catch (error) {
-            console.error('Next participant error:', error);
-            displayTempMessage('Network error: Could not reach server. Please ensure the backend is running.', false);
-        }
-    }
-
-
-    // --- Admin User Management Functions ---
-    async function loadAdminUsers() {
-        const tableBody = document.querySelector('#adminUsersTable tbody');
-        tableBody.innerHTML = '';
-        document.getElementById('noUsersFound').classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/users`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch user list');
-            const users = await response.json();
-
-            let hasUsers = false;
-            users.forEach(user => {
-                hasUsers = true;
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = user.fullName;
-                row.insertCell().textContent = user.email;
-                row.insertCell().textContent = user.role + (user.adminLevel ? ` (${user.adminLevel})` : '');
-                row.insertCell().innerHTML = `<span class="${user.isPaid ? 'status-paid' : 'status-unpaid'}">${user.isPaid ? 'Paid' : 'Unpaid'}</span>`;
-                row.insertCell().innerHTML = `<span class="${user.status === 'active' ? 'status-active' : 'status-inactive'}">${user.status.toUpperCase()}</span>`;
-
-                const actionsCell = row.insertCell();
-                if (user.id !== currentUserData.id && !(user.adminLevel === 'superAdmin' && currentUserData.adminLevel !== 'superAdmin')) { // Cannot deactivate self or superAdmin by subAdmin
-                    if (user.status === 'active') {
-                        const deactivateBtn = document.createElement('button');
-                        deactivateBtn.textContent = 'Deactivate';
-                        deactivateBtn.style.backgroundColor = '#f0ad4e'; // Warning yellow
-                        deactivateBtn.onclick = () => updateUserStatus(user.id, 'inactive');
-                        actionsCell.appendChild(deactivateBtn);
-                    } else {
-                        const activateBtn = document.createElement('button');
-                        activateBtn.textContent = 'Activate';
-                        activateBtn.style.backgroundColor = '#5cb85c'; // Success green
-                        activateBtn.onclick = () => updateUserStatus(user.id, 'active');
-                        actionsCell.appendChild(activateBtn);
-                    }
-                } else {
-                    actionsCell.textContent = 'N/A'; // Cannot change status
-                }
-            });
-            document.getElementById('noUsersFound').classList.toggle('hidden', hasUsers);
-        } catch (error) {
-            console.error('Error loading admin users:', error);
-            tableBody.innerHTML = '<tr><td colspan="6">Error loading user list.</td>';
-            document.getElementById('noUsersFound').classList.add('hidden');
-        }
-    }
-
-    async function updateUserStatus(userId, status) {
-        // Replacing confirm with direct action for now, as confirm() is disallowed.
-        // In a real application, implement a custom modal for user confirmation.
-        displayTempMessage(`Updating status for user ${userId} to ${status}...`, false);
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/user/${userId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentAuthToken}`
-                },
-                body: JSON.stringify({ status })
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                displayTempMessage(data.message || `User status updated to ${status}.`, true);
-                await loadAdminUsers(); // Refresh the user list
-                await loadAvailableMembersForRotation(); // Refresh available participants
-                await displayRotationParticipants(); // Refresh rotation list
-                await displayAdminHistory(); // Update history
-            } else {
-                displayTempMessage(`Error updating user status: ${data.message || 'Unknown error.'}`, false);
-            }
-        } catch (error) {
-            console.error('Error updating user status:', error);
-            displayTempMessage('Network error or server unreachable. Could not update user status.', false);
-        }
-    }
-
-    async function generateReferralCode() {
-        const msg = document.getElementById('generatedReferralCodeMsg');
-        const codeDisplay = document.getElementById('generatedReferralCode');
-        msg.classList.add('hidden');
-        codeDisplay.textContent = 'Generating...';
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/referral-code/generate`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                codeDisplay.textContent = data.referralCode;
-                msg.textContent = `✅ ${data.message || 'New referral code generated!'}`;
-                msg.classList.remove('hidden', 'error-msg');
-                msg.classList.add('success-msg');
-                await displayAdminHistory(); // Update history
-            } else {
-                codeDisplay.textContent = 'Error';
-                msg.textContent = `❌ ${data.message || 'Failed to generate referral code.'}`;
-                msg.classList.remove('hidden', 'success-msg');
-                msg.classList.add('error-msg');
-            }
-        } catch (error) {
-            console.error('Generate referral code error:', error);
-            codeDisplay.textContent = 'Error';
-            msg.textContent = '❌ Network error: Could not reach server.';
-            msg.classList.remove('hidden', 'success-msg');
-            msg.classList.add('error-msg');
-        }
-        setTimeout(() => msg.classList.add('hidden'), 3000);
-    }
-
-
-    // --- CEO Specific Functions ---
-
-    async function displayRotationHistory() {
-        const tableBody = document.querySelector('#ceoRotationHistoryTable tbody');
-        tableBody.innerHTML = '';
-        const noHistoryMsg = document.getElementById('noRotationHistory');
-        noHistoryMsg.classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/rotation/history`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            let history;
-            try {
-                history = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from rotation history:', jsonError);
-                tableBody.innerHTML = '<tr><td colspan="6">Server communication problem: Expected JSON, but received unexpected data.</td></tr>';
-                noHistoryMsg.classList.add('hidden');
-                return;
-            }
-
-            if (!response.ok) throw new Error(`Failed to fetch rotation history: ${history.message || response.statusText}`);
-
-
-            if (history.length === 0) {
-                return;
-            } else {
-                noHistoryMsg.classList.add('hidden');
-            }
-
-            // Display newest first
-            [...history].reverse().forEach(entry => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = entry.day;
-                row.insertCell().textContent = `${entry.recipientName} (${entry.recipientEmail})`;
-                row.insertCell().textContent = entry.invest.toFixed(2);
-                row.insertCell().textContent = entry.totalPool.toFixed(2); // New: Display total pool
-                row.insertCell().textContent = entry.gain.toFixed(2);
-                row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
-            });
-
-        } catch (error) {
-            console.error('Error loading rotation history:', error);
-            tableBody.innerHTML = '<tr><td colspan="6">Error loading history.</td></tr>';
-            noHistoryMsg.classList.add('hidden');
-        }
-    }
-
-    async function displayAdminHistory() {
-        const tableBody = document.querySelector('#adminHistoryTable tbody');
-        tableBody.innerHTML = '';
-        const noHistoryMsg = document.getElementById('noAdminHistory');
-        noHistoryMsg.classList.remove('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/history`, {
-                headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-            });
-            let history;
-            try {
-                history = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse JSON response from admin history:', jsonError);
-                tableBody.innerHTML = '<tr><td colspan="4">Server communication problem: Expected JSON, but received unexpected data.</td></tr>';
-                noHistoryMsg.classList.add('hidden');
-                return;
-            }
-
-            if (!response.ok) throw new Error(`Failed to fetch admin history: ${history.message || response.statusText}`);
-
-            if (history.length === 0) {
-                return;
-            } else {
-                noHistoryMsg.classList.add('hidden');
-            }
-
-            // Display newest first
-            [...history].reverse().forEach(entry => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = new Date(entry.timestamp).toLocaleString();
-                row.insertCell().textContent = entry.type;
-                row.insertCell().textContent = entry.description;
-                row.insertCell().textContent = JSON.stringify(entry.details); // Display details as JSON string
-            });
-
-        } catch (error) {
-            console.error('Error loading admin history:', error);
-            tableBody.innerHTML = '<tr><td colspan="4">Error loading system history.</td></tr>';
-            noHistoryMsg.classList.add('hidden');
-        }
-    }
-
-
-    function calculRotation() {
-        const msg = document.getElementById('ceoReportMsg');
-        msg.textContent = 'This button can be expanded to generate more complex reports (e.g., total funds, financial projections, export data). For now, please view the history tables above.';
-        msg.classList.remove('hidden');
-        msg.classList.remove('success-msg');
-        msg.classList.add('error-msg');
-        setTimeout(() => msg.classList.add('hidden'), 4000);
-    }
-
-    // --- Initial Load Logic ---
-    window.onload = async function() {
-        console.log("window.onload triggered.");
-        // Here, we check if a token exists, and if so, attempt to validate it with the backend
-        // This is how a "session" would persist.
-        if (currentAuthToken && currentUserData.email && currentUserData.role) {
-            console.log("Auth token and user data found in localStorage. Attempting token verification.");
-            try {
-                // Verify the token with the backend
-                const response = await fetch(`${API_BASE_URL}/auth/verify-token`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${currentAuthToken}` }
-                });
-
-                let data;
-                try {
-                    data = await response.json();
-                } catch (jsonError) {
-                    console.error('Failed to parse JSON response from token verification:', jsonError);
-                    clearAuthData();
-                    showLogin();
-                    return;
-                }
-
-                if (response.ok) {
-                    // Token is valid, proceed based on role
-                    console.log('Token verified. User data from token:', data.user);
-                    saveAuthData(data.token, data.user); // Update currentUserData with fresh data from backend
-
-                    if (data.user.role === 'user') {
-                        console.log('Initial load routing: User role detected. Checking payment status.');
-                        if (data.user.paid && data.user.status === 'active') {
-                            showMainPlatform(data.user.fullName || data.user.email, data.user.invest, data.user.gain, data.user.referralCode);
-                        } else {
-                            showPaymentPanel(data.user.email);
-                        }
-                    } else if (data.user.role === 'leader') {
-                        console.log('Initial load routing: Leader role detected. Showing Leader Dashboard.');
-                        hideAllPanels();
-                        document.getElementById('leaderPanel').classList.remove('hidden');
-                        document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
-                        await loadPendingPayments();
-                        await loadRotationSettings();
-                        await loadAvailableMembersForRotation();
-                        await displayRotationParticipants();
-                        await loadUserMessages();
-                        await updateCurrentRecipientDisplay();
-                        await loadAdminUsers(); // Load users for management
-                    } else if (data.user.role === 'ceo') {
-                        console.log('Initial load routing: CEO role detected. Showing CEO Dashboard.');
-                        hideAllPanels();
-                        document.getElementById('ceoPanel').classList.remove('hidden');
-                        await displayRotationHistory();
-                        await displayAdminHistory(); // Load system history
-                        await loadAdminUsers(); // Load users for management
-                    } else {
-                        console.warn('Initial load routing: Unknown role from token verification:', data.user.role, 'Defaulting to login.');
-                        clearAuthData();
-                        showLogin();
-                    }
-                } else {
-                    console.warn('Auth token invalid/expired or server reported error, forcing re-login.', data.message);
-                    clearAuthData();
-                    showLogin();
-                }
-            } catch (error) {
-                console.error('Error during initial token verification:', error);
-                clearAuthData();
-                showLogin();
-            }
-        } else {
-            console.log('No auth token found or incomplete user data. Showing signup/login.');
-            showSignUp();
-        }
-    };
+    // Demo: Start at login
+    showLogin();
 </script>
-
 </body>
 </html>
