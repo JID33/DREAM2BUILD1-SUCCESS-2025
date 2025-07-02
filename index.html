@@ -1,712 +1,723 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dream2Build1 - Authentication & Payment</title>
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D2B1 - Authentification Sécurisée</title>
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+        // Expose Firebase objects globally for use in the main script block
+        window.firebaseApp = initializeApp;
+        window.firebaseAuth = getAuth;
+        window.firebaseSignInAnonymously = signInAnonymously;
+        window.firebaseSignInWithCustomToken = signInWithCustomToken;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+        window.firebaseFirestore = getFirestore;
+        window.firebaseDoc = doc;
+        window.firebaseGetDoc = getDoc;
+        window.firebaseSetDoc = setDoc;
+    </script>
     <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background: linear-gradient(135deg, #e3f0ff 0%, #fafcff 100%);
+        body { font-family: 'Inter', sans-serif; background: #f0f4f9; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
+        .card { background: white; padding: 20px; margin: 15px auto; max-width: 600px; width: 90%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
+        h1, h3, h4 { text-align: center; color: #004080; margin-bottom: 15px; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; font-size: 16px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; transition: all 0.3s ease; }
+        input[type="number"] { /* Specific style for number input */
+            -moz-appearance: textfield; /* Firefox */
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { /* Webkit (Chrome, Safari) */
+            -webkit-appearance: none;
             margin: 0;
-            min-height: 100vh;
         }
-        h1 {
-            text-align: center;
-            color: #2563eb;
-            margin-top: 40px;
-            margin-bottom: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        h2 {
-            color: #2563eb;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        .container {
-            max-width: 420px;
-            margin: 30px auto;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 32px rgba(37,99,235,0.08);
-            padding: 36px 28px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #374151;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 18px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 16px;
-            background: #f9fafb;
-            transition: border 0.2s;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #2563eb;
-            outline: none;
-            background: #fff;
-        }
+
+        input:focus { border-color: #004080; box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.2); outline: none; }
         button {
-            width: 100%;
-            background: linear-gradient(90deg,#2563eb 0%,#38bdf8 100%);
-            color: #fff;
             border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
+            color: white;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 4px;
-            box-shadow: 0 2px 8px rgba(37,99,235,0.08);
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: linear-gradient(90deg,#1d4ed8 0%,#0ea5e9 100%);
-        }
-        .alt-link {
-            display: block;
-            text-align: center;
-            margin-top: 18px;
-            color: #2563eb;
-            text-decoration: none;
-            font-size: 0.98em;
-        }
-        .alt-link:hover {
-            text-decoration: underline;
-        }
-        .hidden { display: none; }
-        .success-msg { color: #22c55e; font-weight: 500; text-align: center; }
-        .error-msg { color: #ef4444; font-weight: 500; text-align: center; }
-        /* Payment instructions styling */
-        .paiement-etapes {
-            background: #f1f5f9;
-            border-left: 4px solid #2563eb;
-            padding: 16px 18px;
+            position: relative;
+            overflow: hidden;
+            background-size: 200% auto;
             border-radius: 8px;
-            margin-bottom: 18px;
-            font-size: 0.98em;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
         }
-        /* User dashboard */
-        #mainPlatform {
-            background: #f0f9ff;
-            border-radius: 10px;
-            padding: 24px;
-            margin-top: 18px;
+        button:hover { background-position: right center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        .btn-primary { background-image: linear-gradient(to right, #004080 0%, #0056b3 50%, #004080 100%); }
+        .btn-secondary { background-image: linear-gradient(to right, #2980b9 0%, #3498db 50%, #2980b9 100%); }
+        .btn-danger { background-image: linear-gradient(to right, #e74c3c 0%, #c0392b 50%, #e74c3c 100%); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; border-radius: 8px; overflow: hidden; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        th { background-color: #004080; color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f8f8f8; }
+
+        .superviseur-name, .teamleader-name, .participant-input { margin-bottom: 10px; }
+        #forgotSection { text-align: center; margin-top: 15px; font-size: 0.9em; color: #555; cursor: pointer; transition: color 0.3s ease; }
+        #forgotSection:hover { color: #004080; }
+
+        /* Custom Modal Styling */
+        #customModal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #customModal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #customModal .card {
+            max-width: 450px;
+            padding: 30px;
             text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
         }
-        /* Responsive */
+        #customModal.show .card {
+            transform: translateY(0);
+        }
+        #modalButtons button {
+            display: inline-block;
+            width: auto;
+            padding: 10px 25px;
+            margin: 0 8px;
+        }
+
+        /* CSS for flashing effect */
+        .action-request-btn.alert-red {
+            animation: flashRed 1s infinite alternate;
+        }
+        @keyframes flashRed {
+            from { background-color: #e74c3c; }
+            to { background-color: #ffcccc; }
+        }
+
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #004080;
+            z-index: 1001;
+        }
+
         @media (max-width: 600px) {
-            .container {
-                padding: 16px 6vw;
-            }
+            .card { padding: 15px; margin: 10px auto; width: 95%; }
+            input, button { font-size: 14px; padding: 10px; }
+            table { font-size: 0.85em; }
+            th, td { padding: 8px; }
+            #modalButtons button { padding: 8px 15px; margin: 0 5px; }
         }
     </style>
 </head>
 <body>
+<!-- Loading Overlay -->
+<div id="loadingOverlay">Chargement des données...</div>
 
-<h1>Dream2Build1</h1>
-
-<!-- Registration Panel -->
-<div class="container" id="signUpPanel">
-    <h2>📝 Sign Up</h2>
-    <form id="signUpForm">
-        <label for="firstName">First Name</label>
-        <input type="text" id="firstName" required>
-        <label for="lastName">Last Name</label>
-        <input type="text" id="lastName" required>
-        <label for="phoneNumber">Phone Number</label>
-        <input type="tel" id="phoneNumber" required>
-        <label for="email">Email</label>
-        <input type="email" id="email" required>
-        <label for="password">Password</label>
-        <input type="password" id="password" required>
-        <label for="confirmPassword">Confirm Password</label>
-        <input type="password" id="confirmPassword" required>
-        <label for="referralCode">Referral Code (Optional)</label>
-        <input type="text" id="referralCode">
-        <button type="submit">Sign Up</button>
-        <p id="signUpMsg" class="success-msg hidden"></p>
-    </form>
-    <a href="#" class="alt-link" onclick="showLogin();return false;">Already have an account? Login here</a>
-</div>
-
-<!-- Login Panel -->
-<div class="container hidden" id="loginPanel">
-    <h2>🔐 Log In</h2>
-    <form id="loginForm">
-        <label for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" required>
-        <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" required>
-        <button type="submit">Log In</button>
-        <p id="loginMsg" class="error-msg hidden"></p>
-    </form>
-    <a href="#" class="alt-link" onclick="showSignUp();return false;">Don't have an account? Sign Up</a>
-    <a href="#" class="alt-link" onclick="showContactAdmin();return false;">Contact Support</a>
-</div>
-
-<!-- Payment Panel -->
-<div class="container hidden" id="paymentPanel">
-    <h2>💳 Complete Payment</h2>
-    <p>Welcome, <span id="paymentUserName"></span>!</p>
-    <form id="paymentForm">
-        <label for="paymentMethod">Choose Payment Method</label>
-        <select id="paymentMethod" onchange="showPaymentInstructions(this.value)" required>
-            <option value="">-- Select Payment Method --</option>
-            <option value="cash">Cash</option>
-            <option value="mastercard">Mastercard / Debit Card</option>
-            <option value="paypal">PayPal</option>
-            <option value="moncash">MonCash</option>
-            <option value="natcash">NatCash</option>
-        </select>
-        <div class="paiement-etapes hidden" id="paymentInstructions">
-            <div id="cashInfo" class="hidden">
-                <p><strong>Cash:</strong> A team leader will contact you to validate your payment.</p>
-            </div>
-            <div id="mastercardInfo" class="hidden">
-                <p><strong>Mastercard / Debit Card:</strong> (Simulated payment)</p>
-                <label>Card Number</label>
-                <input type="text" id="cardNumber">
-                <label>Expiration Date</label>
-                <input type="text" id="cardExpiry">
-                <label>CVC</label>
-                <input type="text" id="cardCVC">
-                <label>Name on Card</label>
-                <input type="text" id="cardName">
-            </div>
-            <div id="paypalInfo" class="hidden">
-                <p><strong>PayPal:</strong> Use <b>dream2build@gmail.com</b></p>
-            </div>
-            <div id="moncashInfo" class="hidden">
-                <p><strong>MonCash:</strong> Send to <b>+509 43260012</b></p>
-            </div>
-            <div id="natcashInfo" class="hidden">
-                <p><strong>NatCash:</strong> Send to <b>+509 43260012</b></p>
-            </div>
-        </div>
-        <button type="submit" class="paiement-submit-btn">Submit Payment Info</button>
-        <p id="paymentMsg" class="success-msg hidden"></p>
-    </form>
-</div>
-
-<!-- Main Platform -->
-<div class="container hidden" id="mainPlatformPanel">
-    <h2>Welcome, <span id="loggedInUserName"></span>!</h2>
-    <div id="mainPlatform">
-        <p>This is your main platform content, accessible after login and payment.</p>
-        <div style="margin-top: 20px;">
-            <h3>Your Financials:</h3>
-            <p>Investment: <strong>$<span id="participantInvest">0.00</span></strong></p>
-            <p>Last Gain: <strong>$<span id="participantGain">0.00</span></strong></p>
-            <p>Referral Code: <strong><span id="participantReferralCode">N/A</span></strong></p>
+<!-- Custom Modal Structure -->
+<div id="customModal">
+    <div class="card">
+        <p id="modalMessage"></p>
+        <div id="modalButtons">
+            <button id="modalConfirmBtn" class="btn-primary">Oui</button>
+            <button id="modalCancelBtn" class="btn-secondary">OK</button>
         </div>
     </div>
 </div>
 
-<!-- Contact Admin -->
-<div class="container hidden" id="contactAdminPanel">
-    <h2>📧 Contact Support</h2>
-    <form id="contactAdminForm">
-        <label for="contactEmail">Your Email</label>
-        <input type="email" id="contactEmail" required>
-        <label for="contactSubject">Subject</label>
-        <input type="text" id="contactSubject" required>
-        <label for="contactMessage">Message</label>
-        <textarea id="contactMessage" rows="4" required></textarea>
-        <button type="submit">Send Message</button>
-        <p id="contactAdminMsg" class="success-msg hidden"></p>
-    </form>
-    <a href="#" class="alt-link" onclick="showLogin();return false;">Back to Login</a>
+<div class="card" id="authCard">
+    <h1>Espace Admin Sécurisé</h1>
+    <input type="password" id="adminPass" placeholder="Mot de passe admin" />
+    <button onclick="toggleVisibility('adminPass')" class="btn-secondary">Afficher/Cacher</button>
+    <button onclick="checkAdminStep1()" class="btn-primary">Connexion</button>
+    <div id="forgotSection">Mot de passe oublié ?</div>
+</div>
+
+<div class="card" id="codeCard" style="display:none;">
+    <p>Code OTP envoyé à votre email et WhatsApp</p>
+    <input type="password" id="code2FA" placeholder="Entrez le code OTP" />
+    <button onclick="toggleVisibility('code2FA')" class="btn-secondary">Afficher/Cacher</button>
+    <button onclick="checkAdminStep2()" class="btn-primary">Vérifier</button>
+</div>
+
+<div class="card" id="mainCard" style="display:none;">
+    <h3>D2B1 - Administration Principale</h3>
+    <input type="text" id="participantName" placeholder="Nom du participant" />
+    <button onclick="addParticipant()" class="btn-primary">Ajouter</button>
+    <button onclick="validatePayments()" class="btn-secondary">Valider Paiement</button>
+    <button onclick="nextDay()" class="btn-secondary">Jour Suivant</button>
+    <button onclick="exportToExcel()" class="btn-primary">Export Historique</button>
+    <button onclick="resetData()" class="btn-danger">Réinitialiser Données</button>
+    <button onclick="logout()" class="btn-danger">Déconnexion</button>
+    <div id="stats" style="margin-top:20px;"></div>
+
+    <!-- Admin Calculator Section -->
+    <div class="card" style="margin-top:20px;">
+        <h4>Calculateur Financier (Admin)</h4>
+        <input type="number" id="calculatorParticipants" placeholder="Nombre de participants" min="0" value="0" />
+        <button onclick="calculateAdminHypotheticalFinance()" class="btn-primary">Calculer</button>
+        <div id="calculatorResults" style="margin-top:10px;">
+            <p><strong>Revenus Hypothétiques:</strong> $0.00</p>
+            <p><strong>Part Bénéficiaire Hypothétique:</strong> $0.00</p>
+            <p><strong>Montant Intouchable Hypothétique:</strong> $0.00</p>
+        </div>
+    </div>
+    <!-- End Admin Calculator Section -->
+
+    <div id="historyTable" style="margin-top:20px;"></div>
+    <div id="participantsList" style="margin-top:20px;"></div>
+</div>
+
+<div class="card" id="superviseurContainer" style="display:none;">
+    <h3>Ajouter un Superviseur</h3>
+    <button class="btn-primary" onclick="ajouterSuperviseur()">Superviseur +1</button>
+    <div id="superviseurs"></div>
 </div>
 
 <script>
-    // Panel switching logic
-    function hideAllPanels() {
-        document.getElementById('signUpPanel').classList.add('hidden');
-        document.getElementById('loginPanel').classList.add('hidden');
-        document.getElementById('paymentPanel').classList.add('hidden');
-        document.getElementById('mainPlatformPanel').classList.add('hidden');
-        document.getElementById('contactAdminPanel').classList.add('hidden');
-    }
-    function showSignUp() { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
-    function showLogin() { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
-    function showPayment() { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
-    function showMainPlatform() { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
-    function showContactAdmin() { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
+    // Initialize EmailJS with your Public Key
+    emailjs.init("M1gXL-2NtM2UnmLXj"); // Replace with your actual User ID
 
-    // Payment instructions logic
-    function showPaymentInstructions(method) {
-        document.getElementById('paymentInstructions').classList.remove('hidden');
-        ['cashInfo','mastercardInfo','paypalInfo','moncashInfo','natcashInfo'].forEach(id=>{
-            document.getElementById(id).classList.add('hidden');
+    // Firebase variables (will be initialized on DOMContentLoaded)
+    let firebaseAppInstance;
+    let auth;
+    let db;
+    let userId;
+    let isAuthReady = false; // Flag to indicate Firebase Auth is ready
+
+    // Global Variables (Application State)
+    let otpCode = "";
+    let participants = [];
+    let history = [];
+    let currentDay = 1;
+    let cooperativeRotationFund = 0;
+
+    let totalParticipantsCount = 0;
+    let dailyRevenue = 0;
+    let beneficiaryShare = 0;
+    let untouchableAmount = 0;
+
+    // --- Custom Modal Logic ---
+    let modalResolveCallback = null;
+
+    function showModal(message, type) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById("customModal");
+            const modalMessage = document.getElementById("modalMessage");
+            const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+            const modalCancelBtn = document.getElementById("modalCancelBtn");
+
+            modalMessage.textContent = message;
+            modalResolveCallback = resolve;
+
+            if (type === "confirm") {
+                modalConfirmBtn.style.display = "inline-block";
+                modalCancelBtn.textContent = "Non";
+            } else { // type === "alert"
+                modalConfirmBtn.style.display = "none";
+                modalCancelBtn.textContent = "OK";
+            }
+
+            modal.classList.add('show');
         });
-        if(method) document.getElementById(method+'Info').classList.remove('hidden');
     }
 
-    // Demo: Start at login
-    showLogin();
-</script>
-    <script>
-/* --- Panel Switching Utilities --- */
-function hideAllPanels() {
-    [
-        'signUpPanel', 'loginPanel', 'paymentPanel', 'mainPlatformPanel',
-        'contactAdminPanel', 'verificationMessagePanel'
-    ].forEach(id => {
-        let el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-}
-function showSignUp()        { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
-function showLogin()         { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
-function showPayment()       { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
-function showMainPlatform()  { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
-function showContactAdmin()  { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
-function showVerificationMessage(email) {
-    hideAllPanels();
-    if(document.getElementById('verificationMessagePanel')) {
-        document.getElementById('verificationMessagePanel').classList.remove('hidden');
-        document.getElementById('verificationEmailDisplay').textContent = email;
+    function hideModal() {
+        document.getElementById("customModal").classList.remove('show');
+        modalResolveCallback = null;
     }
-}
 
-/* --- Simulated "Database" --- */
-let users = [
-    { email: 'ceo@dream.com', password: 'ceopass', role: 'ceo', name: 'CEO', paid: true },
-    { email: 'leader@dream.com', password: 'leaderpass', role: 'leader', name: 'Leader', paid: true }
-];
-let currentUser = null;
+    // --- Firebase Initialization and Data Persistence ---
+    async function initializeFirebase() {
+        try {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
-/* --- Sign Up Logic --- */
-if(document.getElementById('signUpForm')) {
-document.getElementById('signUpForm').onsubmit = function(e) {
-    e.preventDefault();
-    let email = document.getElementById('email').value.trim();
-    let password = document.getElementById('password').value;
-    let confirmPassword = document.getElementById('confirmPassword').value;
-    let firstName = document.getElementById('firstName').value.trim();
-    let lastName = document.getElementById('lastName').value.trim();
+            if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing or empty.");
+                showModal("Erreur: Configuration Firebase manquante. La persistance des données ne fonctionnera pas.", "alert");
+                document.getElementById('loadingOverlay').style.display = 'none'; // Hide loading
+                return;
+            }
 
-    let msg = document.getElementById('signUpMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
+            firebaseAppInstance = window.firebaseApp(firebaseConfig);
+            db = window.firebaseFirestore(firebaseAppInstance);
+            auth = window.firebaseAuth(firebaseAppInstance);
 
-    if (password !== confirmPassword) {
-        msg.textContent = "Passwords do not match!";
-        msg.classList.add('error-msg');
-        return;
-    }
-    if (users.find(u => u.email === email)) {
-        msg.textContent = "This email is already registered.";
-        msg.classList.add('error-msg');
-        return;
-    }
-    users.push({
-        email, password,
-        role: 'user',
-        name: firstName + ' ' + lastName,
-        paid: false
-    });
-    msg.textContent = "Registration successful! Please verify your email (simulated).";
-    msg.classList.add('success-msg');
-    setTimeout(() => showVerificationMessage(email), 1200);
-};
-}
+            // Listen for auth state changes
+            window.firebaseOnAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Firebase Auth Ready. User ID:", userId);
+                    isAuthReady = true;
+                    await loadAppState(); // Load state after successful authentication
+                } else {
+                    // Sign in anonymously if no user is found and no custom token is provided
+                    // Or if a custom token is provided, attempt to sign in with it
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await window.firebaseSignInWithCustomToken(auth, __initial_auth_token);
+                        } catch (tokenError) {
+                            console.error("Error signing in with custom token:", tokenError);
+                            showModal("Erreur lors de la connexion avec le jeton personnalisé: " + tokenError.message + ". Tentative de connexion anonyme.", "alert");
+                            await window.firebaseSignInAnonymously(auth);
+                        }
+                    } else {
+                        // If no custom token, sign in anonymously
+                        await window.firebaseSignInAnonymously(auth);
+                    }
+                }
+                // The loading overlay will be hidden in loadAppState() or after anonymous sign-in if no data exists.
+            });
 
-/* --- Login Logic --- */
-if(document.getElementById('loginForm')) {
-document.getElementById('loginForm').onsubmit = function(e) {
-    e.preventDefault();
-    let email = document.getElementById('loginEmail').value.trim();
-    let password = document.getElementById('loginPassword').value;
-    let msg = document.getElementById('loginMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
-    let user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-        msg.textContent = "Invalid email or password.";
-        msg.classList.add('error-msg');
-        return;
-    }
-    currentUser = user;
-    msg.textContent = "";
-    msg.classList.add('success-msg');
-    setTimeout(() => {
-        if (user.role === 'ceo') {
-            alert("Welcome to the CEO Dashboard! (Add your CEO panel here)");
-            showMainPlatform();
-        } else if (user.role === 'leader') {
-            alert("Welcome to the Leader Dashboard! (Add your Leader panel here)");
-            showMainPlatform();
-        } else if (!user.paid) {
-            document.getElementById('paymentUserName').textContent = user.name;
-            showPayment();
-        } else {
-            document.getElementById('loggedInUserName').textContent = user.name;
-            showMainPlatform();
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+            showModal("Erreur lors de l'initialisation de Firebase: " + error.message + ". La persistance des données pourrait être affectée.", "alert");
+            document.getElementById('loadingOverlay').style.display = 'none'; // Hide loading
         }
-    }, 600);
-};
-}
-
-/* --- Payment Logic --- */
-if(document.getElementById('paymentForm')) {
-document.getElementById('paymentForm').onsubmit = function(e) {
-    e.preventDefault();
-    if (!currentUser) return;
-    currentUser.paid = true;
-    document.getElementById('loggedInUserName').textContent = currentUser.name;
-    showMainPlatform();
-};
-}
-
-/* --- Payment Instructions --- */
-function showPaymentInstructions(method) {
-    let paymentInstructions = document.getElementById('paymentInstructions');
-    paymentInstructions.classList.remove('hidden');
-    ['cashInfo','mastercardInfo','paypalInfo','moncashInfo','natcashInfo'].forEach(id=>{
-        let el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-    if (method) {
-        let el = document.getElementById(method+'Info');
-        if (el) el.classList.remove('hidden');
     }
-}
 
-/* --- Contact Admin --- */
-if(document.getElementById('contactAdminForm')) {
-document.getElementById('contactAdminForm').onsubmit = function(e) {
-    e.preventDefault();
-    let msg = document.getElementById('contactAdminMsg');
-    msg.textContent = "Your message has been sent! (simulated)";
-    msg.classList.remove('hidden');
-    setTimeout(() => { msg.classList.add('hidden'); }, 2000);
-};
-}
-
-/* --- Logout --- */
-function logoutUser() {
-    currentUser = null;
-    showLogin();
-}
-
-/* --- On Load: Show Login Panel --- */
-showLogin();
-</script>
-<script>
-// Panel switching logic
-function hideAllPanels() {
-    [
-        'signUpPanel', 'loginPanel', 'paymentPanel', 'mainPlatformPanel',
-        'contactAdminPanel', 'verificationMessagePanel'
-    ].forEach(id => {
-        let el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-}
-function showSignUp()        { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
-function showLogin()         { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
-function showPayment()       { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
-function showMainPlatform()  { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
-function showContactAdmin()  { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
-function showVerificationMessage(email) {
-    hideAllPanels();
-    if(document.getElementById('verificationMessagePanel')) {
-        document.getElementById('verificationMessagePanel').classList.remove('hidden');
-        document.getElementById('verificationEmailDisplay').textContent = email;
-    }
-}
-
-// Simulated user database
-let users = [
-    { email: 'ceo@dream.com', password: 'ceopass', role: 'ceo', name: 'CEO', paid: true },
-    { email: 'leader@dream.com', password: 'leaderpass', role: 'leader', name: 'Leader', paid: true }
-];
-let currentUser = null;
-
-// Sign Up
-if(document.getElementById('signUpForm')) {
-document.getElementById('signUpForm').onsubmit = function(e) {
-    e.preventDefault();
-    let email = document.getElementById('email').value.trim();
-    let password = document.getElementById('password').value;
-    let confirmPassword = document.getElementById('confirmPassword').value;
-    let firstName = document.getElementById('firstName').value.trim();
-    let lastName = document.getElementById('lastName').value.trim();
-
-    let msg = document.getElementById('signUpMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
-
-    if (password !== confirmPassword) {
-        msg.textContent = "Passwords do not match!";
-        msg.classList.add('error-msg');
-        return;
-    }
-    if (users.find(u => u.email === email)) {
-        msg.textContent = "This email is already registered.";
-        msg.classList.add('error-msg');
-        return;
-    }
-    users.push({
-        email, password,
-        role: 'user',
-        name: firstName + ' ' + lastName,
-        paid: false
-    });
-    msg.textContent = "Registration successful! Please verify your email (simulated).";
-    msg.classList.add('success-msg');
-    setTimeout(() => showVerificationMessage(email), 1200);
-};
-}
-
-// Login
-if(document.getElementById('loginForm')) {
-document.getElementById('loginForm').onsubmit = function(e) {
-    e.preventDefault();
-    let email = document.getElementById('loginEmail').value.trim();
-    let password = document.getElementById('loginPassword').value;
-    let msg = document.getElementById('loginMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
-    let user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-        msg.textContent = "Invalid email or password.";
-        msg.classList.add('error-msg');
-        return;
-    }
-    currentUser = user;
-    msg.textContent = "";
-    msg.classList.add('success-msg');
-    setTimeout(() => {
-        if (user.role === 'ceo') {
-            alert("Welcome to the CEO Dashboard! (Add your CEO panel here)");
-            showMainPlatform();
-        } else if (user.role === 'leader') {
-            alert("Welcome to the Leader Dashboard! (Add your Leader panel here)");
-            showMainPlatform();
-        } else if (!user.paid) {
-            document.getElementById('paymentUserName').textContent = user.name;
-            showPayment();
-        } else {
-            document.getElementById('loggedInUserName').textContent = user.name;
-            showMainPlatform();
+    /**
+     * Constructs the Firestore document reference for the current user's app state.
+     */
+    function getAppStateDocRef() {
+        if (!db || !userId) {
+            console.error("Firestore DB or User ID not available.");
+            return null;
         }
-    }, 600);
-};
-}
-
-// Payment
-if(document.getElementById('paymentForm')) {
-document.getElementById('paymentForm').onsubmit = function(e) {
-    e.preventDefault();
-    if (!currentUser) return;
-    currentUser.paid = true;
-    document.getElementById('loggedInUserName').textContent = currentUser.name;
-    showMainPlatform();
-};
-}
-
-// Payment Instructions
-function showPaymentInstructions(method) {
-    let paymentInstructions = document.getElementById('paymentInstructions');
-    paymentInstructions.classList.remove('hidden');
-    ['cashInfo','mastercardInfo','paypalInfo','moncashInfo','natcashInfo'].forEach(id=>{
-        let el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-    if (method) {
-        let el = document.getElementById(method+'Info');
-        if (el) el.classList.remove('hidden');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Path: /artifacts/{appId}/users/{userId}/d2b1_state/current_state
+        return window.firebaseDoc(db, `artifacts/${appId}/users/${userId}/d2b1_state/current_state`);
     }
-}
 
-// Contact Admin
-if(document.getElementById('contactAdminForm')) {
-document.getElementById('contactAdminForm').onsubmit = function(e) {
-    e.preventDefault();
-    let msg = document.getElementById('contactAdminMsg');
-    msg.textContent = "Your message has been sent! (simulated)";
-    msg.classList.remove('hidden');
-    setTimeout(() => { msg.classList.add('hidden'); }, 2000);
-};
-}
+    /**
+     * Saves the current application state to Firestore.
+     */
+    async function saveAppState() {
+        if (!isAuthReady) {
+            console.log("Firebase Auth not ready, skipping save.");
+            return;
+        }
+        const docRef = getAppStateDocRef();
+        if (!docRef) return;
 
-// Logout
-function logoutUser() {
-    currentUser = null;
-    showLogin();
-}
+        const appState = {
+            participants: participants,
+            history: history,
+            currentDay: currentDay,
+            cooperativeRotationFund: cooperativeRotationFund
+        };
 
-// On Load: Show Login Panel
-showLogin();
-</script>
-<script>
-// Utility: Hide all main panels
-function hideAllPanels() {
-  const panels = [
-    'signUpPanel', 'loginPanel', 'paymentPanel', 'mainPlatformPanel',
-    'contactAdminPanel', 'verificationMessagePanel',
-    'leaderLoginPanel', 'leaderRegisterPanel', 'ceoLoginPanel',
-    'leaderPanel', 'ceoPanel'
-  ];
-  panels.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  });
-}
-
-// Panel display functions
-function showSignUp() { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
-function showLogin() { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
-function showPayment() { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
-function showMainPlatform() { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
-function showContactAdmin() { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
-function showVerificationMessage(email) {
-  hideAllPanels();
-  const panel = document.getElementById('verificationMessagePanel');
-  if (panel) {
-    panel.classList.remove('hidden');
-    document.getElementById('verificationEmailDisplay').textContent = email;
-  }
-}
-function showLeaderLoginOnly() { hideAllPanels(); document.getElementById('leaderLoginPanel').classList.remove('hidden'); }
-function showLeaderRegisterOnly() { hideAllPanels(); document.getElementById('leaderRegisterPanel').classList.remove('hidden'); }
-function showCEOLogin() { hideAllPanels(); document.getElementById('ceoLoginPanel').classList.remove('hidden'); }
-function showLeaderPanel() { hideAllPanels(); document.getElementById('leaderPanel').classList.remove('hidden'); }
-function showCEOPanel() { hideAllPanels(); document.getElementById('ceoPanel').classList.remove('hidden'); }
-
-// Simulated users database
-const users = [
-  { email: 'ceo@dream.com', password: 'ceopass', role: 'ceo', name: 'CEO', paid: true },
-  { email: 'leader@dream.com', password: 'leaderpass', role: 'leader', name: 'Leader', paid: true }
-];
-let currentUser = null;
-
-// Sign Up form submission
-const signUpForm = document.getElementById('signUpForm');
-if (signUpForm) {
-  signUpForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const msg = document.getElementById('signUpMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
-
-    if (password !== confirmPassword) {
-      msg.textContent = 'Passwords do not match!';
-      msg.classList.add('error-msg');
-      return;
+        try {
+            await window.firebaseSetDoc(docRef, appState);
+            console.log("Application state saved to Firestore.");
+        } catch (e) {
+            console.error("Error saving application state:", e);
+            showModal("Erreur lors de la sauvegarde des données: " + e.message, "alert");
+        }
     }
-    if (users.find(u => u.email === email)) {
-      msg.textContent = 'This email is already registered.';
-      msg.classList.add('error-msg');
-      return;
+
+    /**
+     * Loads the application state from Firestore.
+     */
+    async function loadAppState() {
+        if (!isAuthReady) {
+            console.log("Firebase Auth not ready, cannot load.");
+            return;
+        }
+        const docRef = getAppStateDocRef();
+        if (!docRef) return;
+
+        try {
+            const docSnap = await window.firebaseGetDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                participants = data.participants || [];
+                history = data.history || [];
+                currentDay = data.currentDay || 1;
+                cooperativeRotationFund = data.cooperativeRotationFund || 0;
+                console.log("Application state loaded from Firestore.", data);
+
+                // Update all displays after loading
+                updateParticipantsList();
+                updateHistoryTable();
+                updateStatsDisplay();
+                calculateAdminHypotheticalFinance();
+            } else {
+                console.log("No existing application state found in Firestore. Starting fresh.");
+                // Ensure initial state is clean and displayed
+                resetLocalState();
+                updateParticipantsList();
+                updateHistoryTable();
+                updateStatsDisplay();
+                calculateAdminHypotheticalFinance();
+            }
+        } catch (e) {
+            console.error("Error loading application state:", e);
+            showModal("Erreur lors du chargement des données: " + e.message + ". L'application va démarrer avec des données vierges.", "alert");
+            // If loading fails, ensure local state is reset to avoid corrupted display
+            resetLocalState();
+            updateParticipantsList();
+            updateHistoryTable();
+            updateStatsDisplay();
+            calculateAdminHypotheticalFinance();
+        } finally {
+            document.getElementById('loadingOverlay').style.display = 'none'; // Ensure loading overlay is hidden
+        }
     }
-    users.push({
-      email,
-      password,
-      role: 'user',
-      name: `${firstName} ${lastName}`,
-      paid: false
-    });
-    msg.textContent = 'Registration successful! Please verify your email (simulated).';
-    msg.classList.add('success-msg');
-    setTimeout(() => showVerificationMessage(email), 1200);
-  });
-}
 
-// Login form submission
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-  loginForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const msg = document.getElementById('loginMsg');
-    msg.classList.remove('hidden', 'error-msg', 'success-msg');
-
-    const user = users.find(u => u.email === email && u.password === password);
-    if (!user) {
-      msg.textContent = 'Invalid email or password.';
-      msg.classList.add('error-msg');
-      return;
+    /**
+     * Resets local application state variables. Does NOT affect Firestore.
+     */
+    function resetLocalState() {
+        participants = [];
+        history = [];
+        currentDay = 1;
+        cooperativeRotationFund = 0;
+        totalParticipantsCount = 0;
+        dailyRevenue = 0;
+        beneficiaryShare = 0;
+        untouchableAmount = 0;
     }
-    currentUser = user;
-    msg.textContent = '';
-    msg.classList.add('success-msg');
 
-    setTimeout(() => {
-      if (user.role === 'ceo') {
-        showCEOPanel();
-      } else if (user.role === 'leader') {
-        showLeaderPanel();
-      } else if (!user.paid) {
-        document.getElementById('paymentUserName').textContent = user.name;
-        showPayment();
-      } else {
-        document.getElementById('loggedInUserName').textContent = user.name;
-        showMainPlatform();
-      }
-    }, 600);
-  });
-}
 
-// Payment form submission
-const paymentForm = document.getElementById('paymentForm');
-if (paymentForm) {
-  paymentForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if (!currentUser) return;
-    currentUser.paid = true;
-    document.getElementById('loggedInUserName').textContent = currentUser.name;
-    showMainPlatform();
-  });
-}
+    // --- Authentication Functions ---
+    function sendOTPByEmail(code) {
+        emailjs.send("service_3gm6ixa", "template_tq202es", {
+            to_name: "Emmanuel",
+            to_email: "emmanueljeambas@gmail.com",
+            message: "Votre code de vérification est : " + code
+        }).then(() => {
+            console.log("OTP envoyé par Email");
+        }).catch(err => {
+            showModal("Erreur envoi Email: " + err.text, "alert");
+        });
+    }
 
-// Payment instructions display
-function showPaymentInstructions(method) {
-  const paymentInstructions = document.getElementById('paymentInstructions');
-  if (!paymentInstructions) return;
-  paymentInstructions.classList.remove('hidden');
-  ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  });
-  if (method) {
-    const el = document.getElementById(method + 'Info');
-    if (el) el.classList.remove('hidden');
-  }
-}
+    function sendOTPByWhatsApp(code) {
+        const phone = "+50943260012";
+        const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
+        fetch(url).then(() => {
+            console.log("WhatsApp OTP envoyé");
+        }).catch(e => {
+            showModal("Erreur WhatsApp: " + e.message, "alert");
+        });
+    }
 
-// Contact admin form submission
-const contactAdminForm = document.getElementById('contactAdminForm');
-if (contactAdminForm) {
-  contactAdminForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const msg = document.getElementById('contactAdminMsg');
-    msg.textContent = 'Your message has been sent! (simulated)';
-    msg.classList.remove('hidden');
-    setTimeout(() => msg.classList.add('hidden'), 3000);
-  });
-}
+    function checkAdminStep1() {
+        const pass = document.getElementById("adminPass").value;
+        if (pass === "d2b1admin") {
+            otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById("authCard").style.display = "none";
+            document.getElementById("codeCard").style.display = "block";
+            sendOTPByEmail(otpCode);
+            sendOTPByWhatsApp(otpCode);
+        } else {
+            showModal("Mot de passe incorrect", "alert");
+        }
+    }
 
-// Logout function
-function logoutUser() {
-  currentUser = null;
-  showLogin();
-}
+    function toggleVisibility(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
 
-// Initialize page with login panel
-showLogin();
-</script>
-</body>
-</html>
+    function checkAdminStep2() {
+        const code = document.getElementById("code2FA").value.trim();
+        if (code === otpCode) {
+            document.getElementById("codeCard").style.display = "none";
+            document.getElementById("mainCard").style.display = "block";
+            document.getElementById("superviseurContainer").style.display = "block";
+            // Ensure all displays are updated upon successful login
+            updateParticipantsList();
+            updateHistoryTable();
+            updateStatsDisplay();
+            calculateAdminHypotheticalFinance();
+        } else {
+            showModal("Code de vérification invalide", "alert");
+        }
+    }
+
+    // --- Financial Calculation Logic ---
+    function calculateDailyFinance() {
+        totalParticipantsCount = participants.length;
+        dailyRevenue = totalParticipantsCount * 10;
+
+        let amountForCalculation = dailyRevenue;
+
+        if (currentDay >= 5 && totalParticipantsCount > 0) {
+            amountForCalculation += 10;
+        }
+
+        amountForCalculation += cooperativeRotationFund; // Add accumulated fund
+
+        const initialDeduction = amountForCalculation * (1 / 3);
+        let currentBeneficiaryShare = amountForCalculation - initialDeduction;
+        const tenPercentOfDeduction = initialDeduction * 0.10;
+        const thirtyPercentOfDeduction = initialDeduction * 0.30;
+
+        untouchableAmount = tenPercentOfDeduction;
+        currentBeneficiaryShare += thirtyPercentOfDeduction;
+        beneficiaryShare = currentBeneficiaryShare;
+
+        if (untouchableAmount < 0) {
+            untouchableAmount = 0;
+        }
+
+        updateStatsDisplay();
+    }
+
+    function calculateHypotheticalFinance(numParticipants, day = currentDay) {
+        let hypotheticalDailyRevenue = numParticipants * 10;
+        let hypotheticalAmountForCalculation = hypotheticalDailyRevenue;
+
+        if (day >= 5 && numParticipants > 0) {
+            hypotheticalAmountForCalculation += 10;
+        }
+
+        hypotheticalAmountForCalculation += cooperativeRotationFund; // Add accumulated fund
+
+        const hypotheticalInitialDeduction = hypotheticalAmountForCalculation * (1 / 3);
+        let hypotheticalBeneficiaryShare = hypotheticalAmountForCalculation - hypotheticalInitialDeduction;
+        const hypotheticalTenPercentOfDeduction = hypotheticalInitialDeduction * 0.10;
+        const hypotheticalThirtyPercentOfDeduction = hypotheticalInitialDeduction * 0.30;
+
+        let hypotheticalUntouchableAmount = hypotheticalTenPercentOfDeduction;
+        hypotheticalBeneficiaryShare += hypotheticalThirtyPercentOfDeduction;
+
+        if (hypotheticalUntouchableAmount < 0) {
+            hypotheticalUntouchableAmount = 0;
+        }
+
+        return {
+            dailyRevenue: hypotheticalDailyRevenue,
+            beneficiaryShare: hypotheticalBeneficiaryShare,
+            untouchableAmount: hypotheticalUntouchableAmount
+        };
+    }
+
+    function updateStatsDisplay() {
+        const statsDiv = document.getElementById("stats");
+        statsDiv.innerHTML = `
+            <h4>Statistiques du Jour ${currentDay}:</h4>
+            <p><strong>Participants:</strong> ${totalParticipantsCount}</p>
+            <p><strong>Revenus Générés:</strong> $${dailyRevenue.toFixed(2)}</p>
+            <p><strong>Part Bénéficiaire:</strong> $${beneficiaryShare.toFixed(2)}</p>
+            <p><strong>Montant Intouchable:</strong> $${untouchableAmount.toFixed(2)}</p>
+        `;
+    }
+
+    function calculateAdminHypotheticalFinance() {
+        const numParticipantsInput = document.getElementById("calculatorParticipants");
+        const numParticipants = parseInt(numParticipantsInput.value) || 0;
+
+        const results = calculateHypotheticalFinance(numParticipants, currentDay);
+
+        const resultsDiv = document.getElementById("calculatorResults");
+        resultsDiv.innerHTML = `
+            <p><strong>Revenus Hypothétiques:</strong> $${results.dailyRevenue.toFixed(2)}</p>
+            <p><strong>Part Bénéficiaire Hypothétique:</strong> $${results.beneficiaryShare.toFixed(2)}</p>
+            <p><strong>Montant Intouchable Hypothétique:</strong> $${results.untouchableAmount.toFixed(2)}</p>
+        `;
+    }
+
+    function calculateIndividualEarnings(investment) {
+        if (investment < 0) return 0;
+
+        const initialDeduction = investment * (1 / 3);
+        let personalShare = investment - initialDeduction;
+        const thirtyPercentOfDeduction = initialDeduction * 0.30;
+        personalShare += thirtyPercentOfDeduction;
+
+        return personalShare;
+    }
+
+    // --- Participant and History Management ---
+    async function addParticipant() {
+        const nameInput = document.getElementById("participantName");
+        const participantName = nameInput.value.trim();
+
+        if (participantName) {
+            participants.push({ name: participantName, paid: false });
+            nameInput.value = "";
+            updateParticipantsList();
+            calculateDailyFinance();
+            await saveAppState(); // Save state after adding
+        } else {
+            showModal("Veuillez entrer un nom de participant.", "alert");
+        }
+    }
+
+    function updateParticipantsList() {
+        const listDiv = document.getElementById("participantsList");
+        listDiv.innerHTML = "<h4>Participants Aujourd'hui:</h4>";
+        if (participants.length === 0) {
+            listDiv.innerHTML += "<p>Aucun participant ajouté pour le moment.</p>";
+            return;
+        }
+        const ul = document.createElement("ul");
+        participants.forEach((p) => {
+            const li = document.createElement("li");
+            li.textContent = `${p.name} - ${p.paid ? "Payé" : "Non Payé"}`;
+            ul.appendChild(li);
+        });
+        listDiv.appendChild(ul);
+    }
+
+    async function validatePayments() {
+        if (participants.length === 0) {
+            showModal("Aucun participant à valider.", "alert");
+            return;
+        }
+        participants.forEach(p => p.paid = true);
+        updateParticipantsList();
+        showModal("Paiements validés pour tous les participants actuels.", "alert");
+        await saveAppState(); // Save state after validating
+    }
+
+    async function nextDay() {
+        history.push({
+            day: currentDay,
+            totalParticipants: participants.length,
+            dailyRevenue: dailyRevenue,
+            beneficiaryShare: beneficiaryShare,
+            untouchableAmount: untouchableAmount
+        });
+
+        cooperativeRotationFund += untouchableAmount;
+
+        currentDay++;
+        participants = [];
+        totalParticipantsCount = 0;
+        dailyRevenue = 0;
+        beneficiaryShare = 0;
+        untouchableAmount = 0;
+
+        updateParticipantsList();
+        updateHistoryTable();
+        updateStatsDisplay();
+        calculateAdminHypotheticalFinance();
+        showModal(`Passage au Jour ${currentDay}. Les participants ont été réinitialisés. Le fond de rotation coopératif est maintenant de $${cooperativeRotationFund.toFixed(2)}.`, "alert");
+        await saveAppState(); // Save state after advancing day
+    }
+
+    function updateHistoryTable() {
+        const historyDiv = document.getElementById("historyTable");
+        historyDiv.innerHTML = "<h4>Historique des Jours Précédents:</h4>";
+        if (history.length === 0) {
+            historyDiv.innerHTML += "<p>Aucun historique disponible.</p>";
+            return;
+        }
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Jour</th>
+                    <th>Participants</th>
+                    <th>Revenus ($)</th>
+                    <th>Part Bénéficiaire ($)</th>
+                    <th>Intouchable ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        `;
+        const tbody = table.querySelector("tbody");
+        history.forEach(entry => {
+            const row = tbody.insertRow();
+            row.insertCell().textContent = entry.day;
+            row.insertCell().textContent = entry.totalParticipants;
+            row.insertCell().textContent = entry.dailyRevenue.toFixed(2);
+            row.insertCell().textContent = entry.beneficiaryShare.toFixed(2);
+            row.insertCell().textContent = entry.untouchableAmount.toFixed(2);
+        });
+        historyDiv.appendChild(table);
+    }
+
+    function exportToExcel() {
+        if (history.length === 0) {
+            showModal("Aucune donnée historique à exporter.", "alert");
+            return;
+        }
+
+        const ws = XLSX.utils.json_to_sheet(history);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Historique D2B1");
+        XLSX.writeFile(wb, "D2B1_Historique.xlsx");
+        showModal("Historique exporté vers Excel !", "alert");
+    }
+
+    async function resetData() {
+        showModal("Êtes-vous sûr de vouloir réinitialiser toutes les données (participants, historique, et fond coopératif) ? Cette action est irréversible.", "confirm")
+            .then(async (result) => { // Make sure this is async to await save
+                if (result) {
+                    resetLocalState(); // Reset local state first
+                    updateParticipantsList();
+                    updateHistoryTable();
+                    updateStatsDisplay();
+                    calculateAdminHypotheticalFinance();
+                    await saveAppState(); // Save the reset state to Firestore
+                    showModal("Toutes les données ont été réinitialisées.", "alert");
+                }
+            });
+    }
+
+    function logout() {
+        // For a client-side app, reloading effectively logs out (clears in-memory state)
+        // If Firebase Auth state needs to be cleared, use auth.signOut()
+        // However, given the requirement to continue on other PCs, just reloading might be fine
+        // as the state will be reloaded from Firestore on next login.
+        location.reload();
+    }
+
+    // --- Supervisor/Team Leader Management and Request Workflow ---
+    function ajouterSuperviseur() {
+        const container = document.getElementById('superviseurs');
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <h4>Superviseur</h4>
+            <input type="text" class="superviseur-name" placeholder="Nom du superviseur" />
+            <button onclick="ajouterTeamLeader(this)" class="btn-primary">Team Leader +1</button>
+            <div class="teamleaders"></div>
+            <button onclick="demanderAction(event, 'reset', 'Superviseur', this.parentNode.querySelector('.superviseur-name').value)" class="btn-danger action-request-btn">Demande Réinitialiser</button>
+            <button onclick="demanderAction(event, 'logout', 'Superviseur', this.parentNode.querySelector('.superviseur-name').value)" class="btn-danger action-request-btn">Demande Déconnexion</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function ajouterTeamLeader(btn) {
+        const container = btn.nextElementSibling;
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <input type="text" class="teamleader-name" placeholder="Nom du team leader" />
+            <input type="text" class="participant-input" placeholder="Nom du participant" />
+            <button onclick="addParticipantFromTeamLeader(this)" class="btn-primary">Ajouter</button>
