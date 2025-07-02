@@ -400,6 +400,313 @@ function logoutUser() {
 /* --- On Load: Show Login Panel --- */
 showLogin();
 </script>
+<script>
+// Panel switching logic
+function hideAllPanels() {
+    [
+        'signUpPanel', 'loginPanel', 'paymentPanel', 'mainPlatformPanel',
+        'contactAdminPanel', 'verificationMessagePanel'
+    ].forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+}
+function showSignUp()        { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
+function showLogin()         { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
+function showPayment()       { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
+function showMainPlatform()  { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
+function showContactAdmin()  { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
+function showVerificationMessage(email) {
+    hideAllPanels();
+    if(document.getElementById('verificationMessagePanel')) {
+        document.getElementById('verificationMessagePanel').classList.remove('hidden');
+        document.getElementById('verificationEmailDisplay').textContent = email;
+    }
+}
 
+// Simulated user database
+let users = [
+    { email: 'ceo@dream.com', password: 'ceopass', role: 'ceo', name: 'CEO', paid: true },
+    { email: 'leader@dream.com', password: 'leaderpass', role: 'leader', name: 'Leader', paid: true }
+];
+let currentUser = null;
+
+// Sign Up
+if(document.getElementById('signUpForm')) {
+document.getElementById('signUpForm').onsubmit = function(e) {
+    e.preventDefault();
+    let email = document.getElementById('email').value.trim();
+    let password = document.getElementById('password').value;
+    let confirmPassword = document.getElementById('confirmPassword').value;
+    let firstName = document.getElementById('firstName').value.trim();
+    let lastName = document.getElementById('lastName').value.trim();
+
+    let msg = document.getElementById('signUpMsg');
+    msg.classList.remove('hidden', 'error-msg', 'success-msg');
+
+    if (password !== confirmPassword) {
+        msg.textContent = "Passwords do not match!";
+        msg.classList.add('error-msg');
+        return;
+    }
+    if (users.find(u => u.email === email)) {
+        msg.textContent = "This email is already registered.";
+        msg.classList.add('error-msg');
+        return;
+    }
+    users.push({
+        email, password,
+        role: 'user',
+        name: firstName + ' ' + lastName,
+        paid: false
+    });
+    msg.textContent = "Registration successful! Please verify your email (simulated).";
+    msg.classList.add('success-msg');
+    setTimeout(() => showVerificationMessage(email), 1200);
+};
+}
+
+// Login
+if(document.getElementById('loginForm')) {
+document.getElementById('loginForm').onsubmit = function(e) {
+    e.preventDefault();
+    let email = document.getElementById('loginEmail').value.trim();
+    let password = document.getElementById('loginPassword').value;
+    let msg = document.getElementById('loginMsg');
+    msg.classList.remove('hidden', 'error-msg', 'success-msg');
+    let user = users.find(u => u.email === email && u.password === password);
+    if (!user) {
+        msg.textContent = "Invalid email or password.";
+        msg.classList.add('error-msg');
+        return;
+    }
+    currentUser = user;
+    msg.textContent = "";
+    msg.classList.add('success-msg');
+    setTimeout(() => {
+        if (user.role === 'ceo') {
+            alert("Welcome to the CEO Dashboard! (Add your CEO panel here)");
+            showMainPlatform();
+        } else if (user.role === 'leader') {
+            alert("Welcome to the Leader Dashboard! (Add your Leader panel here)");
+            showMainPlatform();
+        } else if (!user.paid) {
+            document.getElementById('paymentUserName').textContent = user.name;
+            showPayment();
+        } else {
+            document.getElementById('loggedInUserName').textContent = user.name;
+            showMainPlatform();
+        }
+    }, 600);
+};
+}
+
+// Payment
+if(document.getElementById('paymentForm')) {
+document.getElementById('paymentForm').onsubmit = function(e) {
+    e.preventDefault();
+    if (!currentUser) return;
+    currentUser.paid = true;
+    document.getElementById('loggedInUserName').textContent = currentUser.name;
+    showMainPlatform();
+};
+}
+
+// Payment Instructions
+function showPaymentInstructions(method) {
+    let paymentInstructions = document.getElementById('paymentInstructions');
+    paymentInstructions.classList.remove('hidden');
+    ['cashInfo','mastercardInfo','paypalInfo','moncashInfo','natcashInfo'].forEach(id=>{
+        let el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+    if (method) {
+        let el = document.getElementById(method+'Info');
+        if (el) el.classList.remove('hidden');
+    }
+}
+
+// Contact Admin
+if(document.getElementById('contactAdminForm')) {
+document.getElementById('contactAdminForm').onsubmit = function(e) {
+    e.preventDefault();
+    let msg = document.getElementById('contactAdminMsg');
+    msg.textContent = "Your message has been sent! (simulated)";
+    msg.classList.remove('hidden');
+    setTimeout(() => { msg.classList.add('hidden'); }, 2000);
+};
+}
+
+// Logout
+function logoutUser() {
+    currentUser = null;
+    showLogin();
+}
+
+// On Load: Show Login Panel
+showLogin();
+</script>
+<script>
+// Utility: Hide all main panels
+function hideAllPanels() {
+  const panels = [
+    'signUpPanel', 'loginPanel', 'paymentPanel', 'mainPlatformPanel',
+    'contactAdminPanel', 'verificationMessagePanel',
+    'leaderLoginPanel', 'leaderRegisterPanel', 'ceoLoginPanel',
+    'leaderPanel', 'ceoPanel'
+  ];
+  panels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+}
+
+// Panel display functions
+function showSignUp() { hideAllPanels(); document.getElementById('signUpPanel').classList.remove('hidden'); }
+function showLogin() { hideAllPanels(); document.getElementById('loginPanel').classList.remove('hidden'); }
+function showPayment() { hideAllPanels(); document.getElementById('paymentPanel').classList.remove('hidden'); }
+function showMainPlatform() { hideAllPanels(); document.getElementById('mainPlatformPanel').classList.remove('hidden'); }
+function showContactAdmin() { hideAllPanels(); document.getElementById('contactAdminPanel').classList.remove('hidden'); }
+function showVerificationMessage(email) {
+  hideAllPanels();
+  const panel = document.getElementById('verificationMessagePanel');
+  if (panel) {
+    panel.classList.remove('hidden');
+    document.getElementById('verificationEmailDisplay').textContent = email;
+  }
+}
+function showLeaderLoginOnly() { hideAllPanels(); document.getElementById('leaderLoginPanel').classList.remove('hidden'); }
+function showLeaderRegisterOnly() { hideAllPanels(); document.getElementById('leaderRegisterPanel').classList.remove('hidden'); }
+function showCEOLogin() { hideAllPanels(); document.getElementById('ceoLoginPanel').classList.remove('hidden'); }
+function showLeaderPanel() { hideAllPanels(); document.getElementById('leaderPanel').classList.remove('hidden'); }
+function showCEOPanel() { hideAllPanels(); document.getElementById('ceoPanel').classList.remove('hidden'); }
+
+// Simulated users database
+const users = [
+  { email: 'ceo@dream.com', password: 'ceopass', role: 'ceo', name: 'CEO', paid: true },
+  { email: 'leader@dream.com', password: 'leaderpass', role: 'leader', name: 'Leader', paid: true }
+];
+let currentUser = null;
+
+// Sign Up form submission
+const signUpForm = document.getElementById('signUpForm');
+if (signUpForm) {
+  signUpForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const msg = document.getElementById('signUpMsg');
+    msg.classList.remove('hidden', 'error-msg', 'success-msg');
+
+    if (password !== confirmPassword) {
+      msg.textContent = 'Passwords do not match!';
+      msg.classList.add('error-msg');
+      return;
+    }
+    if (users.find(u => u.email === email)) {
+      msg.textContent = 'This email is already registered.';
+      msg.classList.add('error-msg');
+      return;
+    }
+    users.push({
+      email,
+      password,
+      role: 'user',
+      name: `${firstName} ${lastName}`,
+      paid: false
+    });
+    msg.textContent = 'Registration successful! Please verify your email (simulated).';
+    msg.classList.add('success-msg');
+    setTimeout(() => showVerificationMessage(email), 1200);
+  });
+}
+
+// Login form submission
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const msg = document.getElementById('loginMsg');
+    msg.classList.remove('hidden', 'error-msg', 'success-msg');
+
+    const user = users.find(u => u.email === email && u.password === password);
+    if (!user) {
+      msg.textContent = 'Invalid email or password.';
+      msg.classList.add('error-msg');
+      return;
+    }
+    currentUser = user;
+    msg.textContent = '';
+    msg.classList.add('success-msg');
+
+    setTimeout(() => {
+      if (user.role === 'ceo') {
+        showCEOPanel();
+      } else if (user.role === 'leader') {
+        showLeaderPanel();
+      } else if (!user.paid) {
+        document.getElementById('paymentUserName').textContent = user.name;
+        showPayment();
+      } else {
+        document.getElementById('loggedInUserName').textContent = user.name;
+        showMainPlatform();
+      }
+    }, 600);
+  });
+}
+
+// Payment form submission
+const paymentForm = document.getElementById('paymentForm');
+if (paymentForm) {
+  paymentForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentUser) return;
+    currentUser.paid = true;
+    document.getElementById('loggedInUserName').textContent = currentUser.name;
+    showMainPlatform();
+  });
+}
+
+// Payment instructions display
+function showPaymentInstructions(method) {
+  const paymentInstructions = document.getElementById('paymentInstructions');
+  if (!paymentInstructions) return;
+  paymentInstructions.classList.remove('hidden');
+  ['cashInfo', 'mastercardInfo', 'paypalInfo', 'moncashInfo', 'natcashInfo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  if (method) {
+    const el = document.getElementById(method + 'Info');
+    if (el) el.classList.remove('hidden');
+  }
+}
+
+// Contact admin form submission
+const contactAdminForm = document.getElementById('contactAdminForm');
+if (contactAdminForm) {
+  contactAdminForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const msg = document.getElementById('contactAdminMsg');
+    msg.textContent = 'Your message has been sent! (simulated)';
+    msg.classList.remove('hidden');
+    setTimeout(() => msg.classList.add('hidden'), 3000);
+  });
+}
+
+// Logout function
+function logoutUser() {
+  currentUser = null;
+  showLogin();
+}
+
+// Initialize page with login panel
+showLogin();
+</script>
 </body>
 </html>
