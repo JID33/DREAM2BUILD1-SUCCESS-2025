@@ -959,7 +959,7 @@
                     currentUserData.paid = true;
                     currentUserData.status = 'active'; // Frontend updates status immediately for non-cash
                     saveAuthData(currentAuthToken, currentUserData);
-                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'`;
+                    msg.textContent = `✅ ${data.message || 'Payment successful! Redirecting to platform...'}`; // Fixed: Added closing backtick
                     setTimeout(() => showMainPlatform(currentUserData.fullName, currentUserData.invest, currentUserData.gain, currentUserData.referralCode), 1500);
                 }
                 msg.classList.remove('hidden', 'error-msg');
@@ -1151,7 +1151,7 @@
                         setTimeout(() => showPaymentPanel(data.user.email), 500);
                     }
                 } else if (data.user.role === 'leader') {
-                    console.log('Login routing: Leader role detected. Showing Leader Dashboard.');
+                    console.log('Initial load routing: Leader role detected. Showing Leader Dashboard.');
                     hideAllPanels();
                     document.getElementById('leaderPanel').classList.remove('hidden');
                     document.getElementById('leaderNameDisplay').textContent = data.user.fullName;
@@ -1163,7 +1163,7 @@
                     await updateCurrentRecipientDisplay();
                     await loadAdminUsers(); // Load users for management
                 } else if (data.user.role === 'ceo') {
-                    console.log('Login routing: CEO role detected. Showing CEO Dashboard.');
+                    console.log('Initial load routing: CEO role detected. Showing CEO Dashboard.');
                     hideAllPanels();
                     document.getElementById('ceoPanel').classList.remove('hidden');
                     await displayRotationHistory();
