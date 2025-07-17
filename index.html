@@ -1,156 +1,154 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Devenir Membre & Calcul de Rotation - COOPERATIVE R2C1</title>
-    </head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COOPERATIVE R2C1 - Inscription & Authentification</title>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f4f9; padding: 20px; margin: 0; }
+    .card { background: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1, h2, h3, h4 { text-align: center; color: #004080; }
+    input, button, select { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; box-sizing: border-box; }
+    label { display: block; margin-top: 10px; }
+    button { cursor: pointer; }
+    .btn-danger { background-color: #e74c3c; color: white; }
+    .btn-primary { background-color: #004080; color: white; }
+    .btn-secondary { background-color: #2980b9; color: white; }
+    .hidden { display: none; }
+  </style>
+</head>
 <body>
+<!-- FORMULAIRE D'INSCRIPTION -->
+<div class="card" id="inscriptionCard">
+  <h2>Inscription - COOPERATIVE R2C1</h2>
+  <form id="formInscription">
+    <label for="nom">Nom :</label>
+    <input type="text" id="nom" required>
+    <label for="prenom">Prénom :</label>
+    <input type="text" id="prenom" required>
+    <label for="date_naissance">Date de Naissance :</label>
+    <input type="date" id="date_naissance" required>
+    <label for="email">E-mail :</label>
+    <input type="email" id="email" required>
+    <label for="pays">Pays :</label>
+    <input type="text" id="pays" required>
+    <label for="telephone">Téléphone :</label>
+    <input type="tel" id="telephone" required placeholder="Ex: +509 3456 7890">
+    
+    <label>Méthode de Paiement :</label>
+    <select id="methode_paiement" required onchange="toggleCardDetails(this.value)">
+      <option value="">-- Choisir --</option>
+      <option value="natcash">Natcash</option>
+      <option value="moncash">Moncash</option>
+      <option value="paypal">PayPal</option>
+      <option value="carte">Carte</option>
+      <option value="cash">Cash</option>
+    </select>
 
-    <header>
-        <h1>Bienvenue sur COOPERATIVE R2C1</h1>
-        <nav>
-            <ul>
-                <li><a href="#devenir-membre">Devenir Membre</a></li>
-                <li><a href="#calcul-rotation">Calcul de Rotation</a></li>
-                </ul>
-        </nav>
-    </header>
+    <div id="card-details" class="hidden">
+      <label for="numero_carte">Numéro de Carte :</label>
+      <input type="text" id="numero_carte" placeholder="XXXX XXXX XXXX XXXX">
+      <label for="expiration_carte">Date d'Expiration :</label>
+      <input type="text" id="expiration_carte" placeholder="MM/AA">
+      <label for="cvc_carte">CVC/CVV :</label>
+      <input type="text" id="cvc_carte" placeholder="XXX">
+      <label for="nom_carte">Nom sur la Carte :</label>
+      <input type="text" id="nom_carte">
+    </div>
 
-    <main>
-        <section id="devenir-membre">
-            <h2>Devenir Membre</h2>
-            <p>Remplissez le formulaire ci-dessous pour devenir membre et participer à nos rotations.</p>
+    <button type="submit" class="btn-primary">S'inscrire et Payer</button>
+  </form>
+</div>
 
-            <form action="/register" method="POST">
-                <fieldset>
-                    <legend>Informations Personnelles</legend>
-                    <label for="nom">Nom :</label>
-                    <input type="text" id="nom" name="nom" required><br><br>
+<!-- ZONE D’AUTHENTIFICATION -->
+<div class="card hidden" id="authCard">
+  <h1>Espace Admin Sécurisé</h1>
+  <input type="password" id="adminPass" placeholder="Mot de passe admin" />
+  <button onclick="toggleVisibility('adminPass')" class="btn-secondary">👁️ Afficher/Cacher</button>
+  <button onclick="checkAdminStep1()" class="btn-primary">🔐 Connexion</button>
+  <div id="forgotSection" onclick="alert('Veuillez contacter l\'administrateur.')">Mot de passe oublié ?</div>
+</div>
 
-                    <label for="prenom">Prénom :</label>
-                    <input type="text" id="prenom" name="prenom" required><br><br>
+<div class="card hidden" id="codeCard">
+  <p>📤 Code OTP envoyé par Email & WhatsApp</p>
+  <input type="password" id="code2FA" placeholder="Entrez le code OTP" />
+  <button onclick="toggleVisibility('code2FA')" class="btn-secondary">👁️ Afficher/Cacher</button>
+  <button onclick="checkAdminStep2()" class="btn-primary">✅ Vérifier</button>
+</div>
 
-                    <label for="date_naissance">Date de Naissance :</label>
-                    <input type="date" id="date_naissance" name="date_naissance" required><br><br>
+<div class="card hidden" id="mainCard">
+  <h3>D2B1 - Authentification</h3>
+  <input type="text" id="participantName" placeholder="Nom du participant" />
+  <button onclick="alert('Ajouter')" class="btn-primary">➕ Ajouter</button>
+  <button class="btn-secondary">✅ Valider Paiement</button>
+  <button class="btn-secondary">🔁 Jour Suivant</button>
+  <button class="btn-primary">📤 Export Historique</button>
+  <button class="btn-danger" onclick="location.reload()">🚪 Déconnexion</button>
+</div>
 
-                    <label for="email">E-mail :</label>
-                    <input type="email" id="email" name="email" required><br><br>
+<!-- JS COMPLET -->
+<script>
+emailjs.init("M1gXL-2NtM2UnmLXj");
 
-                    <label for="pays">Pays :</label>
-                    <input type="text" id="pays" name="pays" required><br><br>
+let otpCode = "";
 
-                    <label for="telephone">Téléphone :</label>
-                    <input type="tel" id="telephone" name="telephone" placeholder="Ex: +509 3456 7890" required><br><br>
-                </fieldset>
+function toggleCardDetails(val) {
+  const cardDiv = document.getElementById('card-details');
+  cardDiv.classList.toggle('hidden', val !== 'carte');
+}
 
-                <fieldset>
-                    <legend>Méthode de Paiement</legend>
-                    <p>Choisissez votre méthode de paiement préférée :</p>
+document.getElementById('formInscription').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  document.getElementById('inscriptionCard').classList.add('hidden');
+  document.getElementById('authCard').classList.remove('hidden');
+});
 
-                    <div>
-                        <input type="radio" id="natcash" name="methode_paiement" value="natcash" required>
-                        <label for="natcash">Natcash</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="moncash" name="methode_paiement" value="moncash">
-                        <label for="moncash">Moncash</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="paypal" name="methode_paiement" value="paypal">
-                        <label for="paypal">PayPal</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="carte" name="methode_paiement" value="carte">
-                        <label for="carte">Carte de Crédit/Débit</label>
-                        <div id="card-details" style="display:none; margin-top: 10px; padding-left: 20px;">
-                            <label for="numero_carte">Numéro de Carte :</label>
-                            <input type="text" id="numero_carte" name="numero_carte" placeholder="XXXX XXXX XXXX XXXX"><br><br>
-                            <label for="expiration_carte">Date d'Expiration :</label>
-                            <input type="text" id="expiration_carte" name="expiration_carte" placeholder="MM/AA"><br><br>
-                            <label for="cvc_carte">CVC/CVV :</label>
-                            <input type="text" id="cvc_carte" name="cvc_carte" placeholder="XXX"><br><br>
-                            <label for="nom_carte">Nom sur la Carte :</label>
-                            <input type="text" id="nom_carte" name="nom_carte"><br><br>
-                        </div>
-                    </div>
-                    <div>
-                        <input type="radio" id="cash" name="methode_paiement" value="cash">
-                        <label for="cash">Cash (paiement manuel)</label>
-                    </div>
-                </fieldset>
+function toggleVisibility(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === "password" ? "text" : "password";
+}
 
-                <button type="submit">S'inscrire et Payer</button>
-            </form>
-        </section>
+function checkAdminStep1() {
+  const pass = document.getElementById("adminPass").value;
+  if (pass === "d2b1admin") {
+    otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    document.getElementById("authCard").classList.add('hidden');
+    document.getElementById("codeCard").classList.remove('hidden');
+    sendOTPByEmail(otpCode);
+    sendOTPByWhatsApp(otpCode);
+  } else {
+    alert("Mot de passe incorrect");
+  }
+}
 
-        <hr>
+function sendOTPByEmail(code) {
+  emailjs.send("service_3gm6ixa", "template_tq202es", {
+    to_name: "Emmanuel",
+    to_email: "emmanueljeambas@gmail.com",
+    message: "Votre code de vérification est : " + code
+  }).then(() => console.log("OTP Email envoyé"))
+    .catch(err => alert("Erreur Email : " + err.text));
+}
 
-        <section id="calcul-rotation">
-            <h2>Espace de Calcul de Rotation</h2>
-            <p>Utilisez cette calculatrice pour voir les gains potentiels basés sur le nombre de personnes en rotation.</p>
+function sendOTPByWhatsApp(code) {
+  const phone = "+50943260012";
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
+  fetch(url).then(() => console.log("OTP WhatsApp envoyé"))
+    .catch(e => alert("Erreur WhatsApp : " + e.message));
+}
 
-            <form>
-                <label for="nombre_personnes">Nombre de personnes en rotation (10 ou plus) :</label>
-                <input type="number" id="nombre_personnes" name="nombre_personnes" min="10" step="1" placeholder="Ex: 10, 11, 20" required><br><br>
-
-                <label for="gain_final">Gain Final Estimé :</label>
-                <input type="text" id="gain_final" name="gain_final" readonly placeholder="Le gain sera affiché ici"><br><br>
-
-                <button type="button" id="calculer_gain">Calculer le Gain</button>
-                <button type="button" id="ajouter_participant" style="display:none;">Ajouter Participant en Rotation</button>
-                </form>
-        </section>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 COOPERATIVE R2C1. Tous droits réservés.</p>
-    </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const methodePaiementRadios = document.querySelectorAll('input[name="methode_paiement"]');
-            const cardDetailsDiv = document.getElementById('card-details');
-
-            methodePaiementRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === 'carte') {
-                        cardDetailsDiv.style.display = 'block';
-                        // Rendre les champs de carte requis si cette option est sélectionnée
-                        cardDetailsDiv.querySelectorAll('input').forEach(input => input.setAttribute('required', 'true'));
-                    } else {
-                        cardDetailsDiv.style.display = 'none';
-                        // Retirer l'attribut required si une autre option est sélectionnée
-                        cardDetailsDiv.querySelectorAll('input').forEach(input => input.removeAttribute('required'));
-                    }
-                });
-            });
-
-            document.getElementById('calculer_gain').addEventListener('click', function() {
-                const nombrePersonnes = parseFloat(document.getElementById('nombre_personnes').value);
-
-                if (isNaN(nombrePersonnes) || nombrePersonnes < 10) {
-                    alert("Veuillez entrer un nombre de personnes valide (10 ou plus).");
-                    return;
-                }
-
-                // *** ATTENTION : CECI EST UNE SIMULATION EXTRÊMEMENT SIMPLIFIÉE POUR LE RENDU FRONTEND. ***
-                // La vraie logique de calcul doit être gérée par le serveur pour la sécurité et la précision.
-                let gainEstime;
-                const baseGainFor10 = 70; // Gain for 10 people
-                const gainPerPerson = 7; // Assuming each person after 10 adds $7 to the gain
-
-                if (nombrePersonnes === 10) {
-                    gainEstime = baseGainFor10;
-                } else if (nombrePersonnes > 10) {
-                    gainEstime = baseGainFor10 + ((nombrePersonnes - 10) * gainPerPerson);
-                } else {
-                    gainEstime = 0; // Should not happen with min="10" but good for robustness
-                }
-
-                document.getElementById('gain_final').value = gainEstime.toFixed(2) + ' $';
-            });
-        });
-    </script>
+function checkAdminStep2() {
+  const code = document.getElementById("code2FA").value.trim();
+  if (code === otpCode) {
+    document.getElementById("codeCard").classList.add('hidden');
+    document.getElementById("mainCard").classList.remove('hidden');
+  } else {
+    alert("Code de vérification invalide");
+  }
+}
+</script>
 </body>
 </html>
