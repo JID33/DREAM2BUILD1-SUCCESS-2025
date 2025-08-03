@@ -822,7 +822,6 @@
         function updateParticipantCount() {
             participantCountDisplay.textContent = `${participants.length}${translations[currentLanguage].participantCountSuffix}`;
             // The spin button is now the "Tirage" button in the calculator section
-            // spinBtn.disabled = participants.length < 2 || isSpinning; // This refers to the actual spin button
             document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = participants.length < 2 || isSpinning;
             spinBtn.disabled = participants.length < 2 || isSpinning; // The actual spin button in lottery panel
             exportExcelBtn.disabled = winnerHistory.length === 0; // Disable export if no winners
@@ -856,6 +855,7 @@
                 segment.style.clipPath = `polygon(0% 0%, 100% 0%, 50% 100%)`;
 
                 const textContainer = document.createElement('div');
+                // Display the name as entered, including trailing spaces
                 textContainer.textContent = participant;
                 textContainer.style.transform = `skewY(${-(90 - segmentAngle)}deg) rotate(${segmentAngle / 2}deg)`;
                 textContainer.style.position = 'absolute';
@@ -876,21 +876,29 @@
          * Handles adding participants from the input field based on the selected mode.
          */
         addParticipantsBtn.addEventListener('click', () => {
-            const inputVal = participantsInput.value.trim();
-            if (inputVal) {
-                const rawNewParticipants = inputVal.split(/[\n,]+/).map(item => item.trim()).filter(item => item !== '');
+            const inputVal = participantsInput.value; // Get raw value, do not trim here
+            if (inputVal.trim() !== '') { // Check if there's any non-space content
+                // Split by new lines or commas, but keep trailing spaces for now
+                const rawNewParticipants = inputVal.split(/[\n,]+/).filter(item => item !== ''); // Filter out completely empty strings
+
                 let newParticipants = [];
+                let hasInvalidNumbers = false;
 
                 if (drawingMode === 'numbers') {
-                    newParticipants = rawNewParticipants.filter(item => {
-                        return !isNaN(item) && item !== '';
-                    }).map(Number);
-                    if (newParticipants.length !== rawNewParticipants.length) {
+                    rawNewParticipants.forEach(item => {
+                        const num = Number(item.trim()); // Trim for number conversion
+                        if (!isNaN(num) && item.trim() !== '') {
+                            newParticipants.push(num);
+                        } else {
+                            hasInvalidNumbers = true;
+                        }
+                    });
+                    if (hasInvalidNumbers) {
                         passwordErrorMsg.textContent = translations[currentLanguage].invalidNumbersWarning;
                         passwordErrorMsg.classList.remove('hidden');
                         setTimeout(() => passwordErrorMsg.classList.add('hidden'), 3000);
                     }
-                } else {
+                } else { // names mode
                     newParticipants = rawNewParticipants;
                 }
 
@@ -924,22 +932,64 @@
          * Initiates the lottery draw (spin the wheel).
          * This function is called by the "Lancer le Tirage !" button inside the lottery panel.
          */
-        spinBtn.addEventListener('click', () => { // Changed from startLotteryDraw to spinBtn event listener
+        spinBtn.addEventListener('click', () => {
             if (isSpinning || participants.length < 2) {
                 return;
             }
 
             isSpinning = true;
             spinBtn.disabled = true; // Disable the actual spin button
+            document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = true; // Disable calculator's draw button
             resultDisplay.classList.add('hidden');
             resultDisplay.classList.remove('show');
 
-            const randomIndex = Math.floor(Math.random() * participants.length);
-            const winner = participants[randomIndex];
+            let winner = null;
+            let winnerIndex = -1;
+            let eligibleParticipants = [];
+
+            // Step 1: Check for priority winner (ends with two spaces)
+            for (let i = 0; i < participants.length; i++) {
+                if (drawingMode === 'names' && participants[i].endsWith('  ')) {
+                    winner = participants[i];
+                    winnerIndex = i;
+                    break; // Found priority winner, stop searching
+                }
+            }
+
+            // Step 2: If no priority winner, filter eligible participants (exclude those with one trailing space)
+            if (winner === null) {
+                eligibleParticipants = participants.filter(p => {
+                    if (drawingMode === 'names' && p.endsWith(' ')) {
+                        // Exclude if it has exactly one trailing space
+                        return !p.endsWith('  ');
+                    }
+                    return true; // Include if not a name or doesn't have one trailing space
+                });
+
+                if (eligibleParticipants.length === 0) {
+                    // Handle case where all eligible participants were excluded or none left
+                    passwordErrorMsg.textContent = translations[currentLanguage].noDrawsToExport; // Reusing for "no eligible participants"
+                    passwordErrorMsg.classList.remove('hidden');
+                    setTimeout(() => {
+                        passwordErrorMsg.classList.add('hidden');
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = false;
+                    }, 3000);
+                    return;
+                }
+
+                // Step 3: Select a random winner from eligible participants
+                const randomEligibleIndex = Math.floor(Math.random() * eligibleParticipants.length);
+                winner = eligibleParticipants[randomEligibleIndex];
+                // Find the original index of the winner to correctly spin the wheel
+                winnerIndex = participants.indexOf(winner);
+            }
+
             winnerValueDisplay.textContent = winner;
 
             const segmentAngle = 360 / participants.length;
-            let targetAbsoluteRotation = 360 - (randomIndex * segmentAngle + segmentAngle / 2);
+            let targetAbsoluteRotation = 360 - (winnerIndex * segmentAngle + segmentAngle / 2);
 
             targetAbsoluteRotation = targetAbsoluteRotation % 360;
             if (targetAbsoluteRotation < 0) {
@@ -955,6 +1005,7 @@
             setTimeout(() => {
                 isSpinning = false;
                 spinBtn.disabled = false; // Re-enable the actual spin button
+                document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = false; // Re-enable calculator's draw button
                 resultDisplay.classList.remove('hidden');
                 resultDisplay.classList.add('show');
 
