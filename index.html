@@ -1,154 +1,1113 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>COOPERATIVE R2C1 - Inscription & Authentification</title>
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f0f4f9; padding: 20px; margin: 0; }
-    .card { background: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1, h2, h3, h4 { text-align: center; color: #004080; }
-    input, button, select { width: 100%; padding: 10px; margin-top: 10px; font-size: 16px; box-sizing: border-box; }
-    label { display: block; margin-top: 10px; }
-    button { cursor: pointer; }
-    .btn-danger { background-color: #e74c3c; color: white; }
-    .btn-primary { background-color: #004080; color: white; }
-    .btn-secondary { background-color: #2980b9; color: white; }
-    .hidden { display: none; }
-  </style>
-</head>
-<body>
-<!-- FORMULAIRE D'INSCRIPTION -->
-<div class="card" id="inscriptionCard">
-  <h2>Inscription - COOPERATIVE R2C1</h2>
-  <form id="formInscription">
-    <label for="nom">Nom :</label>
-    <input type="text" id="nom" required>
-    <label for="prenom">Prénom :</label>
-    <input type="text" id="prenom" required>
-    <label for="date_naissance">Date de Naissance :</label>
-    <input type="date" id="date_naissance" required>
-    <label for="email">E-mail :</label>
-    <input type="email" id="email" required>
-    <label for="pays">Pays :</label>
-    <input type="text" id="pays" required>
-    <label for="telephone">Téléphone :</label>
-    <input type="tel" id="telephone" required placeholder="Ex: +509 3456 7890">
-    
-    <label>Méthode de Paiement :</label>
-    <select id="methode_paiement" required onchange="toggleCardDetails(this.value)">
-      <option value="">-- Choisir --</option>
-      <option value="natcash">Natcash</option>
-      <option value="moncash">Moncash</option>
-      <option value="paypal">PayPal</option>
-      <option value="carte">Carte</option>
-      <option value="cash">Cash</option>
-    </select>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="appTitle">Calculator & Lottery</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS CDN for Excel export -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-    <div id="card-details" class="hidden">
-      <label for="numero_carte">Numéro de Carte :</label>
-      <input type="text" id="numero_carte" placeholder="XXXX XXXX XXXX XXXX">
-      <label for="expiration_carte">Date d'Expiration :</label>
-      <input type="text" id="expiration_carte" placeholder="MM/AA">
-      <label for="cvc_carte">CVC/CVV :</label>
-      <input type="text" id="cvc_carte" placeholder="XXX">
-      <label for="nom_carte">Nom sur la Carte :</label>
-      <input type="text" id="nom_carte">
+        .main-app-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 1200px; /* Increased max-width for two columns */
+            display: flex;
+            flex-direction: column; /* Stack vertically by default */
+            gap: 25px;
+            align-items: flex-start; /* Align items to the start of the cross axis */
+            position: relative; /* For absolute positioning of language selector */
+        }
+
+        /* Styles for showing/hiding panels */
+        .panel-wrapper {
+            width: 100%; /* Take full width when stacked */
+            display: flex; /* Use flex to manage child panels */
+            flex-direction: column; /* Stack panels within wrapper by default */
+            gap: 25px;
+        }
+
+        @media (min-width: 992px) { /* Adjust breakpoint for side-by-side */
+            .main-app-container {
+                flex-direction: row; /* Side-by-side on larger screens */
+                justify-content: space-around;
+            }
+            .panel-wrapper {
+                flex-direction: row; /* Panels side-by-side within wrapper */
+            }
+        }
+
+        .calculator-panel, .lottery-panel {
+            flex: 1; /* Each panel takes equal width */
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #f9fafb;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            min-width: 300px; /* Minimum width for each panel */
+            box-sizing: border-box; /* Include padding in width */
+            display: none; /* Hidden by default, controlled by JS */
+        }
+
+        .calculator-panel.active, .lottery-panel.active {
+            display: block; /* Show active panel */
+        }
+
+        @media (min-width: 992px) {
+            .calculator-panel, .lottery-panel {
+                display: block; /* Always show both panels on large screens */
+            }
+        }
+
+        /* Calculator specific styles */
+        .calculator-panel .input-group {
+            margin-bottom: 16px;
+        }
+        .calculator-panel .input-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #2d3748;
+            display: block;
+        }
+        .calculator-panel .input-field {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+            background-color: #edf2f7;
+            font-size: 16px;
+            color: #2d3748;
+            transition: border-color 0.2s;
+        }
+        .calculator-panel .input-field:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .calculator-panel .input-field[readonly] {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            font-weight: 700;
+        }
+        .calculator-panel .text-sm {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 4px;
+        }
+        .calculator-panel .button-group {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .calculator-panel .action-button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+            border: none;
+        }
+        .calculator-panel .action-button:hover {
+            transform: translateY(-1px);
+        }
+        .calculator-panel .action-button:active {
+            transform: translateY(0);
+        }
+
+        /* Lottery specific styles (from previous code) */
+        .wheel-container {
+            position: relative;
+            width: 300px; /* Base size for the wheel */
+            height: 300px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 8px solid #3b82f6; /* Blue border */
+            box-shadow: 0 0 0 5px #bfdbfe, 0 0 20px rgba(0, 0, 0, 0.2);
+            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth spin transition */
+            margin: 0 auto;
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: 50% 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            padding-top: 20px; /* Push text down to avoid center overlap */
+        }
+
+        .pointer {
+            position: absolute;
+            top: -25px; /* Position above the wheel */
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ef4444; /* Red color for the pointer */
+            font-size: 50px;
+            z-index: 10;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-display {
+            background-color: #ecfdf5; /* Light green background for result */
+            color: #047857; /* Dark green text */
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 2.25rem; /* Large font size */
+            font-weight: 700;
+            text-align: center;
+            margin-top: 20px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0; /* Hidden by default */
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .result-display.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments for wheel size */
+        @media (max-width: 767px) {
+            .wheel-container {
+                width: 250px;
+                height: 250px;
+            }
+            .wheel-segment {
+                font-size: 12px;
+            }
+            .pointer {
+                font-size: 40px;
+                top: -20px;
+            }
+            .result-display {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .modal-content button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .modal-content .error-message {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-5 flex items-center justify-center min-h-screen">
+    <div class="main-app-container">
+
+        <!-- Language Selector (positioned absolutely within main-app-container) -->
+        <div class="absolute top-4 right-4 z-50">
+            <select id="languageSelector" class="p-2 rounded-md border border-gray-300 bg-white shadow-sm">
+                <option value="en" selected>English</option>
+                <option value="fr">Français</option>
+            </select>
+        </div>
+
+        <!-- Panel Wrapper to manage visibility on small screens -->
+        <div class="panel-wrapper">
+            <!-- Investment Calculator Section -->
+            <div id="calculatorPanel" class="calculator-panel">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-700" data-i18n="calculatorTitle">Investment Calculator</h2>
+
+                <div class="input-group">
+                    <label class="input-label" for="investments" data-i18n="investmentsLabel">Investment</label>
+                    <input type="text" id="investments" class="input-field" data-i18n-placeholder="investmentsPlaceholder" placeholder="e.g.: 1000 or 500+500" oninput="calculate()" onblur="updateInputField(this)">
+                    <p class="text-sm" data-i18n="investmentsHint">Enter the investment amount or a calculation.</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="people" data-i18n="peopleLabel">Number of People</label>
+                    <input type="text" id="people" class="input-field" data-i18n-placeholder="peoplePlaceholder" placeholder="e.g.: 2 or 1+1" oninput="calculate()" onblur="updateInputField(this)">
+                    <p class="text-sm" data-i18n="peopleHint">Enter the total number of people or a calculation.</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="total1" data-i18n="total1Label">TOTAL1</label>
+                    <input type="text" id="total1" class="input-field" readonly>
+                    <p class="text-sm" data-i18n="total1Hint">The calculated total (cannot be modified directly).</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="oneThirdTotal" data-i18n="oneThirdTotalLabel">1/3 Total1</label>
+                    <input type="text" id="oneThirdTotal" class="input-field" readonly>
+                    <p class="text-sm" data-i18n="oneThirdTotalHint">One third of the calculated total (cannot be modified directly).</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="net" data-i18n="netLabel">1/3 Net</label>
+                    <input type="text" id="net" class="input-field" data-i18n-placeholder="netPlaceholder" placeholder="e.g.: 500 or 500/2" oninput="calculate()" onblur="updateInputField(this)">
+                    <p class="text-sm" data-i18n="netHint">Enter the 1/3 Net amount manually or a calculation.</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="deduction" data-i18n="deductionLabel">Deduction</label>
+                    <input type="text" id="deduction" class="input-field" data-i18n-placeholder="deductionPlaceholder" placeholder="e.g.: 10 or 10*2" oninput="calculate()" onblur="updateInputField(this)">
+                    <p class="text-sm" data-i18n="deductionHint">Enter the deduction amount manually or a calculation.</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="ajustement" data-i18n="ajustementLabel">Adjustment</label>
+                    <input type="text" id="ajustement" class="input-field" data-i18n-placeholder="ajustementPlaceholder" placeholder="e.g.: +100 or -50" oninput="calculate()" onblur="updateInputField(this)">
+                    <p class="text-sm" data-i18n="ajustementHint">Add an amount or a calculation to adjust TOTAL1.</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="gain" data-i18n="gainLabel">Gain</label>
+                    <input type="text" id="gain" class="input-field" readonly>
+                    <p class="text-sm" data-i18n="gainHint">The calculated gain (cannot be modified directly).</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="payment" data-i18n="paymentLabel">Payment</label>
+                    <input type="text" id="payment" class="input-field" readonly>
+                    <p class="text-sm" data-i18n="paymentHint">The final calculated payment (cannot be modified directly).</p>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="showView('lottery')" class="action-button bg-green-500 hover:bg-green-600">
+                        <i class="fas fa-dice-one mr-2"></i> <span data-i18n="tirageBtn">Draw</span>
+                    </button>
+                    <button onclick="resetAllCalculators()" class="action-button bg-red-500 hover:bg-red-600">
+                        <span data-i18n="resetAllBtn">Reset All</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lottery System Section -->
+            <div id="lotteryPanel" class="lottery-panel">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center" data-i18n="addParticipantsTitle">Add Participants</h2>
+
+                <!-- Mode Selector -->
+                <div class="flex justify-center gap-4 mb-6">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="mode" value="names" checked class="form-radio h-5 w-5 text-blue-600">
+                        <span class="ml-2 text-gray-700 font-medium" data-i18n="namesLabel">Names</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="mode" value="numbers" class="form-radio h-5 w-5 text-purple-600">
+                        <span class="ml-2 text-gray-700 font-medium" data-i18n="numbersLabel">Numbers</span>
+                    </label>
+                </div>
+
+                <textarea id="participantsInput"
+                          class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 resize-y"
+                          data-i18n-placeholder="namesPlaceholder"
+                          placeholder="Enter names here, one per line or separated by commas (e.g., John, Mary, Peter)"></textarea>
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <button id="addParticipantsBtn"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transform hover:scale-105 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+                            data-i18n="addParticipantsBtn">
+                        <i class="fas fa-plus-circle mr-2"></i> Add Participants
+                    </button>
+                    <button id="clearParticipantsBtn"
+                            class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transform hover:scale-105 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
+                            data-i18n="clearAllBtn">
+                        <i class="fas fa-trash-alt mr-2"></i> Clear All
+                    </button>
+                </div>
+                <p id="participantCount" class="text-gray-600 text-sm mt-4 text-center">0 participant(s) added.</p>
+
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center mt-8" data-i18n="wheelTitle">Wheel of Fortune</h2>
+                <div class="wheel-container relative">
+                    <div id="wheel" class="w-full h-full rounded-full relative transition-transform duration-600 ease-out">
+                        <!-- Segments will be generated here by JavaScript -->
+                    </div>
+                    <i class="fas fa-caret-up pointer"></i> <!-- Pointer to indicate the winner -->
+                </div>
+                <button id="spinBtn"
+                        class="mt-8 bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 px-10 rounded-full shadow-xl transform hover:scale-110 transition duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-400 focus:ring-opacity-75 text-xl uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-i18n="spinBtn">
+                    <i class="fas fa-dice-one mr-3"></i> Spin the Wheel!
+                </button>
+
+                <!-- Result Display -->
+                <div id="resultDisplay" class="result-display hidden">
+                    <span id="winnerValue"></span>
+                </div>
+
+                <!-- Export Excel Button -->
+                <button id="exportExcelBtn"
+                        class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transform hover:scale-105 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-i18n="exportExcelBtn">
+                    <i class="fas fa-file-excel mr-2"></i> Export to Excel
+                </button>
+
+                <!-- Settings Button (to change password) -->
+                <button id="settingsBtn"
+                        class="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transform hover:scale-105 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+                        data-i18n="settingsBtn">
+                    <i class="fas fa-cog mr-2"></i> Settings
+                </button>
+
+                <button onclick="showView('calculator')" class="action-button bg-blue-500 hover:bg-blue-600 mt-8">
+                    <i class="fas fa-arrow-left mr-2"></i> <span data-i18n="returnToCalculatorBtn">Return to Calculator</span>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <button type="submit" class="btn-primary">S'inscrire et Payer</button>
-  </form>
-</div>
+    <!-- Modal for password input for export -->
+    <div id="passwordModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center" data-i18n="passwordRequiredTitle">Password Required</h3>
+            <p class="text-gray-600 mb-4 text-center" data-i18n="passwordRequiredMsg">Please enter the password to export the Excel file.</p>
+            <input type="password" id="exportPasswordInput" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="mb-3">
+            <p id="passwordErrorMsg" class="error-message hidden" data-i18n="incorrectPassword">Incorrect password.</p>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="passwordCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800" data-i18n="cancelBtn">Cancel</button>
+                <button id="passwordSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white" data-i18n="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
 
-<!-- ZONE D’AUTHENTIFICATION -->
-<div class="card hidden" id="authCard">
-  <h1>Espace Admin Sécurisé</h1>
-  <input type="password" id="adminPass" placeholder="Mot de passe admin" />
-  <button onclick="toggleVisibility('adminPass')" class="btn-secondary">👁️ Afficher/Cacher</button>
-  <button onclick="checkAdminStep1()" class="btn-primary">🔐 Connexion</button>
-  <div id="forgotSection" onclick="alert('Veuillez contacter l\'administrateur.')">Mot de passe oublié ?</div>
-</div>
+    <!-- Modal for changing password -->
+    <div id="changePasswordModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center" data-i18n="changePasswordTitle">Change Password</h3>
+            <input type="password" id="newPasswordInput" data-i18n-placeholder="newPasswordPlaceholder" placeholder="New Password" class="mb-3">
+            <input type="password" id="confirmNewPasswordInput" data-i18n-placeholder="confirmNewPasswordPlaceholder" placeholder="Confirm New Password" class="mb-3">
+            <p id="changePasswordErrorMsg" class="error-message hidden" data-i18n="passwordMismatch">Passwords do not match or are empty.</p>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="changePasswordCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800" data-i18n="cancelBtn">Cancel</button>
+                <button id="changePasswordSubmitBtn" class="bg-blue-600 hover:bg-blue-700 text-white" data-i18n="changeBtn">Change</button>
+            </div>
+        </div>
+    </div>
 
-<div class="card hidden" id="codeCard">
-  <p>📤 Code OTP envoyé par Email & WhatsApp</p>
-  <input type="password" id="code2FA" placeholder="Entrez le code OTP" />
-  <button onclick="toggleVisibility('code2FA')" class="btn-secondary">👁️ Afficher/Cacher</button>
-  <button onclick="checkAdminStep2()" class="btn-primary">✅ Vérifier</button>
-</div>
+    <!-- Custom Confirmation Modal for Clear All -->
+    <div id="confirmationModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center" data-i18n="clearConfirmationTitle">Confirm Clear All</h3>
+            <p class="text-gray-600 mb-4 text-center" data-i18n="clearConfirmationMessage">Are you sure you want to clear all participants and history?</p>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="confirmCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800" data-i18n="cancelBtn">Cancel</button>
+                <button id="confirmYesBtn" class="bg-red-500 hover:bg-red-600 text-white" data-i18n="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
 
-<div class="card hidden" id="mainCard">
-  <h3>D2B1 - Authentification</h3>
-  <input type="text" id="participantName" placeholder="Nom du participant" />
-  <button onclick="alert('Ajouter')" class="btn-primary">➕ Ajouter</button>
-  <button class="btn-secondary">✅ Valider Paiement</button>
-  <button class="btn-secondary">🔁 Jour Suivant</button>
-  <button class="btn-primary">📤 Export Historique</button>
-  <button class="btn-danger" onclick="location.reload()">🚪 Déconnexion</button>
-</div>
+    <script>
+        // --- Global View Management ---
+        let currentActivePanel = 'calculator'; // Tracks which panel is currently active ('calculator' or 'lottery')
 
-<!-- JS COMPLET -->
-<script>
-emailjs.init("M1gXL-2NtM2UnmLXj");
+        // Function to switch between calculator and lottery views
+        function showView(viewId) {
+            const calculatorPanel = document.getElementById('calculatorPanel');
+            const lotteryPanel = document.getElementById('lotteryPanel');
+            const mainAppContainer = document.querySelector('.main-app-container');
 
-let otpCode = "";
+            // On large screens, both panels are always visible
+            if (window.innerWidth >= 992) {
+                calculatorPanel.classList.add('active');
+                lotteryPanel.classList.add('active');
+                return; // Do nothing, both are visible
+            }
 
-function toggleCardDetails(val) {
-  const cardDiv = document.getElementById('card-details');
-  cardDiv.classList.toggle('hidden', val !== 'carte');
-}
+            // On small screens, toggle visibility
+            if (viewId === 'calculator') {
+                calculatorPanel.classList.add('active');
+                lotteryPanel.classList.remove('active');
+                currentActivePanel = 'calculator';
+            } else if (viewId === 'lottery') {
+                calculatorPanel.classList.remove('active');
+                lotteryPanel.classList.add('active');
+                currentActivePanel = 'lottery';
+            }
+        }
 
-document.getElementById('formInscription').addEventListener('submit', function(e) {
-  e.preventDefault();
-  
-  document.getElementById('inscriptionCard').classList.add('hidden');
-  document.getElementById('authCard').classList.remove('hidden');
-});
+        // Listen for window resize to adjust panel visibility
+        window.addEventListener('resize', () => {
+            showView(currentActivePanel); // Re-evaluate visibility based on new window size
+        });
 
-function toggleVisibility(id) {
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
-}
+        // --- Calculator Specific Variables and Functions ---
+        /**
+         * Évalue une chaîne de caractères comme une expression mathématique de manière sécurisée.
+         * @param {string} expression L'expression à évaluer.
+         * @returns {number} Le résultat numérique de l'expression, ou 0 si invalide.
+         */
+        function safeEval(expression) {
+            try {
+                // Remplace les virgules par des points pour les décimales et supprime les caractères non autorisés.
+                const sanitizedExpression = expression.replace(/,/g, '.').replace(/[^0-9+\-*/(). ]/g, '');
+                if (sanitizedExpression.trim() === '') {
+                    return 0; // Traite une chaîne vide comme une valeur nulle
+                }
+                const result = eval(sanitizedExpression);
+                if (typeof result === 'number' && isFinite(result)) {
+                    return result;
+                }
+                return 0; // Retourne 0 pour les résultats non numériques ou infinis
+            } catch (e) {
+                return 0; // Retourne 0 en cas d'erreur d'évaluation
+            }
+        }
 
-function checkAdminStep1() {
-  const pass = document.getElementById("adminPass").value;
-  if (pass === "d2b1admin") {
-    otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    document.getElementById("authCard").classList.add('hidden');
-    document.getElementById("codeCard").classList.remove('hidden');
-    sendOTPByEmail(otpCode);
-    sendOTPByWhatsApp(otpCode);
-  } else {
-    alert("Mot de passe incorrect");
-  }
-}
+        /**
+         * Formate un nombre pour l'affichage, en retournant une chaîne vide si le nombre est 0.
+         * @param {number} value Le nombre à formater.
+         * @returns {string} Le nombre formaté à deux décimales, ou une chaîne vide si 0.
+         */
+        function formatForDisplay(value) {
+            return value === 0 ? "" : value.toFixed(2);
+        }
 
-function sendOTPByEmail(code) {
-  emailjs.send("service_3gm6ixa", "template_tq202es", {
-    to_name: "Emmanuel",
-    to_email: "emmanueljeambas@gmail.com",
-    message: "Votre code de vérification est : " + code
-  }).then(() => console.log("OTP Email envoyé"))
-    .catch(err => alert("Erreur Email : " + err.text));
-}
+        /**
+         * Met à jour la valeur d'un champ d'entrée avec le résultat évalué de son contenu.
+         * Appelé lors de l'événement 'onblur' (quand le champ perd le focus).
+         * @param {HTMLInputElement} inputElement L'élément input à mettre à jour.
+         */
+        function updateInputField(inputElement) {
+            const evaluatedValue = safeEval(inputElement.value);
+            inputElement.value = formatForDisplay(evaluatedValue);
+        }
 
-function sendOTPByWhatsApp(code) {
-  const phone = "+50943260012";
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=Votre+code+OTP+est+${code}&apikey=3854603`;
-  fetch(url).then(() => console.log("OTP WhatsApp envoyé"))
-    .catch(e => alert("Erreur WhatsApp : " + e.message));
-}
+        /**
+         * Fonction principale de calcul qui met à jour tous les champs.
+         * Elle lit les valeurs des entrées, effectue les calculs et met à jour les affichages.
+         */
+        function calculate() {
+            // Obtenir les valeurs des champs d'entrée principaux
+            const investment = safeEval(document.getElementById("investments").value);
+            const people = safeEval(document.getElementById("people").value);
+            const net = safeEval(document.getElementById("net").value);
+            const deduction = safeEval(document.getElementById("deduction").value);
+            const ajustement = safeEval(document.getElementById("ajustement").value);
 
-function checkAdminStep2() {
-  const code = document.getElementById("code2FA").value.trim();
-  if (code === otpCode) {
-    document.getElementById("codeCard").classList.add('hidden');
-    document.getElementById("mainCard").classList.remove('hidden');
-  } else {
-    alert("Code de vérification invalide");
-  }
-}
-</script>
+            // --- Étapes de calcul ---
+
+            // TOTAL1 = (nombre de personnes * investissement) - investissement + (2 * investissement) + Ajustement
+            const total1 = ((people * investment) - investment + (2 * investment)) + ajustement;
+            document.getElementById("total1").value = formatForDisplay(total1);
+
+            // 1/3 Total1 = résultat du champ "total 1" multiplié par 0.33
+            const oneThirdTotal = total1 * 0.33;
+            document.getElementById("oneThirdTotal").value = formatForDisplay(oneThirdTotal);
+
+            // Gain = TOTAL1 - 1/3 Net
+            const gain = total1 - net;
+            document.getElementById("gain").value = formatForDisplay(gain);
+
+            // Paiement = Gain - Déduction
+            const payment = gain - deduction;
+            document.getElementById("payment").value = formatForDisplay(payment);
+        }
+
+        // --- Lottery System Specific Variables and Functions ---
+        let participants = [];
+        let currentRotation = 0;
+        let isSpinning = false;
+        let drawingMode = 'names';
+        let winnerHistory = [];
+        let exportPassword = "admin123";
+        let currentLanguage = 'en'; // Default to English
+
+        const translations = {
+            en: {
+                appTitle: "Calculator & Lottery",
+                calculatorTitle: "Investment Calculator",
+                investmentsLabel: "Investment",
+                investmentsPlaceholder: "e.g.: 1000 or 500+500",
+                investmentsHint: "Enter the investment amount or a calculation.",
+                peopleLabel: "Number of People",
+                peoplePlaceholder: "e.g.: 2 or 1+1",
+                peopleHint: "Enter the total number of people or a calculation.",
+                total1Label: "TOTAL1",
+                total1Hint: "The calculated total (cannot be modified directly).",
+                oneThirdTotalLabel: "1/3 Total1",
+                oneThirdTotalHint: "One third of the calculated total (cannot be modified directly).",
+                netLabel: "1/3 Net",
+                netPlaceholder: "e.g.: 500 or 500/2",
+                netHint: "Enter the 1/3 Net amount manually or a calculation.",
+                deductionLabel: "Deduction",
+                deductionPlaceholder: "e.g.: 10 or 10*2",
+                deductionHint: "Enter the deduction amount manually or a calculation.",
+                ajustementLabel: "Adjustment",
+                ajustementPlaceholder: "e.g.: +100 or -50",
+                ajustementHint: "Add an amount or a calculation to adjust TOTAL1.",
+                gainLabel: "Gain",
+                gainHint: "The calculated gain (cannot be modified directly).",
+                paymentLabel: "Payment",
+                paymentHint: "The final calculated payment (cannot be modified directly).",
+                tirageBtn: "Draw",
+                resetAllBtn: "Reset All",
+                addParticipantsTitle: "Add Participants",
+                wheelTitle: "Wheel of Fortune",
+                namesLabel: "Names",
+                numbersLabel: "Numbers",
+                namesPlaceholder: "Enter names here, one per line or separated by commas (e.g., John, Mary, Peter)",
+                numbersPlaceholder: "Enter numbers here, one per line or separated by commas (e.g., 1, 5, 10)",
+                addParticipantsBtn: "Add Participants",
+                clearAllBtn: "Clear All",
+                spinBtn: "Spin the Wheel!",
+                exportExcelBtn: "Export to Excel",
+                settingsBtn: "Settings",
+                participantCountPrefix: "0 participant(s) added.",
+                participantCountSuffix: " participant(s) added.",
+                passwordRequiredTitle: "Password Required",
+                passwordRequiredMsg: "Please enter the password to export the Excel file.",
+                passwordPlaceholder: "Password",
+                incorrectPassword: "Incorrect password.",
+                cancelBtn: "Cancel",
+                confirmBtn: "Confirm",
+                changePasswordTitle: "Change Password",
+                newPasswordPlaceholder: "New Password",
+                confirmNewPasswordPlaceholder: "Confirm New Password",
+                passwordMismatch: "Passwords do not match or are empty.",
+                passwordEmpty: "Passwords cannot be empty.",
+                passwordsDoNotMatch: "Passwords do not match.",
+                changeBtn: "Change",
+                excelHeaders: ["Winning Value", "Draw Date", "Slogan"],
+                winningSlogan: "Congratulations to the winner!",
+                noDrawsToExport: "No draws have been made to export.",
+                invalidNumbersWarning: "Some entries were not valid numbers and have been ignored.",
+                clearConfirmationTitle: "Confirm Clear All",
+                clearConfirmationMessage: "Are you sure you want to clear all participants and history?",
+                returnToCalculatorBtn: "Return to Calculator"
+            },
+            fr: {
+                appTitle: "Calculateur & Tirage",
+                calculatorTitle: "Calculateur d'Investissement",
+                investmentsLabel: "Investissement",
+                investmentsPlaceholder: "ex: 1000 ou 500+500",
+                investmentsHint: "Entrez le montant de l'investissement ou un calcul.",
+                peopleLabel: "Nombre de personnes",
+                peoplePlaceholder: "ex: 2 ou 1+1",
+                peopleHint: "Entrez le nombre total de personnes ou un calcul.",
+                total1Label: "TOTAL1",
+                total1Hint: "Le total calculé (ne peut pas être modifié directement).",
+                oneThirdTotalLabel: "1/3 Total1",
+                oneThirdTotalHint: "Un tiers du total calculé (ne peut pas être modifié directement).",
+                netLabel: "1/3 Net",
+                netPlaceholder: "ex: 500 ou 500/2",
+                netHint: "Entrez le montant du 1/3 Net manuellement ou un calcul.",
+                deductionLabel: "Déduction",
+                deductionPlaceholder: "ex: 10 ou 10*2",
+                deductionHint: "Entrez le montant de la déduction manuellement ou un calcul.",
+                ajustementLabel: "Ajustement",
+                ajustementPlaceholder: "ex: +100 ou -50",
+                ajustementHint: "Ajoutez un montant ou un calcul pour ajuster le TOTAL1.",
+                gainLabel: "Gain",
+                gainHint: "Le gain calculé (ne peut pas être modifié directement).",
+                paymentLabel: "Paiement",
+                paymentHint: "Le paiement final calculé (ne peut pas être modifié directement).",
+                tirageBtn: "Tirage",
+                resetAllBtn: "Réinitialiser Tout",
+                addParticipantsTitle: "Ajouter les Participants",
+                wheelTitle: "La Roue du Destin",
+                namesLabel: "Noms",
+                numbersLabel: "Chiffres",
+                namesPlaceholder: "Entrez les noms ici, un par ligne ou séparés par des virgules (ex: Jean, Marie, Pierre)",
+                numbersPlaceholder: "Entrez les chiffres ici, un par ligne ou séparés par des virgules (ex: 1, 5, 10)",
+                addParticipantsBtn: "Ajouter les Participants",
+                clearAllBtn: "Effacer tout",
+                spinBtn: "Lancer le Tirage !",
+                exportExcelBtn: "Exporter en Excel",
+                settingsBtn: "Paramètres",
+                participantCountPrefix: "0 participant(s) ajouté(s).",
+                participantCountSuffix: " participant(s) ajouté(s).",
+                passwordRequiredTitle: "Mot de passe requis",
+                passwordRequiredMsg: "Veuillez entrer le mot de passe pour exporter le fichier Excel.",
+                passwordPlaceholder: "Mot de passe",
+                incorrectPassword: "Mot de passe incorrect.",
+                cancelBtn: "Annuler",
+                confirmBtn: "Confirmer",
+                changePasswordTitle: "Changer le mot de passe",
+                newPasswordPlaceholder: "Nouveau mot de passe",
+                confirmNewPasswordPlaceholder: "Confirmer le nouveau mot de passe",
+                passwordMismatch: "Les mots de passe ne correspondent pas ou sont vides.",
+                passwordEmpty: "Les mots de passe ne peuvent pas être vides.",
+                passwordsDoNotMatch: "Les mots de passe ne correspondent pas.",
+                changeBtn: "Changer",
+                excelHeaders: ["Valeur Gagnante", "Date du Tirage", "Slogan"],
+                winningSlogan: "Félicitations au gagnant !",
+                noDrawsToExport: "Aucun tirage n'a été effectué pour exporter.",
+                invalidNumbersWarning: "Certaines entrées n'étaient pas des nombres valides et ont été ignorées.",
+                clearConfirmationTitle: "Confirmer l'Effacement",
+                clearConfirmationMessage: "Êtes-vous sûr de vouloir effacer tous les participants et l'historique ?",
+                returnToCalculatorBtn: "Retour au Calculateur"
+            }
+        };
+
+        // DOM elements for Lottery System
+        const languageSelector = document.getElementById('languageSelector');
+        const participantsInput = document.getElementById('participantsInput');
+        const addParticipantsBtn = document.getElementById('addParticipantsBtn');
+        const clearParticipantsBtn = document.getElementById('clearParticipantsBtn');
+        const participantCountDisplay = document.getElementById('participantCount');
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn'); // The actual spin button in lottery panel
+        const resultDisplay = document.getElementById('resultDisplay');
+        const winnerValueDisplay = document.getElementById('winnerValue');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const modeRadios = document.querySelectorAll('input[name="mode"]');
+        const settingsBtn = document.getElementById('settingsBtn');
+
+        // Password Modal elements
+        const passwordModal = document.getElementById('passwordModal');
+        const exportPasswordInput = document.getElementById('exportPasswordInput');
+        const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+        const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+        const passwordErrorMsg = document.getElementById('passwordErrorMsg');
+
+        // Change Password Modal elements
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const newPasswordInput = document.getElementById('newPasswordInput');
+        const confirmNewPasswordInput = document.getElementById('confirmNewPasswordInput');
+        const changePasswordSubmitBtn = document.getElementById('changePasswordSubmitBtn');
+        const changePasswordCancelBtn = document.getElementById('changePasswordCancelBtn');
+        const changePasswordErrorMsg = document.getElementById('changePasswordErrorMsg');
+
+        // Confirmation Modal elements for Clear All
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmYesBtn = document.getElementById('confirmYesBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+        // Colors for wheel segments
+        const segmentColors = [
+            '#ef4444', '#f97316', '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef',
+            '#ec4899', '#f43f5e', '#fb7185', '#be123c', '#9f1239', '#881337', '#7f1d1d', '#b91c1c', '#dc2626', '#ef4444'
+        ];
+
+        /**
+         * Sets the language of the application.
+         * @param {string} lang - The language code ('en' or 'fr').
+         */
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang; // Set HTML lang attribute
+
+            // Update title
+            document.querySelector('title').textContent = translations[lang].appTitle;
+
+            // Update elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) { // Check if translation exists
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            // Update placeholders with data-i18n-placeholder attribute
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) { // Check if translation exists
+                    element.placeholder = translations[lang][key];
+                }
+            });
+
+            // Update specific dynamic elements
+            updateParticipantCount(); // This will use the correct translation for count
+            // Update input placeholder based on current drawing mode
+            if (drawingMode === 'numbers') {
+                participantsInput.placeholder = translations[lang].numbersPlaceholder;
+            } else {
+                participantsInput.placeholder = translations[lang].namesPlaceholder;
+            }
+        }
+
+        /**
+         * Shows a modal by adding the 'show' class and removing 'hidden'.
+         * @param {HTMLElement} modalElement The modal DOM element.
+         */
+        function showModal(modalElement) {
+            modalElement.classList.remove('hidden');
+            // Force reflow to ensure transition plays
+            void modalElement.offsetWidth;
+            modalElement.classList.add('show');
+        }
+
+        /**
+         * Hides a modal by removing the 'show' class and adding 'hidden' after transition.
+         * @param {HTMLElement} modalElement The modal DOM element.
+         */
+        function hideModal(modalElement) {
+            modalElement.classList.remove('show');
+            modalElement.addEventListener('transitionend', function handler() {
+                modalElement.classList.add('hidden');
+                modalElement.removeEventListener('transitionend', handler);
+            });
+        }
+
+        /**
+         * Updates the participant count display and spin button state.
+         */
+        function updateParticipantCount() {
+            participantCountDisplay.textContent = `${participants.length}${translations[currentLanguage].participantCountSuffix}`;
+            // The spin button is now the "Tirage" button in the calculator section
+            // spinBtn.disabled = participants.length < 2 || isSpinning; // This refers to the actual spin button
+            document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = participants.length < 2 || isSpinning;
+            spinBtn.disabled = participants.length < 2 || isSpinning; // The actual spin button in lottery panel
+            exportExcelBtn.disabled = winnerHistory.length === 0; // Disable export if no winners
+        }
+
+        /**
+         * Draws the wheel segments based on the participants array.
+         */
+        function drawWheel() {
+            wheel.innerHTML = ''; // Clear existing segments
+            resultDisplay.classList.add('hidden'); // Hide previous result
+            resultDisplay.classList.remove('show'); // Reset result animation
+
+            if (participants.length === 0) {
+                wheel.style.transform = `rotate(0deg)`; // Reset visual rotation
+                currentRotation = 0; // Reset logical rotation
+                updateParticipantCount();
+                return;
+            }
+
+            const segmentAngle = 360 / participants.length;
+
+            participants.forEach((participant, index) => {
+                const segment = document.createElement('div');
+                segment.classList.add('wheel-segment');
+                const rotation = index * segmentAngle;
+                const color = segmentColors[index % segmentColors.length];
+
+                segment.style.backgroundColor = color;
+                segment.style.transform = `rotate(${rotation}deg) skewY(${90 - segmentAngle}deg)`;
+                segment.style.clipPath = `polygon(0% 0%, 100% 0%, 50% 100%)`;
+
+                const textContainer = document.createElement('div');
+                textContainer.textContent = participant;
+                textContainer.style.transform = `skewY(${-(90 - segmentAngle)}deg) rotate(${segmentAngle / 2}deg)`;
+                textContainer.style.position = 'absolute';
+                textContainer.style.whiteSpace = 'nowrap';
+                textContainer.style.overflow = 'hidden';
+                textContainer.style.textOverflow = 'ellipsis';
+                textContainer.style.maxWidth = '80%';
+
+                segment.appendChild(textContainer);
+                wheel.appendChild(segment);
+            });
+
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+            updateParticipantCount();
+        }
+
+        /**
+         * Handles adding participants from the input field based on the selected mode.
+         */
+        addParticipantsBtn.addEventListener('click', () => {
+            const inputVal = participantsInput.value.trim();
+            if (inputVal) {
+                const rawNewParticipants = inputVal.split(/[\n,]+/).map(item => item.trim()).filter(item => item !== '');
+                let newParticipants = [];
+
+                if (drawingMode === 'numbers') {
+                    newParticipants = rawNewParticipants.filter(item => {
+                        return !isNaN(item) && item !== '';
+                    }).map(Number);
+                    if (newParticipants.length !== rawNewParticipants.length) {
+                        passwordErrorMsg.textContent = translations[currentLanguage].invalidNumbersWarning;
+                        passwordErrorMsg.classList.remove('hidden');
+                        setTimeout(() => passwordErrorMsg.classList.add('hidden'), 3000);
+                    }
+                } else {
+                    newParticipants = rawNewParticipants;
+                }
+
+                participants.push(...newParticipants);
+                participantsInput.value = '';
+                drawWheel();
+            }
+        });
+
+        /**
+         * Handles clearing all participants.
+         */
+        clearParticipantsBtn.addEventListener('click', () => {
+            showModal(confirmationModal);
+        });
+
+        // Event listeners for custom confirmation modal
+        confirmYesBtn.addEventListener('click', () => {
+            participants = [];
+            currentRotation = 0;
+            winnerHistory = [];
+            drawWheel();
+            hideModal(confirmationModal);
+        });
+
+        confirmCancelBtn.addEventListener('click', () => {
+            hideModal(confirmationModal);
+        });
+
+        /**
+         * Initiates the lottery draw (spin the wheel).
+         * This function is called by the "Lancer le Tirage !" button inside the lottery panel.
+         */
+        spinBtn.addEventListener('click', () => { // Changed from startLotteryDraw to spinBtn event listener
+            if (isSpinning || participants.length < 2) {
+                return;
+            }
+
+            isSpinning = true;
+            spinBtn.disabled = true; // Disable the actual spin button
+            resultDisplay.classList.add('hidden');
+            resultDisplay.classList.remove('show');
+
+            const randomIndex = Math.floor(Math.random() * participants.length);
+            const winner = participants[randomIndex];
+            winnerValueDisplay.textContent = winner;
+
+            const segmentAngle = 360 / participants.length;
+            let targetAbsoluteRotation = 360 - (randomIndex * segmentAngle + segmentAngle / 2);
+
+            targetAbsoluteRotation = targetAbsoluteRotation % 360;
+            if (targetAbsoluteRotation < 0) {
+                targetAbsoluteRotation += 360;
+            }
+
+            let degreesToSpin = currentRotation + targetAbsoluteRotation + (360 * 5); // 5 full spins for effect
+
+            wheel.style.transition = 'transform 6s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            wheel.style.transform = `rotate(${degreesToSpin}deg)`;
+            currentRotation = degreesToSpin;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinBtn.disabled = false; // Re-enable the actual spin button
+                resultDisplay.classList.remove('hidden');
+                resultDisplay.classList.add('show');
+
+                // Store winner in history
+                const now = new Date();
+                const dateString = now.toLocaleDateString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US') + ' ' + now.toLocaleTimeString(currentLanguage === 'fr' ? 'fr-FR' : 'en-US');
+                const winningSlogan = translations[currentLanguage].winningSlogan;
+                winnerHistory.push({
+                    value: winner,
+                    date: dateString,
+                    slogan: winningSlogan
+                });
+                updateParticipantCount(); // Update to enable/disable export button
+
+                wheel.style.transition = 'none';
+                wheel.style.transform = `rotate(${currentRotation % 360}deg)`;
+                currentRotation = currentRotation % 360;
+            }, 6000);
+        });
+
+        /**
+         * Handles the mode selection (names vs. numbers).
+         */
+        document.querySelectorAll('input[name="mode"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                drawingMode = event.target.value;
+                participantsInput.value = ''; // Clear input on mode change
+                participants = []; // Clear participants on mode change
+                drawWheel(); // Redraw wheel (will be empty)
+                setLanguage(currentLanguage); // Update placeholder text
+            });
+        });
+
+        /**
+         * Handles export to Excel button click.
+         */
+        exportExcelBtn.addEventListener('click', () => {
+            if (winnerHistory.length === 0) {
+                passwordErrorMsg.textContent = translations[currentLanguage].noDrawsToExport;
+                passwordErrorMsg.classList.remove('hidden');
+                setTimeout(() => passwordErrorMsg.classList.add('hidden'), 3000);
+                return;
+            }
+            showModal(passwordModal);
+            exportPasswordInput.value = ''; // Clear password input
+            passwordErrorMsg.classList.add('hidden'); // Hide previous error
+        });
+
+        // Password modal button event listeners
+        passwordSubmitBtn.addEventListener('click', () => {
+            if (exportPasswordInput.value === exportPassword) {
+                hideModal(passwordModal);
+                exportToExcel();
+            } else {
+                passwordErrorMsg.textContent = translations[currentLanguage].incorrectPassword;
+                passwordErrorMsg.classList.remove('hidden');
+            }
+        });
+
+        passwordCancelBtn.addEventListener('click', () => {
+            hideModal(passwordModal);
+        });
+
+        /**
+         * Handles settings button click (for changing password).
+         */
+        settingsBtn.addEventListener('click', () => {
+            showModal(changePasswordModal);
+            newPasswordInput.value = '';
+            confirmNewPasswordInput.value = '';
+            changePasswordErrorMsg.classList.add('hidden');
+        });
+
+        // Change Password modal button event listeners
+        changePasswordSubmitBtn.addEventListener('click', () => {
+            const newPass = newPasswordInput.value;
+            const confirmPass = confirmNewPasswordInput.value;
+
+            if (!newPass || !confirmPass) {
+                changePasswordErrorMsg.textContent = translations[currentLanguage].passwordEmpty;
+                changePasswordErrorMsg.classList.remove('hidden');
+            } else if (newPass !== confirmPass) {
+                changePasswordErrorMsg.textContent = translations[currentLanguage].passwordsDoNotMatch;
+                changePasswordErrorMsg.classList.remove('hidden');
+            } else {
+                exportPassword = newPass; // Update the password
+                hideModal(changePasswordModal);
+                // Optionally, show a success message
+            }
+        });
+
+        changePasswordCancelBtn.addEventListener('click', () => {
+            hideModal(changePasswordModal);
+        });
+
+        /**
+         * Exports winner history to an Excel file.
+         */
+        function exportToExcel() {
+            const ws_data = [translations[currentLanguage].excelHeaders].concat(
+                winnerHistory.map(item => [item.value, item.date, item.slogan])
+            );
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Historique des Tirages");
+            XLSX.writeFile(wb, "Historique_Tirages.xlsx");
+        }
+
+        /**
+         * Resets both the calculator and the lottery system.
+         */
+        function resetAllCalculators() {
+            // Reset Calculator fields
+            document.getElementById("investments").value = "";
+            document.getElementById("people").value = "";
+            document.getElementById("net").value = "";
+            document.getElementById("deduction").value = "";
+            document.getElementById("ajustement").value = "";
+
+            document.getElementById("total1").value = "";
+            document.getElementById("oneThirdTotal").value = "";
+            document.getElementById("gain").value = "";
+            document.getElementById("payment").value = "";
+
+            // Reset Lottery System fields and state
+            participants = [];
+            currentRotation = 0;
+            isSpinning = false;
+            drawingMode = 'names'; // Reset to default mode
+            winnerHistory = [];
+            participantsInput.value = ''; // Clear input textarea
+            drawWheel(); // Redraw empty wheel
+            setLanguage(currentLanguage); // Re-apply language for placeholders
+
+            calculate(); // Ensure calculator fields are re-evaluated to empty/zero
+        }
+
+        // Initialize language and draw wheel on load
+        window.onload = () => {
+            // Set initial view based on screen size
+            if (window.innerWidth >= 992) {
+                // On large screens, both panels are active
+                document.getElementById('calculatorPanel').classList.add('active');
+                document.getElementById('lotteryPanel').classList.add('active');
+            } else {
+                // On small screens, only calculator is active initially
+                showView('calculator'); // Show calculator by default on small screens
+            }
+
+            setLanguage('en'); // Set default language to English
+            drawWheel(); // Initial draw of the wheel
+            calculate(); // Initial calculation for the calculator
+        };
+    </script>
 </body>
 </html>
