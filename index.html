@@ -8,144 +8,294 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <!-- SheetJS CDN for Excel export -->
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
+        /* Base styles for body and font */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Light gray background */
+            background-color: #e0e7ef; /* Softer, slightly darker background */
             display: flex;
+            flex-direction: column; /* Allow stacking header and main container */
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            background-image: linear-gradient(to bottom right, #f8f9fa, #e9ecef); /* Subtle gradient */
         }
 
+        /* Pulsating Header Section */
+        #pulsatingHeader {
+            width: 100%;
+            max-width: 1300px; /* Match main container width */
+            background-image: linear-gradient(to right, #60a5fa, #3b82f6); /* Blue gradient */
+            color: white;
+            padding: 25px 30px; /* Responsive padding */
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            margin-bottom: 30px; /* Space between header and main app */
+            position: relative;
+            overflow: hidden; /* Hide overflow from pseudo-element */
+            animation: pulse-background 4s infinite alternate ease-in-out; /* Pulsating animation */
+        }
+
+        #pulsatingHeader h1 {
+            font-size: 2.5rem; /* Large title */
+            font-weight: 800; /* Extra bold */
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        #pulsatingHeader p {
+            font-size: 1.1rem; /* Subtitle size */
+            font-weight: 600;
+            opacity: 0.9;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Marquee specific styling */
+        #pulsatingHeader marquee {
+            font-size: 2.5rem; /* Match h1 font size */
+            font-weight: 800; /* Match h1 font weight */
+            color: white; /* Ensure text color is white */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Match h1 text shadow */
+            margin-bottom: 10px; /* Keep margin consistent with h1 */
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Hide overflowing text */
+            display: block; /* Ensure it takes full width */
+            line-height: 1.2; /* Adjust line height if necessary */
+        }
+
+
+        @media (max-width: 768px) {
+            #pulsatingHeader {
+                padding: 20px 25px;
+                margin-bottom: 20px;
+            }
+            #pulsatingHeader h1 {
+                font-size: 2rem;
+            }
+            #pulsatingHeader p {
+                font-size: 1rem;
+            }
+            #pulsatingHeader marquee { /* Adjust marquee font size for smaller screens */
+                font-size: 2rem;
+            }
+        }
+
+        /* Keyframe animation for pulsating background */
+        @keyframes pulse-background {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+        #pulsatingHeader {
+            background-size: 200% 200%; /* Make gradient larger to animate */
+        }
+
+
+        /* Main application container */
         .main-app-container {
             background-color: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            padding: 30px;
+            border-radius: 24px; /* More rounded corners */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); /* Stronger, softer shadow */
+            padding: 40px; /* Increased padding */
             width: 100%;
-            max-width: 1200px; /* Increased max-width for two columns */
+            max-width: 1300px; /* Slightly wider max-width */
             display: flex;
             flex-direction: column; /* Stack vertically by default */
-            gap: 25px;
-            align-items: flex-start; /* Align items to the start of the cross axis */
-            position: relative; /* For absolute positioning of language selector */
+            gap: 30px; /* Increased gap */
+            align-items: flex-start;
+            position: relative;
+            border: 1px solid #e2e8f0; /* Subtle border */
         }
 
         /* Styles for showing/hiding panels */
         .panel-wrapper {
-            width: 100%; /* Take full width when stacked */
-            display: flex; /* Use flex to manage child panels */
-            flex-direction: column; /* Stack panels within wrapper by default */
-            gap: 25px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Increased gap */
         }
 
         @media (min-width: 992px) { /* Adjust breakpoint for side-by-side */
             .main-app-container {
-                flex-direction: row; /* Side-by-side on larger screens */
+                flex-direction: row;
                 justify-content: space-around;
             }
             .panel-wrapper {
-                flex-direction: row; /* Panels side-by-side within wrapper */
+                flex-direction: row;
             }
         }
 
+        /* Individual panel styling */
         .calculator-panel, .lottery-panel {
-            flex: 1; /* Each panel takes equal width */
-            padding: 20px;
-            border-radius: 15px;
-            background-color: #f9fafb;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
-            min-width: 300px; /* Minimum width for each panel */
-            box-sizing: border-box; /* Include padding in width */
+            flex: 1;
+            padding: 30px; /* Increased padding */
+            border-radius: 20px; /* More rounded corners */
+            background-color: #fefefe; /* Lighter panel background */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* More pronounced inner shadow */
+            min-width: 320px; /* Slightly increased min-width */
+            box-sizing: border-box;
             display: none; /* Hidden by default, controlled by JS */
+            border: 1px solid #edf2f7; /* Subtle panel border */
         }
 
         .calculator-panel.active, .lottery-panel.active {
-            display: block; /* Show active panel */
+            display: block;
         }
 
         @media (min-width: 992px) {
             .calculator-panel, .lottery-panel {
-                display: block; /* Always show both panels on large screens */
+                display: block;
             }
         }
 
-        /* Calculator specific styles */
+        /* Calculator specific input styles */
         .calculator-panel .input-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px; /* Increased margin */
         }
         .calculator-panel .input-label {
             font-weight: 600;
-            margin-bottom: 4px;
-            color: #2d3748;
+            margin-bottom: 6px; /* Increased margin */
+            color: #34495e; /* Darker label color */
             display: block;
         }
         .calculator-panel .input-field {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e0;
-            background-color: #edf2f7;
-            font-size: 16px;
-            color: #2d3748;
-            transition: border-color 0.2s;
+            padding: 12px; /* Increased padding */
+            border-radius: 10px; /* More rounded */
+            border: 1px solid #dbe2ea; /* Softer border */
+            background-color: #f7f9fb; /* Lighter background */
+            font-size: 17px; /* Slightly larger font */
+            color: #36454F; /* Darker text color */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
         }
         .calculator-panel .input-field:focus {
             outline: none;
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            border-color: #60a5fa; /* Brighter blue on focus */
+            box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.4); /* More prominent focus shadow */
         }
         .calculator-panel .input-field[readonly] {
-            background-color: #e2e8f0;
-            color: #4a5568;
+            background-color: #eef2f6; /* Slightly darker background for readonly */
+            color: #5a6a7a;
             font-weight: 700;
         }
         .calculator-panel .text-sm {
-            font-size: 0.875rem;
-            color: #718096;
-            margin-top: 4px;
+            font-size: 0.9rem; /* Slightly larger hint text */
+            color: #7f8c8d; /* Softer hint text color */
+            margin-top: 6px; /* Increased margin */
         }
         .calculator-panel .button-group {
-            margin-top: 24px;
+            margin-top: 30px; /* Increased margin */
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px; /* Increased gap */
         }
         .calculator-panel .action-button {
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 14px 25px; /* Larger padding */
+            border-radius: 12px; /* More rounded */
+            font-size: 17px; /* Slightly larger font */
             font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); /* Stronger shadow */
             color: white;
             border: none;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Text shadow for better readability */
+            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); /* Use Tailwind gradients */
+        }
+        .calculator-panel .action-button.bg-green-500 {
+            --tw-gradient-stops: #34d399, #10b981; /* Green gradient */
+        }
+        .calculator-panel .action-button.bg-red-500 {
+            --tw-gradient-stops: #ef4444, #dc2626; /* Red gradient */
+        }
+        .calculator-panel .action-button.bg-blue-500 {
+            --tw-gradient-stops: #60a5fa, #3b82f6; /* Blue gradient */
         }
         .calculator-panel .action-button:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px); /* More pronounced lift */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
         }
         .calculator-panel .action-button:active {
             transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Softer shadow on active */
         }
 
-        /* Lottery specific styles (from previous code) */
+        /* Lottery specific styles (from previous code, refined) */
+        .lottery-panel h2 {
+            color: #34495e; /* Darker heading color */
+        }
+        .lottery-panel .text-gray-700 {
+            color: #4a6572; /* Softer text color for labels */
+        }
+        .lottery-panel .form-radio:checked {
+            border-color: #60a5fa; /* Match calculator focus color */
+        }
+        .lottery-panel textarea {
+            border-radius: 10px; /* More rounded */
+            border: 1px solid #dbe2ea;
+            background-color: #f7f9fb;
+            color: #36454F;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .lottery-panel textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.4);
+        }
+        .lottery-panel button {
+            border-radius: 12px; /* More rounded */
+            padding: 14px 25px; /* Larger padding */
+            font-size: 17px; /* Slightly larger font */
+            font-weight: 700;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        .lottery-panel button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        .lottery-panel button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .lottery-panel .bg-blue-600 { /* Add Participants */
+            background-image: linear-gradient(to bottom right, #3b82f6, #2563eb);
+        }
+        .lottery-panel .bg-red-500 { /* Clear All */
+            background-image: linear-gradient(to bottom right, #ef4444, #dc2626);
+        }
+        .lottery-panel .bg-green-500 { /* Spin Button */
+            background-image: linear-gradient(to bottom right, #22c55e, #16a34a);
+        }
+        .lottery-panel .bg-indigo-600 { /* Export Excel */
+            background-image: linear-gradient(to bottom right, #4f46e5, #4338ca);
+        }
+        .lottery-panel .bg-gray-500 { /* Settings */
+            background-image: linear-gradient(to bottom right, #6b7280, #4b5563);
+        }
+        .lottery-panel .bg-blue-500 { /* Return to Calculator */
+            background-image: linear-gradient(to bottom right, #60a5fa, #3b82f6);
+        }
+
+
         .wheel-container {
             position: relative;
-            width: 300px; /* Base size for the wheel */
+            width: 300px;
             height: 300px;
             border-radius: 50%;
             overflow: hidden;
-            border: 8px solid #3b82f6; /* Blue border */
-            box-shadow: 0 0 0 5px #bfdbfe, 0 0 20px rgba(0, 0, 0, 0.2);
-            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth spin transition */
+            border: 10px solid #60a5fa; /* Thicker, matching border */
+            box-shadow: 0 0 0 8px #bfdbfe, 0 0 30px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(0,0,0,0.1); /* Enhanced shadows */
+            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
             margin: 0 auto;
         }
 
@@ -157,39 +307,41 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 15px; /* Slightly larger font */
+            font-weight: 700; /* Bolder font */
             color: #ffffff;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4); /* Stronger text shadow */
             box-sizing: border-box;
-            padding-top: 20px; /* Push text down to avoid center overlap */
+            padding-top: 25px; /* Adjust padding */
         }
 
         .pointer {
             position: absolute;
-            top: -25px; /* Position above the wheel */
+            top: -30px; /* Adjust position */
             left: 50%;
             transform: translateX(-50%);
-            color: #ef4444; /* Red color for the pointer */
-            font-size: 50px;
+            color: #e74c3c; /* A more vibrant red */
+            font-size: 55px; /* Larger pointer */
             z-index: 10;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3); /* Stronger pointer shadow */
         }
 
         .result-display {
-            background-color: #ecfdf5; /* Light green background for result */
-            color: #047857; /* Dark green text */
-            padding: 20px;
-            border-radius: 15px;
-            font-size: 2.25rem; /* Large font size */
-            font-weight: 700;
+            background-color: #d4edda; /* Softer green background */
+            color: #155724; /* Darker green text */
+            padding: 25px; /* More padding */
+            border-radius: 20px; /* More rounded */
+            font-size: 2.5rem; /* Even larger font size */
+            font-weight: 800; /* Extra bold */
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px; /* Increased margin */
             width: 100%;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            opacity: 0; /* Hidden by default */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Stronger shadow */
+            opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            border: 1px solid #c3e6cb; /* Subtle border */
+            display: none; /* Start hidden by default */
         }
 
         .result-display.show {
@@ -200,18 +352,19 @@
         /* Responsive adjustments for wheel size */
         @media (max-width: 767px) {
             .wheel-container {
-                width: 250px;
-                height: 250px;
+                width: 260px; /* Slightly larger on mobile */
+                height: 260px;
             }
             .wheel-segment {
-                font-size: 12px;
+                font-size: 13px;
+                padding-top: 20px;
             }
             .pointer {
-                font-size: 40px;
-                top: -20px;
+                font-size: 45px;
+                top: -25px;
             }
             .result-display {
-                font-size: 1.75rem;
+                font-size: 2rem;
             }
         }
 
@@ -222,7 +375,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -239,13 +392,14 @@
 
         .modal-content {
             background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 35px; /* More padding */
+            border-radius: 20px; /* More rounded */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25); /* Stronger shadow */
             width: 90%;
-            max-width: 400px;
-            transform: translateY(-20px);
+            max-width: 450px; /* Slightly wider */
+            transform: translateY(-30px); /* More pronounced initial transform */
             transition: transform 0.3s ease;
+            border: 1px solid #e2e8f0; /* Subtle border */
         }
 
         .modal-overlay.show .modal-content {
@@ -254,32 +408,50 @@
 
         .modal-content input {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 14px; /* More padding */
+            margin-bottom: 20px; /* More margin */
+            border: 1px solid #dbe2ea;
+            border-radius: 10px; /* More rounded */
+            font-size: 1.05rem; /* Slightly larger font */
             box-sizing: border-box;
+            background-color: #f7f9fb;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .modal-content button {
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 25px; /* More padding */
+            border-radius: 10px; /* More rounded */
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-
+        .modal-content button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        .modal-content button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
         .modal-content .error-message {
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: -10px;
-            margin-bottom: 10px;
+            color: #e74c3c; /* More vibrant red */
+            font-size: 0.95rem; /* Slightly larger */
+            margin-top: -15px; /* Adjusted margin */
+            margin-bottom: 15px;
             text-align: center;
         }
     </style>
 </head>
 <body class="bg-gray-100 p-5 flex items-center justify-center min-h-screen">
+    <!-- Pulsating Header Section -->
+    <div id="pulsatingHeader">
+        <marquee behavior="scroll" direction="left" scrollamount="8">
+            <h1 data-i18n="headerTitle">Investment AND WIN MORE AT DREAM2BUILD1</h1>
+        </marquee>
+        <p data-i18n="headerSubtitle">Your all-in-one tool for financial planning and fun draws.</p>
+    </div>
+
     <div class="main-app-container">
 
         <!-- Language Selector (positioned absolutely within main-app-container) -->
@@ -408,7 +580,7 @@
                 </button>
 
                 <!-- Result Display -->
-                <div id="resultDisplay" class="result-display hidden">
+                <div id="resultDisplay" class="result-display">
                     <span id="winnerValue"></span>
                 </div>
 
@@ -592,6 +764,8 @@
         const translations = {
             en: {
                 appTitle: "Calculator & Lottery",
+                headerTitle: "Investment AND WIN MORE AT DREAM2BUILD1",
+                headerSubtitle: "Your all-in-one tool for financial planning and fun draws.",
                 calculatorTitle: "Investment Calculator",
                 investmentsLabel: "Investment",
                 investmentsPlaceholder: "e.g.: 1000 or 500+500",
@@ -654,6 +828,8 @@
             },
             fr: {
                 appTitle: "Calculateur & Tirage",
+                headerTitle: "Investissez ET GAGNEZ PLUS À DREAM2BUILD1",
+                headerSubtitle: "Votre outil tout-en-un pour la planification financière et les tirages amusants.",
                 calculatorTitle: "Calculateur d'Investissement",
                 investmentsLabel: "Investissement",
                 investmentsPlaceholder: "ex: 1000 ou 500+500",
@@ -832,8 +1008,9 @@
          */
         function drawWheel() {
             wheel.innerHTML = ''; // Clear existing segments
-            resultDisplay.classList.add('hidden'); // Hide previous result
-            resultDisplay.classList.remove('show'); // Reset result animation
+            // Always hide result display when redrawing wheel (e.g., adding/clearing participants)
+            resultDisplay.classList.remove('show');
+            resultDisplay.style.display = 'none'; // Explicitly hide
 
             if (participants.length === 0) {
                 wheel.style.transform = `rotate(0deg)`; // Reset visual rotation
@@ -940,51 +1117,20 @@
             isSpinning = true;
             spinBtn.disabled = true; // Disable the actual spin button
             document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = true; // Disable calculator's draw button
-            resultDisplay.classList.add('hidden');
+            
+            // Explicitly hide result display before spin
             resultDisplay.classList.remove('show');
+            resultDisplay.style.display = 'none';
 
             let winner = null;
             let winnerIndex = -1;
-            let eligibleParticipants = [];
-
-            // Step 1: Check for priority winner (ends with two spaces)
-            for (let i = 0; i < participants.length; i++) {
-                if (drawingMode === 'names' && participants[i].endsWith('  ')) {
-                    winner = participants[i];
-                    winnerIndex = i;
-                    break; // Found priority winner, stop searching
-                }
-            }
-
-            // Step 2: If no priority winner, filter eligible participants (exclude those with one trailing space)
-            if (winner === null) {
-                eligibleParticipants = participants.filter(p => {
-                    if (drawingMode === 'names' && p.endsWith(' ')) {
-                        // Exclude if it has exactly one trailing space
-                        return !p.endsWith('  ');
-                    }
-                    return true; // Include if not a name or doesn't have one trailing space
-                });
-
-                if (eligibleParticipants.length === 0) {
-                    // Handle case where all eligible participants were excluded or none left
-                    passwordErrorMsg.textContent = translations[currentLanguage].noDrawsToExport; // Reusing for "no eligible participants"
-                    passwordErrorMsg.classList.remove('hidden');
-                    setTimeout(() => {
-                        passwordErrorMsg.classList.add('hidden');
-                        isSpinning = false;
-                        spinBtn.disabled = false;
-                        document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = false;
-                    }, 3000);
-                    return;
-                }
-
-                // Step 3: Select a random winner from eligible participants
-                const randomEligibleIndex = Math.floor(Math.random() * eligibleParticipants.length);
-                winner = eligibleParticipants[randomEligibleIndex];
-                // Find the original index of the winner to correctly spin the wheel
-                winnerIndex = participants.indexOf(winner);
-            }
+            
+            // --- MODIFICATION START ---
+            // Step 1: Select a random winner directly from all participants
+            const randomIndex = Math.floor(Math.random() * participants.length);
+            winner = participants[randomIndex];
+            winnerIndex = randomIndex;
+            // --- MODIFICATION END ---
 
             winnerValueDisplay.textContent = winner;
 
@@ -996,7 +1142,7 @@
                 targetAbsoluteRotation += 360;
             }
 
-            let degreesToSpin = currentRotation + targetAbsoluteRotation + (360 * 5); // 5 full spins for effect
+            let degreesToSpin = currentRotation + targetAbsoluteRotation + (360 * 1000); // 1000 full spins for effect
 
             wheel.style.transition = 'transform 6s cubic-bezier(0.25, 0.1, 0.25, 1)';
             wheel.style.transform = `rotate(${degreesToSpin}deg)`;
@@ -1006,8 +1152,11 @@
                 isSpinning = false;
                 spinBtn.disabled = false; // Re-enable the actual spin button
                 document.querySelector('.calculator-panel .action-button.bg-green-500').disabled = false; // Re-enable calculator's draw button
-                resultDisplay.classList.remove('hidden');
-                resultDisplay.classList.add('show');
+                
+                // Show result display after spin
+                resultDisplay.style.display = 'block'; // Make it visible (but still transparent)
+                void resultDisplay.offsetWidth; // Force reflow for transition
+                resultDisplay.classList.add('show'); // Apply opacity:1 and transform:translateY(0)
 
                 // Store winner in history
                 const now = new Date();
@@ -1021,8 +1170,8 @@
                 updateParticipantCount(); // Update to enable/disable export button
 
                 wheel.style.transition = 'none';
-                wheel.style.transform = `rotate(${currentRotation % 360}deg)`;
-                currentRotation = currentRotation % 360;
+                currentRotation = currentRotation % 360; // Reset currentRotation to a value between 0 and 359
+                wheel.style.transform = `rotate(${currentRotation}deg)`; // Apply the reset rotation
             }, 6000);
         });
 
@@ -1156,6 +1305,10 @@
             }
 
             setLanguage('en'); // Set default language to English
+
+            // Add event listener for language selector
+            languageSelector.addEventListener('change', (event) => setLanguage(event.target.value));
+
             drawWheel(); // Initial draw of the wheel
             calculate(); // Initial calculation for the calculator
         };
